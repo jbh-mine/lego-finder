@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import useTranslatedName from '../hooks/useTranslatedName';
-import useInstructions from '../hooks/useInstructions';
-import { getLegoPageUrl } from '../utils/instructions';
 import {
   isInCollection, addToCollection, removeFromCollection,
   isInWishlist, addToWishlist, removeFromWishlist,
@@ -17,8 +15,6 @@ function SetCard(props) {
   var lc = useLanguage();
   var t = lc.t;
   var translated = useTranslatedName(set.name);
-  var insData = useInstructions(set.set_num);
-  var instructions = insData.instructions;
   var cs = useState(false); var inC = cs[0]; var setC = cs[1];
   var ws = useState(false); var inW = ws[0]; var setW = ws[1];
 
@@ -37,47 +33,6 @@ function SetCard(props) {
     if (inW) { removeFromWishlist(set.set_num); setW(false); }
     else { addToWishlist(set); setW(true); }
   };
-  var openLegoPage = function(e) {
-    e.stopPropagation();
-    window.open(getLegoPageUrl(set.set_num), '_blank');
-  };
-
-  var insButtons = [];
-  if (instructions.length > 0) {
-    if (instructions.length === 1) {
-      insButtons.push(
-        React.createElement('a', {
-          key: 'ins-0',
-          className: 'btn-icon btn-instructions',
-          href: instructions[0].url,
-          target: '_blank',
-          rel: 'noopener noreferrer',
-          onClick: function(e) { e.stopPropagation(); },
-        }, t('buildInstructions') + ' PDF')
-      );
-    } else {
-      instructions.forEach(function(ins, idx) {
-        insButtons.push(
-          React.createElement('a', {
-            key: 'ins-' + idx,
-            className: 'btn-icon btn-instructions btn-ins-booklet',
-            href: ins.url,
-            target: '_blank',
-            rel: 'noopener noreferrer',
-            onClick: function(e) { e.stopPropagation(); },
-          }, t('buildInstructions') + ' ' + ins.sequence + '/' + ins.total)
-        );
-      });
-    }
-  } else {
-    insButtons.push(
-      React.createElement('button', {
-        key: 'ins-page',
-        className: 'btn-icon btn-instructions',
-        onClick: openLegoPage,
-      }, t('buildInstructions'))
-    );
-  }
 
   return React.createElement('div', { className: 'set-card', onClick: function() { nav('/set/' + set.set_num); } },
     React.createElement('img', { className: 'set-card-img', src: set.set_img_url || PH, alt: set.name, loading: 'lazy', onError: function(e) { e.target.src = PH; } }),
@@ -92,8 +47,7 @@ function SetCard(props) {
     ),
     React.createElement('div', { className: 'set-card-actions' },
       React.createElement('button', { className: 'btn-icon' + (inC ? ' active' : ''), onClick: togC }, inC ? t('owned') : t('notOwned')),
-      React.createElement('button', { className: 'btn-icon' + (inW ? ' wishlist-active' : ''), onClick: togW }, inW ? t('wished') : t('notWished')),
-      insButtons
+      React.createElement('button', { className: 'btn-icon' + (inW ? ' wishlist-active' : ''), onClick: togW }, inW ? t('wished') : t('notWished'))
     )
   );
 }
