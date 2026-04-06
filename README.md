@@ -23,6 +23,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **테마/연도 필터링** — 테마별, 연도별 브라우징 (테마명 한국어 번역 지원)
 - **세트 상세 정보** — 부품 목록, 미니피규어, 색상 정보 확인
 - **부품 상세 정보** — 사용 가능한 색상, 엘리먼트 ID, 포함된 세트 목록
+- **한국 레고 가격 표시** — 세트 카드와 상세 페이지에서 KRW 가격 표시
 - **내 컬렉션 관리** — localStorage 기반 컬렉션 및 위시리스트
 - **한/영 전환** — 헤더 토글 버튼으로 언어 전환
 - **모바일 반응형** — 햄버거 메뉴, 터치 영역 확대 등 모바일 최적화
@@ -62,11 +63,13 @@ src/
 │   ├── FundingPage.js      # BDP 펀딩제품 (시리즈탭 + 연도필터 + 이름검색)
 │   └── CollectionPage.js   # 내 컬렉션/위시리스트
 ├── styles/
-│   └── App.css             # 전체 스타일 (반응형 포함)
+│   ├── App.css             # 전체 스타일 (반응형 포함)
+│   └── price.css           # 가격 표시 스타일
 └── utils/
     ├── api.js              # Rebrickable API 래퍼 (세트 + 부품)
     ├── searchDict.js       # 한국어→영어 검색 키워드 사전 + SET_NUM_MAP (별명→제품번호)
     ├── translate.js        # 테마명 하드코딩 번역 + MyMemory API 폴백
+    ├── price.js            # 가격 유틸리티 (KRW 포맷팅, 환율, 검색)
     ├── i18n.js             # 한/영 UI 번역 리소스
     └── collection.js       # localStorage 컬렉션 관리
 ```
@@ -90,7 +93,34 @@ npm run deploy
 
 ---
 
+## 가격 데이터 업데이트
+
+빌드 시간에 한국 레고 가격을 자동 갱신하려면:
+
+```bash
+# 특정 세트들의 가격 가져오기
+npm run fetch-prices 10294 42151 75192
+
+# 모든 등록된 세트 가격 새로고침
+npm run fetch-prices --refresh
+```
+
+생성된 `src/data/prices.json`은 빌드 타임에 자동으로 번들에 포함됩니다.
+
+---
+
 ## 변경 이력 (Changelog)
+
+### v0.3.0 — 2026-04-06
+
+#### `NEW` feat: 한국 레고 가격 표시
+- 세트 카드에 KRW 가격 표시 (소수점 제거, 한글 원화 기호)
+- 세트 상세 페이지에 가격 메타 정보 추가
+- 단종 제품은 "단종" 태그 표시
+- `scripts/fetch-prices.js` — 빌드 타임에 lego.com/ko-kr에서 JSON-LD 가격 데이터 수집
+- `src/data/prices.json` — 가격 데이터베이스 (커밋됨, 초기값 포함)
+- `src/utils/price.js` — 가격 포맷팅, 환율 변환, 검색 URL 유틸리티
+- `src/hooks/useLegoPrice.js` — React 훅으로 세트별 가격 조회
 
 ### v0.2.0 — 2026-04-06
 

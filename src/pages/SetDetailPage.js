@@ -3,17 +3,20 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import useTranslatedName from '../hooks/useTranslatedName';
 import useInstructions from '../hooks/useInstructions';
+import useLegoPrice from '../hooks/useLegoPrice';
 import { getLegoPageUrl } from '../utils/instructions';
+import { getLegoKrProductUrl } from '../utils/price';
 import { getSetDetail, getSetParts, getSetMinifigs } from '../utils/api';
 import { isInCollection, addToCollection, removeFromCollection, isInWishlist, addToWishlist, removeFromWishlist } from '../utils/collection';
 import Pagination from '../components/Pagination';
 import { Loading, ErrorMessage } from '../components/Loading';
+import '../styles/price.css';
 
 var PH = 'https://rebrickable.com/static/img/nil_mf.jpg';
 
 function SetDetailPage() {
   var p = useParams(); var setNum = p.setNum;
-  var lc = useLanguage(); var t = lc.t;
+  var lc = useLanguage(); var t = lc.t; var lang = lc.lang;
   var navigate = useNavigate();
   var s1 = useState(null); var set = s1[0]; var setSet = s1[1];
   var s2 = useState(null); var parts = s2[0]; var setParts = s2[1];
@@ -37,6 +40,7 @@ function SetDetailPage() {
   var insLoading = insData.loading;
   var legoProductNumber = insData.legoProductNumber;
   var fileSizes = insData.fileSizes;
+  var priceData = useLegoPrice(setNum);
   var PPS = 50;
 
   var rebrickableNum = setNum ? setNum.replace(/-.*$/, '') : '';
@@ -369,6 +373,12 @@ function SetDetailPage() {
           React.createElement('h1', null, translated || set.name),
           translated && React.createElement('div', { className: 'set-name-original' }, set.name),
           React.createElement('div', { className: 'detail-meta' },
+            React.createElement('div', { className: 'detail-meta-item detail-price-row' },
+              React.createElement('span', { className: 'label' }, t('legoKorea') + ' ' + (lang === 'ko' ? '\uAC00\uACA9' : 'Price')),
+              priceData.formatted ? React.createElement('span', { className: 'detail-price' }, priceData.formatted)
+                : priceData.isDiscontinued ? React.createElement('span', { className: 'detail-price discontinued' }, lang === 'ko' ? '\uB2E8\uC885 \uC81C\uD488' : 'Retired')
+                : React.createElement('a', { href: getLegoKrProductUrl(setNum), target: '_blank', rel: 'noopener noreferrer', className: 'detail-price-link' }, lang === 'ko' ? '\uAC00\uACA9 \uD655\uC778' : 'Check Price')
+            ),
             React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, t('releaseYear')), React.createElement('span', null, set.year + t('yearSuffix'))),
             React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, t('numParts')), React.createElement('span', null, (set.num_parts || 0).toLocaleString() + t('partsCount'))),
             set.theme_id && React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, t('themeId')), React.createElement('span', null, set.theme_id)),

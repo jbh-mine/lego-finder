@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import useTranslatedName from '../hooks/useTranslatedName';
 import useInstructions from '../hooks/useInstructions';
+import useLegoPrice from '../hooks/useLegoPrice';
 import {
   isInCollection, addToCollection, removeFromCollection,
   isInWishlist, addToWishlist, removeFromWishlist,
 } from '../utils/collection';
+import '../styles/price.css';
 
 var PH = 'https://rebrickable.com/static/img/nil_mf.jpg';
 
@@ -15,9 +17,11 @@ function SetCard(props) {
   var nav = useNavigate();
   var lc = useLanguage();
   var t = lc.t;
+  var lang = lc.lang;
   var translated = useTranslatedName(set.name);
   var insData = useInstructions(set.set_num);
   var instructions = insData.instructions;
+  var priceData = useLegoPrice(set.set_num);
   var cs = useState(false); var inC = cs[0]; var setC = cs[1];
   var ws = useState(false); var inW = ws[0]; var setW = ws[1];
 
@@ -75,7 +79,10 @@ function SetCard(props) {
       React.createElement('div', { className: 'set-card-meta' },
         React.createElement('span', null, set.year + t('yearSuffix')),
         React.createElement('span', null, (set.num_parts || 0).toLocaleString() + t('partsUnit'))
-      )
+      ),
+      priceData.formatted ? React.createElement('div', { className: 'set-card-price' }, priceData.formatted) 
+        : priceData.isDiscontinued ? React.createElement('div', { className: 'set-card-price discontinued' }, lang === 'ko' ? '\uB2E8\uC885' : 'Retired')
+        : null
     ),
     React.createElement('div', { className: 'set-card-actions' },
       React.createElement('button', { className: 'btn-icon' + (inC ? ' active' : ''), onClick: togC }, inC ? t('owned') : t('notOwned')),

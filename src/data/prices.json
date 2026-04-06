@@ -1,0 +1,149 @@
+{
+  "meta": {
+    "lastUpdated": "2026-04-06",
+    "currency": "KRW",
+    "source": "lego.com/ko-kr"
+  },
+  "prices": {
+    "10294": {
+      "price": 890000,
+      "name": "LEGO Titanic"
+    },
+    "42151": {
+      "price": 72900,
+      "name": "Bugatti Bolide"
+    },
+    "10307": {
+      "price": 649000,
+      "name": "Eiffel Tower"
+    },
+    "10276": {
+      "price": 299900,
+      "name": "Colosseum"
+    },
+    "75192": {
+      "price": 1099000,
+      "name": "Millennium Falcon"
+    },
+    "71040": {
+      "price": 499900,
+      "name": "Disney Castle"
+    },
+    "10305": {
+      "price": 549000,
+      "name": "Lion Knights Castle"
+    },
+    "10182": {
+      "price": 0,
+      "name": "Cafe Corner",
+      "discontinued": true
+    },
+    "10197": {
+      "price": 0,
+      "name": "Fire Brigade",
+      "discontinued": true
+    },
+    "10211": {
+      "price": 0,
+      "name": "Grand Emporium",
+      "discontinued": true
+    },
+    "10218": {
+      "price": 0,
+      "name": "Pet Shop",
+      "discontinued": true
+    },
+    "10224": {
+      "price": 0,
+      "name": "Town Hall",
+      "discontinued": true
+    },
+    "10232": {
+      "price": 0,
+      "name": "Palace Cinema",
+      "discontinued": true
+    },
+    "10243": {
+      "price": 0,
+      "name": "Parisian Restaurant",
+      "discontinued": true
+    },
+    "10246": {
+      "price": 0,
+      "name": "Detectives Office",
+      "discontinued": true
+    },
+    "10251": {
+      "price": 0,
+      "name": "Brick Bank",
+      "discontinued": true
+    },
+    "10255": {
+      "price": 369900,
+      "name": "Assembly Square"
+    },
+    "10260": {
+      "price": 0,
+      "name": "Downtown Diner",
+      "discontinued": true
+    },
+    "10264": {
+      "price": 0,
+      "name": "Corner Garage",
+      "discontinued": true
+    },
+    "10270": {
+      "price": 259900,
+      "name": "Bookshop"
+    },
+    "10278": {
+      "price": 0,
+      "name": "Police Station",
+      "discontinued": true
+    },
+    "10297": {
+      "price": 289900,
+      "name": "Boutique Hotel"
+    },
+    "10312": {
+      "price": 289900,
+      "name": "Jazz Club"
+    },
+    "10326": {
+      "price": 419900,
+      "name": "Natural History Museum"
+    },
+    "10350": {
+      "price": 299900,
+      "name": "Tudor Corner"
+    },
+    "10318": {
+      "price": 249900,
+      "name": "Concorde"
+    },
+    "21318": {
+      "price": 299900,
+      "name": "Tree House"
+    },
+    "21325": {
+      "price": 0,
+      "name": "Medieval Blacksmith",
+      "discontinued": true
+    },
+    "21323": {
+      "price": 0,
+      "name": "Grand Piano",
+      "discontinued": true
+    },
+    "21327": {
+      "price": 0,
+      "name": "Typewriter",
+      "discontinued": true
+    },
+    "10365": {
+      "price": 0,
+      "name": "Black Pearl",
+      "note": "BDP"
+    }
+  }
+}

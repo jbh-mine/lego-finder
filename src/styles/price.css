@@ -1,0 +1,44 @@
+/* Price display styles */
+.set-card-price {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #006db7;
+  margin-top: 6px;
+  letter-spacing: -0.3px;
+}
+
+.set-card-price.discontinued {
+  color: #999;
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.detail-price {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #006db7;
+  letter-spacing: -0.5px;
+}
+
+.detail-price.discontinued {
+  color: #999;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.detail-price-link {
+  color: #006db7;
+  text-decoration: underline;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.detail-price-row .label {
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .detail-price {
+    font-size: 1.1rem;
+  }
+}
