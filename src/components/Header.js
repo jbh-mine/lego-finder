@@ -9,10 +9,15 @@ function Header() {
 
   const isActive = (path) => location.pathname === path ? 'active' : '';
 
+  const clearSearchState = () => {
+    try { sessionStorage.removeItem('lego_search_state'); } catch(e) {}
+    setMenuOpen(false);
+  };
+
   return (
     <header className="header">
       <div className="header-inner">
-        <Link to="/" className="header-logo" onClick={() => setMenuOpen(false)}>
+        <Link to="/" className="header-logo" onClick={clearSearchState}>
           LEGO<span> Finder</span>
         </Link>
 
@@ -42,7 +47,7 @@ function Header() {
         </div>
 
         <nav className={'header-nav' + (menuOpen ? ' nav-open' : '')}>
-          <Link to="/" className={isActive('/')} onClick={() => setMenuOpen(false)}>
+          <Link to="/" className={isActive('/')} onClick={clearSearchState}>
             {t('search')}
           </Link>
           <Link to="/parts" className={isActive('/parts')} onClick={() => setMenuOpen(false)}>

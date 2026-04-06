@@ -102,6 +102,10 @@ function PartsSearchPage() {
     doSearchAll(query, selCat);
   };
 
+  var handleClearQuery = function() {
+    setQuery('');
+  };
+
   var handleCatChange = function(e) {
     var newCat = e.target.value;
     setSelCat(newCat);
@@ -134,16 +138,27 @@ function PartsSearchPage() {
     });
   }
 
+  // Clear button for search input
+  var clearBtn = query ? React.createElement('button', {
+    type: 'button',
+    className: 'search-clear-btn',
+    onClick: handleClearQuery,
+    'aria-label': 'Clear search',
+  }, '\u00D7') : null;
+
   // Render
   var searchSection = React.createElement('div', { className: 'search-section' },
     React.createElement('h2', null, t('partsSearch')),
     React.createElement('form', { className: 'search-bar', onSubmit: handleSearch },
-      React.createElement('input', {
-        type: 'text',
-        value: query,
-        onChange: function(e) { setQuery(e.target.value); },
-        placeholder: t('partsSearchPlaceholder'),
-      }),
+      React.createElement('div', { className: 'search-input-wrapper' },
+        React.createElement('input', {
+          type: 'text',
+          value: query,
+          onChange: function(e) { setQuery(e.target.value); },
+          placeholder: t('partsSearchPlaceholder'),
+        }),
+        clearBtn
+      ),
       React.createElement('button', { type: 'submit', disabled: loading },
         loading ? t('searching') : t('searchBtn')
       )
