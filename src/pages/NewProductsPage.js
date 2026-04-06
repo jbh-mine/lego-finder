@@ -84,7 +84,13 @@ function NewProductsPage() {
     return themeMap[themeId] || ('Theme ' + themeId);
   };
 
-  // Fetch new products
+  // Extract numeric part from set_num (e.g. "76463-1" -> 76463)
+  var getSetNumber = function(setNum) {
+    var match = setNum ? setNum.match(/^(\d+)/) : null;
+    return match ? parseInt(match[1], 10) : 0;
+  };
+
+  // Fetch new products — ordered by set_num descending (newest first)
   var doFetch = useCallback(async function(year, pg, append) {
     setLoading(true);
     setError(null);
@@ -94,6 +100,7 @@ function NewProductsPage() {
         maxYear: year,
         page: pg,
         pageSize: PAGE_SIZE,
+        ordering: '-set_num',
       });
       if (append) {
         setAllResults(function(prev) { return prev.concat(data.results); });
@@ -133,7 +140,7 @@ function NewProductsPage() {
     return function() { obs.disconnect(); };
   });
 
-  // Group by theme
+  // Group by theme — sort by highest set_num in each group (newest first)
   var themeGroups = useMemo(function() {
     if (allResults.length === 0) return [];
     var groups = {};
@@ -144,12 +151,18 @@ function NewProductsPage() {
           themeId: themeId,
           themeName: getThemeName(themeId),
           sets: [],
+          maxSetNum: 0,
         };
       }
       groups[themeId].sets.push(set);
+      var num = getSetNumber(set.set_num);
+      if (num > groups[themeId].maxSetNum) {
+        groups[themeId].maxSetNum = num;
+      }
     });
+    // Sort theme groups by highest set_num descending (newest themes first)
     return Object.values(groups).sort(function(a, b) {
-      return a.themeName.localeCompare(b.themeName, 'ko');
+      return b.maxSetNum - a.maxSetNum;
     });
   }, [allResults, themeMap, themeNames, lang]);
 

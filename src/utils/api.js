@@ -77,11 +77,11 @@ export async function getSetsByYear(minYear, maxYear, page = 1, pageSize = 20) {
   });
 }
 
-export async function filterSets({ search, themeId, minYear, maxYear, page = 1, pageSize = 20 }) {
+export async function filterSets({ search, themeId, minYear, maxYear, page = 1, pageSize = 20, ordering = '-year' }) {
   const params = {
     page,
     page_size: pageSize,
-    ordering: '-year',
+    ordering: ordering,
   };
   if (search) params.search = search;
   if (themeId) params.theme_id = themeId;
