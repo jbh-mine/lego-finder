@@ -75,6 +75,9 @@ var translations = {
     showMore: '\uB354\uBCF4\uAE30',
     loadingMore: '\uB354 \uBD88\uB7EC\uC624\uB294 \uC911...',
     setsCount: '\uAC1C \uC138\uD2B8',
+    instructionLoading: '\uC124\uBA85\uC11C \uBD88\uB7EC\uC624\uB294 \uC911...',
+    noInstructions: '\uC124\uBA85\uC11C\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.',
+    viewOnLego: '\uB808\uACE0 \uACF5\uC2DD \uD398\uC774\uC9C0\uC5D0\uC11C \uBCF4\uAE30',
   },
   en: {
     search: 'Search',
@@ -152,6 +155,9 @@ var translations = {
     showMore: 'Show More',
     loadingMore: 'Loading more...',
     setsCount: ' sets',
+    instructionLoading: 'Loading instructions...',
+    noInstructions: 'Instructions not found.',
+    viewOnLego: 'View on LEGO.com',
   },
 };
 

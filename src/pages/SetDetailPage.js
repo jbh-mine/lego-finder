@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import useTranslatedName from '../hooks/useTranslatedName';
+import useInstructions from '../hooks/useInstructions';
+import { getLegoPageUrl } from '../utils/instructions';
 import { getSetDetail, getSetParts, getSetMinifigs } from '../utils/api';
 import { isInCollection, addToCollection, removeFromCollection, isInWishlist, addToWishlist, removeFromWishlist } from '../utils/collection';
 import Pagination from '../components/Pagination';
 import { Loading, ErrorMessage } from '../components/Loading';
 
 var PH = 'https://rebrickable.com/static/img/nil_mf.jpg';
-function insUrl(n) { return 'https://www.lego.com/en-us/service/building-instructions/' + (n ? n.replace(/-.*$/, '') : ''); }
 
 function SetDetailPage() {
   var p = useParams(); var setNum = p.setNum;
@@ -24,6 +25,9 @@ function SetDetailPage() {
   var s9 = useState(false); var inW = s9[0]; var setInW = s9[1];
   var s10 = useState('parts'); var tab = s10[0]; var setTab = s10[1];
   var translated = useTranslatedName(set ? set.name : null);
+  var insData = useInstructions(setNum);
+  var instructions = insData.instructions;
+  var insLoading = insData.loading;
   var PPS = 50;
 
   useEffect(function() {
@@ -35,7 +39,7 @@ function SetDetailPage() {
         var r = await Promise.all([getSetParts(setNum, 1, PPS), getSetMinifigs(setNum)]);
         setParts(r[0]); setMinifigs(r[1]);
       } catch(e) {
-        setError(e.response && e.response.status === 404 ? '"' + setNum + '"' + t('setNotFound') : t('apiErrorGeneric'));
+        setError(e.response && e.response.status === 404 ? '\"' + setNum + '\"' + t('setNotFound') : t('apiErrorGeneric'));
       } finally { setLoading(false); }
     })();
   }, [setNum, t]);
@@ -51,6 +55,43 @@ function SetDetailPage() {
   if (loading) return React.createElement(Loading, { message: t('setLoading') });
   if (error) return React.createElement(ErrorMessage, { message: error });
   if (!set) return null;
+
+  // Build instruction links section
+  var insSection;
+  if (insLoading) {
+    insSection = React.createElement('div', { className: 'ins-section' },
+      React.createElement('span', { className: 'ins-loading-text' }, t('instructionLoading'))
+    );
+  } else if (instructions.length > 0) {
+    var insLinks = instructions.map(function(ins, idx) {
+      var label;
+      if (instructions.length === 1) {
+        label = t('buildInstructions') + ' PDF';
+      } else {
+        label = t('buildInstructions') + ' ' + ins.sequence + '/' + ins.total;
+      }
+      return React.createElement('a', {
+        key: idx,
+        className: 'btn-instructions-detail btn-ins-dl',
+        href: ins.url,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+      },
+        React.createElement('span', { className: 'ins-dl-icon' }, '\uD83D\uDCC4'),
+        React.createElement('span', null, label)
+      );
+    });
+    insSection = React.createElement('div', { className: 'ins-section' }, insLinks);
+  } else {
+    insSection = React.createElement('div', { className: 'ins-section' },
+      React.createElement('a', {
+        className: 'btn-instructions-detail',
+        href: getLegoPageUrl(setNum),
+        target: '_blank',
+        rel: 'noopener noreferrer',
+      }, t('buildInstructions'))
+    );
+  }
 
   return React.createElement('div', null,
     React.createElement(Link, { to: '/', className: 'back-btn' }, t('back')),
@@ -69,9 +110,10 @@ function SetDetailPage() {
           ),
           React.createElement('div', { className: 'detail-actions' },
             React.createElement('button', { className: 'btn-collection' + (inC ? ' active' : ''), onClick: togC }, inC ? t('removeCollection') : t('addCollection')),
-            React.createElement('button', { className: 'btn-wishlist' + (inW ? ' active' : ''), onClick: togW }, inW ? t('removeWishlist') : t('addWishlist')),
-            React.createElement('a', { className: 'btn-instructions-detail', href: insUrl(setNum), target: '_blank', rel: 'noopener noreferrer' }, t('buildInstructions'))
-          )
+            React.createElement('button', { className: 'btn-wishlist' + (inW ? ' active' : ''), onClick: togW }, inW ? t('removeWishlist') : t('addWishlist'))
+          ),
+          React.createElement('div', { className: 'ins-title' }, t('buildInstructions')),
+          insSection
         )
       ),
       React.createElement('div', { className: 'collection-tabs' },

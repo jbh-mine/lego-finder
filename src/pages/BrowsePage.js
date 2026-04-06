@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getThemes, filterSets } from '../utils/api';
+import { getCachedTranslation, translateName } from '../utils/translate';
 import SetCard from '../components/SetCard';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
 
@@ -12,12 +13,16 @@ var FILTER_PAGE_SIZE = 20;
 function BrowsePage() {
   var lc = useLanguage();
   var t = lc.t;
+  var lang = lc.lang;
 
   // Themes state
   var ts1 = useState([]); var themes = ts1[0]; var setThemes = ts1[1];
   var ts2 = useState(INITIAL_THEMES); var showCount = ts2[0]; var setShowCount = ts2[1];
   var ts3 = useState({}); var themeData = ts3[0]; var setThemeData = ts3[1];
   var ts4 = useState(true); var themesLoading = ts4[0]; var setThemesLoading = ts4[1];
+
+  // Theme name translations
+  var tn1 = useState({}); var themeNames = tn1[0]; var setThemeNames = tn1[1];
 
   // Filter state
   var fs1 = useState(''); var selTheme = fs1[0]; var setSelTheme = fs1[1];
@@ -44,6 +49,36 @@ function BrowsePage() {
       finally { setThemesLoading(false); }
     })();
   }, []);
+
+  // Translate theme names when lang is ko
+  useEffect(function() {
+    if (lang !== 'ko' || themes.length === 0) return;
+    themes.forEach(function(theme) {
+      if (themeNames[theme.id]) return;
+      var cached = getCachedTranslation(theme.name);
+      if (cached) {
+        setThemeNames(function(prev) {
+          var o = {}; o[theme.id] = cached;
+          return Object.assign({}, prev, o);
+        });
+      } else {
+        translateName(theme.name).then(function(result) {
+          if (result && result !== theme.name) {
+            setThemeNames(function(prev) {
+              var o = {}; o[theme.id] = result;
+              return Object.assign({}, prev, o);
+            });
+          }
+        });
+      }
+    });
+  }, [themes, lang]);
+
+  // Helper to get translated theme name
+  var getThemeName = function(theme) {
+    if (lang === 'ko' && themeNames[theme.id]) return themeNames[theme.id];
+    return theme.name;
+  };
 
   // Load sets for each visible theme
   useEffect(function() {
@@ -136,7 +171,7 @@ function BrowsePage() {
       React.createElement('label', null, t('theme')),
       React.createElement('select', { value: selTheme, onChange: function(e) { setSelTheme(e.target.value); }, disabled: themesLoading },
         React.createElement('option', { value: '' }, t('allThemes')),
-        themes.map(function(th) { return React.createElement('option', { key: th.id, value: th.id }, th.name); })
+        themes.map(function(th) { return React.createElement('option', { key: th.id, value: th.id }, getThemeName(th)); })
       )
     ),
     React.createElement('div', { className: 'filter-group' },
@@ -179,7 +214,7 @@ function BrowsePage() {
       var d = themeData[theme.id];
       var children = [];
       children.push(React.createElement('div', { key: 'hdr', className: 'theme-header' },
-        React.createElement('h2', { className: 'theme-title' }, theme.name),
+        React.createElement('h2', { className: 'theme-title' }, getThemeName(theme)),
         d && d.count ? React.createElement('span', { className: 'theme-count' }, d.count.toLocaleString() + t('setsCount')) : null
       ));
       if (d && d.sets && d.sets.length > 0) {
