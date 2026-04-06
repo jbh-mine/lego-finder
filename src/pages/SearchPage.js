@@ -29,11 +29,14 @@ function SearchPage() {
   // Extra name-search results (loaded once on first page)
   var s11 = useState([]); var nameExtras = s11[0]; var setNameExtras = s11[1];
 
+  // Sort order state
+  var s12 = useState('default'); var sortOrder = s12[0]; var setSortOrder = s12[1];
+
   var sentinelRef = useRef(null);
   var curQueryRef = useRef('');
-  var matchedThemeRef = useRef(null); // Store matched theme_id for infinite scroll
+  var matchedThemeRef = useRef(null);
 
-  // Load all themes on mount for theme_id -> name mapping
+  // Load all themes on mount
   useEffect(function() {
     (async function() {
       try {
@@ -54,7 +57,7 @@ function SearchPage() {
     })();
   }, []);
 
-  // Translate theme names when lang is ko and results change
+  // Translate theme names when lang is ko
   useEffect(function() {
     if (lang !== 'ko' || allResults.length === 0) return;
     var themeIds = {};
@@ -85,20 +88,17 @@ function SearchPage() {
     });
   }, [allResults, themeMap, lang]);
 
-  // Get translated theme name
   var getThemeName = function(themeId) {
     if (lang === 'ko' && themeNames[themeId]) return themeNames[themeId];
     return themeMap[themeId] || ('Theme ' + themeId);
   };
 
-  // Find theme IDs that match the search query
   var findMatchingThemeIds = function(translatedQuery) {
     var q = translatedQuery.toLowerCase().trim();
     if (!q || q.length < 2) return [];
     var matches = [];
     Object.keys(themeMap).forEach(function(tid) {
       var name = themeMap[tid].toLowerCase();
-      // Exact match or contains match
       if (name === q || name.indexOf(q) >= 0 || q.indexOf(name) >= 0) {
         matches.push(parseInt(tid));
       }
@@ -115,17 +115,14 @@ function SearchPage() {
       var matchedThemeIds = findMatchingThemeIds(translatedQuery);
 
       if (matchedThemeIds.length > 0) {
-        // Theme match found! Use theme-based search as primary
         var primaryThemeId = matchedThemeIds[0];
         matchedThemeRef.current = primaryThemeId;
 
         if (searchPage === 1) {
-          // First page: fetch both theme results and name results in parallel
           var promises = [
             filterSets({ themeId: primaryThemeId, page: 1, pageSize: PAGE_SIZE }),
             searchSets(translatedQuery, 1, PAGE_SIZE)
           ];
-          // Also fetch from child themes (additional matched themes)
           for (var i = 1; i < matchedThemeIds.length && i < 3; i++) {
             promises.push(filterSets({ themeId: matchedThemeIds[i], page: 1, pageSize: PAGE_SIZE }));
           }
@@ -134,20 +131,16 @@ function SearchPage() {
           var themeData = results[0];
           var nameData = results[1];
 
-          // Merge: theme results first
           var seen = {};
           var merged = [];
-          // Add all theme results
           themeData.results.forEach(function(s) {
             if (!seen[s.set_num]) { seen[s.set_num] = true; merged.push(s); }
           });
-          // Add results from additional themes
           for (var j = 2; j < results.length; j++) {
             results[j].results.forEach(function(s) {
               if (!seen[s.set_num]) { seen[s.set_num] = true; merged.push(s); }
             });
           }
-          // Add name search results that aren't duplicates
           var extras = [];
           nameData.results.forEach(function(s) {
             if (!seen[s.set_num]) { seen[s.set_num] = true; merged.push(s); extras.push(s); }
@@ -160,21 +153,19 @@ function SearchPage() {
           setHasMore(themeData.results.length >= PAGE_SIZE);
           setSearched(true);
         } else {
-          // Subsequent pages: only paginate theme results
-          var themeData = await filterSets({ themeId: primaryThemeId, page: searchPage, pageSize: PAGE_SIZE });
+          var themeData2 = await filterSets({ themeId: primaryThemeId, page: searchPage, pageSize: PAGE_SIZE });
           if (append) {
             setAllResults(function(prev) {
-              var seen = {};
-              prev.forEach(function(s) { seen[s.set_num] = true; });
-              var newItems = themeData.results.filter(function(s) { return !seen[s.set_num]; });
+              var seen2 = {};
+              prev.forEach(function(s) { seen2[s.set_num] = true; });
+              var newItems = themeData2.results.filter(function(s) { return !seen2[s.set_num]; });
               return prev.concat(newItems);
             });
           }
           setPage(searchPage);
-          setHasMore(themeData.results.length >= PAGE_SIZE);
+          setHasMore(themeData2.results.length >= PAGE_SIZE);
         }
       } else {
-        // No theme match: regular name-only search
         matchedThemeRef.current = null;
         setNameExtras([]);
         var data = await searchSets(translatedQuery, searchPage, PAGE_SIZE);
@@ -207,10 +198,11 @@ function SearchPage() {
     setHasMore(false);
     matchedThemeRef.current = null;
     curQueryRef.current = query;
+    setSortOrder('default');
     doSearch(query, 1, false);
   };
 
-  // Infinite scroll observer
+  // Infinite scroll
   useEffect(function() {
     if (!sentinelRef.current) return;
     var obs = new IntersectionObserver(function(entries) {
@@ -222,10 +214,29 @@ function SearchPage() {
     return function() { obs.disconnect(); };
   });
 
-  // Group results by theme_id
-  var themeGroups = useMemo(function() {
-    if (allResults.length === 0) return [];
+  // Sorted flat results (used when sortOrder !== 'default')
+  var sortedResults = useMemo(function() {
+    if (sortOrder === 'default' || allResults.length === 0) return null;
+    var sorted = allResults.slice();
+    if (sortOrder === 'parts_desc') {
+      sorted.sort(function(a, b) { return (b.num_parts || 0) - (a.num_parts || 0); });
+    } else if (sortOrder === 'parts_asc') {
+      sorted.sort(function(a, b) { return (a.num_parts || 0) - (b.num_parts || 0); });
+    } else if (sortOrder === 'year_desc') {
+      sorted.sort(function(a, b) { return (b.year || 0) - (a.year || 0); });
+    } else if (sortOrder === 'name_asc') {
+      sorted.sort(function(a, b) {
+        var nameA = (a.name || '').toLowerCase();
+        var nameB = (b.name || '').toLowerCase();
+        return nameA.localeCompare(nameB, 'ko');
+      });
+    }
+    return sorted;
+  }, [allResults, sortOrder]);
 
+  // Theme-grouped results (used when sortOrder === 'default')
+  var themeGroups = useMemo(function() {
+    if (sortOrder !== 'default' || allResults.length === 0) return [];
     var groups = {};
     allResults.forEach(function(set) {
       var themeId = set.theme_id || 0;
@@ -238,12 +249,15 @@ function SearchPage() {
       }
       groups[themeId].sets.push(set);
     });
-
-    // Sort groups alphabetically by theme name
     return Object.values(groups).sort(function(a, b) {
       return a.themeName.localeCompare(b.themeName, 'ko');
     });
-  }, [allResults, themeMap, themeNames, lang]);
+  }, [allResults, themeMap, themeNames, lang, sortOrder]);
+
+  // Handle sort change
+  var handleSortChange = function(e) {
+    setSortOrder(e.target.value);
+  };
 
   // Search form
   var searchSection = React.createElement('div', { className: 'search-section' },
@@ -261,28 +275,57 @@ function SearchPage() {
     )
   );
 
-  // Results grouped by theme
+  // Results section
   var resultsSection = null;
-  if (themeGroups.length > 0) {
+  var hasSomeResults = sortOrder === 'default' ? themeGroups.length > 0 : (sortedResults && sortedResults.length > 0);
+
+  if (hasSomeResults) {
     var summaryText = t('total') + ' ' + totalCount + t('count') + ' ' + t('searchResultsFound');
-    var summary = React.createElement('div', { className: 'search-results-summary' }, summaryText);
 
-    var themeSections = themeGroups.map(function(group) {
-      var header = React.createElement('div', { className: 'theme-header' },
-        React.createElement('span', { className: 'theme-title' }, group.themeName),
-        React.createElement('span', { className: 'theme-count' }, group.sets.length + t('setsCount'))
-      );
+    // Sort selectbox
+    var sortSelect = React.createElement('select', {
+      className: 'search-sort-select',
+      value: sortOrder,
+      onChange: handleSortChange,
+    },
+      React.createElement('option', { value: 'default' }, t('sortDefault')),
+      React.createElement('option', { value: 'parts_desc' }, t('sortPartsDesc')),
+      React.createElement('option', { value: 'parts_asc' }, t('sortPartsAsc')),
+      React.createElement('option', { value: 'year_desc' }, t('sortYearDesc')),
+      React.createElement('option', { value: 'name_asc' }, t('sortName'))
+    );
 
-      var grid = React.createElement('div', { className: 'set-grid' },
-        group.sets.map(function(set) {
+    var summary = React.createElement('div', { className: 'search-results-summary search-results-summary-flex' },
+      React.createElement('span', null, summaryText),
+      sortSelect
+    );
+
+    var contentSection;
+    if (sortOrder === 'default') {
+      // Theme-grouped view
+      var themeSections = themeGroups.map(function(group) {
+        var header = React.createElement('div', { className: 'theme-header' },
+          React.createElement('span', { className: 'theme-title' }, group.themeName),
+          React.createElement('span', { className: 'theme-count' }, group.sets.length + t('setsCount'))
+        );
+        var grid = React.createElement('div', { className: 'set-grid' },
+          group.sets.map(function(set) {
+            return React.createElement(SetCard, { key: set.set_num, set: set });
+          })
+        );
+        return React.createElement('div', { key: group.themeId, className: 'theme-section' }, header, grid);
+      });
+      contentSection = themeSections;
+    } else {
+      // Flat sorted view
+      contentSection = [React.createElement('div', { key: 'sorted-grid', className: 'set-grid' },
+        sortedResults.map(function(set) {
           return React.createElement(SetCard, { key: set.set_num, set: set });
         })
-      );
+      )];
+    }
 
-      return React.createElement('div', { key: group.themeId, className: 'theme-section' }, header, grid);
-    });
-
-    resultsSection = React.createElement(React.Fragment, null, summary, themeSections);
+    resultsSection = React.createElement(React.Fragment, null, summary, contentSection);
   }
 
   var loadingMore = null;
