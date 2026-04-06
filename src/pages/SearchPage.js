@@ -7,6 +7,7 @@ import SetCard from '../components/SetCard';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
 
 var PAGE_SIZE = 40;
+var SEARCH_STATE_KEY = 'lego_search_state';
 
 function SearchPage() {
   var lc = useLanguage();
@@ -35,9 +36,90 @@ function SearchPage() {
   // Matched theme ID for priority sorting
   var s13 = useState(null); var matchedThemeId = s13[0]; var setMatchedThemeId = s13[1];
 
+  // Whether state was restored from sessionStorage
+  var s14 = useState(false); var stateRestored = s14[0]; var setStateRestored = s14[1];
+
   var sentinelRef = useRef(null);
   var curQueryRef = useRef('');
   var matchedThemeRef = useRef(null);
+
+  // Restore search state from sessionStorage on mount
+  useEffect(function() {
+    try {
+      var saved = sessionStorage.getItem(SEARCH_STATE_KEY);
+      if (saved) {
+        var state = JSON.parse(saved);
+        if (state.query && state.allResults && state.allResults.length > 0) {
+          setQuery(state.query);
+          curQueryRef.current = state.query;
+          setAllResults(state.allResults);
+          setTotalCount(state.totalCount || 0);
+          setPage(state.page || 1);
+          setSearched(true);
+          setHasMore(state.hasMore || false);
+          setSortOrder(state.sortOrder || 'default');
+          setMatchedThemeId(state.matchedThemeId || null);
+          matchedThemeRef.current = state.matchedThemeId || null;
+          setNameExtras(state.nameExtras || []);
+          setStateRestored(true);
+          // Restore scroll position after render
+          if (state.scrollY) {
+            requestAnimationFrame(function() {
+              setTimeout(function() { window.scrollTo(0, state.scrollY); }, 50);
+            });
+          }
+        }
+      }
+    } catch (e) {
+      // ignore parse errors
+    }
+  }, []);
+
+  // Save search state to sessionStorage whenever results change
+  useEffect(function() {
+    if (!searched || allResults.length === 0) return;
+    try {
+      var state = {
+        query: curQueryRef.current,
+        allResults: allResults,
+        totalCount: totalCount,
+        page: page,
+        searched: searched,
+        hasMore: hasMore,
+        sortOrder: sortOrder,
+        matchedThemeId: matchedThemeId,
+        nameExtras: nameExtras,
+        scrollY: window.scrollY,
+      };
+      sessionStorage.setItem(SEARCH_STATE_KEY, JSON.stringify(state));
+    } catch (e) {
+      // ignore quota errors
+    }
+  }, [allResults, totalCount, page, searched, hasMore, sortOrder, matchedThemeId, nameExtras]);
+
+  // Update scroll position in sessionStorage on scroll
+  useEffect(function() {
+    if (!searched) return;
+    var timer = null;
+    var handleScroll = function() {
+      clearTimeout(timer);
+      timer = setTimeout(function() {
+        try {
+          var saved = sessionStorage.getItem(SEARCH_STATE_KEY);
+          if (saved) {
+            var state = JSON.parse(saved);
+            state.scrollY = window.scrollY;
+            sessionStorage.setItem(SEARCH_STATE_KEY, JSON.stringify(state));
+          }
+        } catch (e) {}
+      }, 200);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return function() {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [searched]);
 
   // Load all themes on mount
   useEffect(function() {
@@ -208,6 +290,11 @@ function SearchPage() {
     doSearch(query, 1, false);
   };
 
+  // Clear search input
+  var handleClearQuery = function() {
+    setQuery('');
+  };
+
   // Infinite scroll
   useEffect(function() {
     if (!sentinelRef.current) return;
@@ -278,16 +365,26 @@ function SearchPage() {
     setSortOrder(e.target.value);
   };
 
-  // Search form
+  // Search form with clear button
+  var clearBtn = query ? React.createElement('button', {
+    type: 'button',
+    className: 'search-clear-btn',
+    onClick: handleClearQuery,
+    'aria-label': 'Clear search',
+  }, '\u00D7') : null;
+
   var searchSection = React.createElement('div', { className: 'search-section' },
     React.createElement('h2', null, t('searchTitle')),
     React.createElement('form', { className: 'search-bar', onSubmit: handleSearch },
-      React.createElement('input', {
-        type: 'text',
-        value: query,
-        onChange: function(e) { setQuery(e.target.value); },
-        placeholder: t('searchPlaceholder'),
-      }),
+      React.createElement('div', { className: 'search-input-wrapper' },
+        React.createElement('input', {
+          type: 'text',
+          value: query,
+          onChange: function(e) { setQuery(e.target.value); },
+          placeholder: t('searchPlaceholder'),
+        }),
+        clearBtn
+      ),
       React.createElement('button', { type: 'submit', disabled: loading },
         loading ? t('searching') : t('searchBtn')
       )
