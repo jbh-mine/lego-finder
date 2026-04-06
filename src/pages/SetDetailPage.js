@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import useTranslatedName from '../hooks/useTranslatedName';
@@ -26,6 +26,11 @@ function SetDetailPage() {
   var s9 = useState(false); var inW = s9[0]; var setInW = s9[1];
   var s10 = useState('parts'); var tab = s10[0]; var setTab = s10[1];
   var s15 = useState(false); var imagePopupOpen = s15[0]; var setImagePopupOpen = s15[1];
+
+  // Image gallery states
+  var s16 = useState([]); var allImages = s16[0]; var setAllImages = s16[1];
+  var s17 = useState(0); var imgIdx = s17[0]; var setImgIdx = s17[1];
+
   var translated = useTranslatedName(set ? set.name : null);
   var insData = useInstructions(setNum);
   var instructions = insData.instructions;
@@ -36,6 +41,15 @@ function SetDetailPage() {
 
   var rebrickableNum = setNum ? setNum.replace(/-.*$/, '') : '';
 
+  // Touch swipe refs
+  var touchStartXRef = useRef(0);
+  var touchDeltaXRef = useRef(0);
+  var allImagesRef = useRef([]);
+
+  // Keep images ref in sync
+  useEffect(function() { allImagesRef.current = allImages; }, [allImages]);
+
+  // Load set data
   useEffect(function() {
     (async function() {
       setLoading(true); setError(null);
@@ -50,6 +64,36 @@ function SetDetailPage() {
     })();
   }, [setNum, t]);
 
+  // Load multiple images when set is available
+  useEffect(function() {
+    if (!set) return;
+    var images = [];
+    if (set.set_img_url) images.push(set.set_img_url);
+    setAllImages(images);
+    setImgIdx(0);
+
+    // Try loading additional images from BrickLink CDN
+    var extraUrls = [
+      'https://img.bricklink.com/ItemImage/SN/0/' + set.set_num + '.png',
+      'https://img.bricklink.com/ItemImage/ON/0/' + set.set_num + '.png',
+    ];
+
+    var mainUrl = set.set_img_url || '';
+    extraUrls.forEach(function(url) {
+      var img = new Image();
+      img.onload = function() {
+        if (img.naturalWidth > 10 && img.naturalHeight > 10) {
+          setAllImages(function(prev) {
+            if (prev.indexOf(url) >= 0) return prev;
+            return prev.concat([url]);
+          });
+        }
+      };
+      img.onerror = function() {};
+      img.src = url;
+    });
+  }, [set]);
+
   var loadPP = async function(pg) {
     setPLoading(true);
     try { var d = await getSetParts(setNum, pg, PPS); setParts(d); setPP(pg); }
@@ -63,11 +107,40 @@ function SetDetailPage() {
   var openImagePopup = function() { setImagePopupOpen(true); };
   var closeImagePopup = function() { setImagePopupOpen(false); };
 
-  // Close popup on Escape key and prevent body scroll
+  // Navigation functions
+  var goNext = function() {
+    setImgIdx(function(prev) {
+      return prev < allImagesRef.current.length - 1 ? prev + 1 : prev;
+    });
+  };
+  var goPrev = function() {
+    setImgIdx(function(prev) {
+      return prev > 0 ? prev - 1 : prev;
+    });
+  };
+
+  // Touch handlers
+  var handleTouchStart = function(e) {
+    touchStartXRef.current = e.touches[0].clientX;
+    touchDeltaXRef.current = 0;
+  };
+  var handleTouchMove = function(e) {
+    touchDeltaXRef.current = e.touches[0].clientX - touchStartXRef.current;
+  };
+  var handleTouchEnd = function() {
+    if (Math.abs(touchDeltaXRef.current) > 50) {
+      if (touchDeltaXRef.current < 0) goNext();
+      else goPrev();
+    }
+  };
+
+  // Close popup on Escape, arrow keys for navigation
   useEffect(function() {
     if (!imagePopupOpen) return;
     var handleKeyDown = function(e) {
       if (e.key === 'Escape') closeImagePopup();
+      if (e.key === 'ArrowLeft') goPrev();
+      if (e.key === 'ArrowRight') goNext();
     };
     document.addEventListener('keydown', handleKeyDown);
     document.body.style.overflow = 'hidden';
@@ -81,7 +154,70 @@ function SetDetailPage() {
   if (error) return React.createElement(ErrorMessage, { message: error });
   if (!set) return null;
 
-  var imgSrc = set.set_img_url || PH;
+  var imgSrc = allImages.length > 0 ? allImages[imgIdx] || PH : (set.set_img_url || PH);
+  var showNav = allImages.length > 1;
+
+  // Build image gallery element
+  var galleryChildren = [];
+
+  // Main image
+  galleryChildren.push(React.createElement('img', {
+    key: 'img',
+    className: 'gallery-main-img',
+    src: imgSrc,
+    alt: set.name,
+    onError: function(e) { e.target.src = PH; },
+    onClick: openImagePopup,
+    draggable: false,
+  }));
+
+  // Left arrow
+  if (showNav && imgIdx > 0) {
+    galleryChildren.push(React.createElement('button', {
+      key: 'left',
+      className: 'gallery-arrow gallery-arrow-left',
+      onClick: function(e) { e.stopPropagation(); goPrev(); },
+      'aria-label': 'Previous image',
+    }, '\u2039'));
+  }
+
+  // Right arrow
+  if (showNav && imgIdx < allImages.length - 1) {
+    galleryChildren.push(React.createElement('button', {
+      key: 'right',
+      className: 'gallery-arrow gallery-arrow-right',
+      onClick: function(e) { e.stopPropagation(); goNext(); },
+      'aria-label': 'Next image',
+    }, '\u203A'));
+  }
+
+  // Dots
+  if (showNav) {
+    galleryChildren.push(React.createElement('div', { key: 'dots', className: 'gallery-dots' },
+      allImages.map(function(_, i) {
+        return React.createElement('span', {
+          key: i,
+          className: 'gallery-dot' + (i === imgIdx ? ' active' : ''),
+          onClick: function(e) { e.stopPropagation(); setImgIdx(i); },
+        });
+      })
+    ));
+  }
+
+  // Counter badge
+  if (showNav) {
+    galleryChildren.push(React.createElement('span', {
+      key: 'counter',
+      className: 'gallery-counter',
+    }, (imgIdx + 1) + ' / ' + allImages.length));
+  }
+
+  var galleryEl = React.createElement('div', {
+    className: 'image-gallery',
+    onTouchStart: handleTouchStart,
+    onTouchMove: handleTouchMove,
+    onTouchEnd: handleTouchEnd,
+  }, galleryChildren);
 
   // Build instruction cards section
   var insSection;
@@ -103,7 +239,6 @@ function SetDetailPage() {
 
       var sizeText = fileSizes[idx] || '';
 
-      // PDF thumbnail
       var thumbnail = React.createElement('div', { className: 'ins-card-thumb' },
         React.createElement('div', { className: 'ins-card-thumb-inner' },
           React.createElement('span', { className: 'ins-card-thumb-icon' }, 'PDF'),
@@ -111,14 +246,12 @@ function SetDetailPage() {
         )
       );
 
-      // Info section
       var info = React.createElement('div', { className: 'ins-card-info' },
         React.createElement('div', { className: 'ins-card-name' }, label),
         React.createElement('div', { className: 'ins-card-file' }, fileName),
         sizeText ? React.createElement('div', { className: 'ins-card-size' }, sizeText) : React.createElement('div', { className: 'ins-card-size ins-card-size-loading' }, '...')
       );
 
-      // Download button
       var dlBtn = React.createElement('a', {
         className: 'ins-card-dl',
         href: ins.url,
@@ -142,12 +275,79 @@ function SetDetailPage() {
     insSection = null;
   }
 
-  // LEGO Korea official site URL
   var legoKrUrl = getLegoPageUrl(setNum, legoProductNumber);
 
-  // Image zoom popup
+  // Image zoom popup with swipe
   var imagePopup = null;
   if (imagePopupOpen) {
+    var popupChildren = [];
+
+    // Close button
+    popupChildren.push(React.createElement('button', {
+      key: 'close',
+      className: 'image-popup-close',
+      onClick: closeImagePopup,
+    }, '\u00D7'));
+
+    // Image area with swipe
+    var popupContentChildren = [];
+
+    // Left arrow in popup
+    if (showNav && imgIdx > 0) {
+      popupContentChildren.push(React.createElement('button', {
+        key: 'pleft',
+        className: 'popup-gallery-arrow popup-gallery-arrow-left',
+        onClick: goPrev,
+      }, '\u2039'));
+    }
+
+    popupContentChildren.push(React.createElement('img', {
+      key: 'pimg',
+      className: 'image-popup-img',
+      src: imgSrc,
+      alt: set.name,
+      onError: function(e) { e.target.src = PH; },
+      draggable: false,
+    }));
+
+    // Right arrow in popup
+    if (showNav && imgIdx < allImages.length - 1) {
+      popupContentChildren.push(React.createElement('button', {
+        key: 'pright',
+        className: 'popup-gallery-arrow popup-gallery-arrow-right',
+        onClick: goNext,
+      }, '\u203A'));
+    }
+
+    popupChildren.push(React.createElement('div', {
+      key: 'pcontent',
+      className: 'image-popup-content',
+      onTouchStart: handleTouchStart,
+      onTouchMove: handleTouchMove,
+      onTouchEnd: handleTouchEnd,
+    }, popupContentChildren));
+
+    // Popup dots
+    if (showNav) {
+      popupChildren.push(React.createElement('div', { key: 'pdots', className: 'popup-gallery-dots' },
+        allImages.map(function(_, i) {
+          return React.createElement('button', {
+            key: i,
+            className: 'popup-gallery-dot' + (i === imgIdx ? ' active' : ''),
+            onClick: function() { setImgIdx(i); },
+          });
+        })
+      ));
+    }
+
+    // Caption
+    var captionText = set.set_num + ' - ' + (translated || set.name);
+    if (showNav) captionText += ' (' + (imgIdx + 1) + '/' + allImages.length + ')';
+    popupChildren.push(React.createElement('div', {
+      key: 'pcaption',
+      className: 'image-popup-caption',
+    }, captionText));
+
     imagePopup = React.createElement('div', {
       className: 'image-popup-overlay',
       onClick: closeImagePopup,
@@ -155,23 +355,7 @@ function SetDetailPage() {
       React.createElement('div', {
         className: 'image-popup-container',
         onClick: function(e) { e.stopPropagation(); },
-      },
-        React.createElement('button', {
-          className: 'image-popup-close',
-          onClick: closeImagePopup,
-        }, '\u00D7'),
-        React.createElement('div', { className: 'image-popup-content' },
-          React.createElement('img', {
-            className: 'image-popup-img',
-            src: imgSrc,
-            alt: set.name,
-            onError: function(e) { e.target.src = PH; },
-          })
-        ),
-        React.createElement('div', { className: 'image-popup-caption' },
-          set.set_num + ' - ' + (translated || set.name)
-        )
-      )
+      }, popupChildren)
     );
   }
 
@@ -179,14 +363,7 @@ function SetDetailPage() {
     React.createElement('button', { className: 'back-btn', onClick: handleBack }, t('back')),
     React.createElement('div', { className: 'set-detail' },
       React.createElement('div', { className: 'set-detail-header' },
-        React.createElement('img', {
-          className: 'set-detail-img set-detail-img-clickable',
-          src: imgSrc,
-          alt: set.name,
-          onError: function(e) { e.target.src = PH; },
-          onClick: openImagePopup,
-          title: t('clickToZoom') || '클릭하여 이미지 확대',
-        }),
+        galleryEl,
         React.createElement('div', { className: 'set-detail-info' },
           React.createElement('div', { className: 'set-num' }, set.set_num),
           React.createElement('h1', null, translated || set.name),
