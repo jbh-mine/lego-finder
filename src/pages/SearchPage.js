@@ -32,6 +32,9 @@ function SearchPage() {
   // Sort order state
   var s12 = useState('default'); var sortOrder = s12[0]; var setSortOrder = s12[1];
 
+  // Matched theme ID for priority sorting
+  var s13 = useState(null); var matchedThemeId = s13[0]; var setMatchedThemeId = s13[1];
+
   var sentinelRef = useRef(null);
   var curQueryRef = useRef('');
   var matchedThemeRef = useRef(null);
@@ -117,6 +120,7 @@ function SearchPage() {
       if (matchedThemeIds.length > 0) {
         var primaryThemeId = matchedThemeIds[0];
         matchedThemeRef.current = primaryThemeId;
+        setMatchedThemeId(primaryThemeId);
 
         if (searchPage === 1) {
           var promises = [
@@ -167,6 +171,7 @@ function SearchPage() {
         }
       } else {
         matchedThemeRef.current = null;
+        setMatchedThemeId(null);
         setNameExtras([]);
         var data = await searchSets(translatedQuery, searchPage, PAGE_SIZE);
         if (append) {
@@ -197,6 +202,7 @@ function SearchPage() {
     setPage(1);
     setHasMore(false);
     matchedThemeRef.current = null;
+    setMatchedThemeId(null);
     curQueryRef.current = query;
     setSortOrder('default');
     doSearch(query, 1, false);
@@ -249,10 +255,23 @@ function SearchPage() {
       }
       groups[themeId].sets.push(set);
     });
+
+    var primaryTheme = matchedThemeId;
+
     return Object.values(groups).sort(function(a, b) {
+      // If there's a matched theme, it always comes first
+      if (primaryTheme) {
+        var aMatch = (a.themeId === primaryTheme) ? 1 : 0;
+        var bMatch = (b.themeId === primaryTheme) ? 1 : 0;
+        if (aMatch !== bMatch) return bMatch - aMatch;
+      }
+      // Then sort by number of sets (most first), then alphabetically
+      if (b.sets.length !== a.sets.length) {
+        return b.sets.length - a.sets.length;
+      }
       return a.themeName.localeCompare(b.themeName, 'ko');
     });
-  }, [allResults, themeMap, themeNames, lang, sortOrder]);
+  }, [allResults, themeMap, themeNames, lang, sortOrder, matchedThemeId]);
 
   // Handle sort change
   var handleSortChange = function(e) {
