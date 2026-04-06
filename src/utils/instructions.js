@@ -142,10 +142,17 @@ function parseResponse(data) {
 
   instructions.sort(function(a, b) { return a.sequence - b.sequence; });
 
-  var seen = {};
+  // Remove duplicates by BOTH URL and sequence number
+  // This prevents showing 1/3, 1/3, 2/3, 2/3 when the same instruction
+  // appears across multiple product_versions with different URLs
+  var seenUrl = {};
+  var seenSeq = {};
   var filtered = instructions.filter(function(ins) {
-    if (seen[ins.url]) return false;
-    seen[ins.url] = true;
+    if (seenUrl[ins.url]) return false;
+    var seqKey = ins.sequence + '/' + ins.total;
+    if (seenSeq[seqKey]) return false;
+    seenUrl[ins.url] = true;
+    seenSeq[seqKey] = true;
     return true;
   });
 
