@@ -1,166 +1,208 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getThemes, filterSets } from '../utils/api';
 import SetCard from '../components/SetCard';
-import Pagination from '../components/Pagination';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
 
+var SETS_PER_THEME = 8;
+var INITIAL_THEMES = 4;
+var LOAD_MORE_THEMES = 3;
+var FILTER_PAGE_SIZE = 20;
+
 function BrowsePage() {
-  var lang = useLanguage();
-  var t = lang.t;
-  var themesState = useState([]);
-  var themes = themesState[0];
-  var setThemes = themesState[1];
-  var selThemeState = useState('');
-  var selectedTheme = selThemeState[0];
-  var setSelectedTheme = selThemeState[1];
-  var minYState = useState('');
-  var minYear = minYState[0];
-  var setMinYear = minYState[1];
-  var maxYState = useState('');
-  var maxYear = maxYState[0];
-  var setMaxYear = maxYState[1];
-  var resState = useState(null);
-  var results = resState[0];
-  var setResults = resState[1];
-  var pageState = useState(1);
-  var page = pageState[0];
-  var setPage = pageState[1];
-  var loadState = useState(false);
-  var loading = loadState[0];
-  var setLoading = loadState[1];
-  var tlState = useState(true);
-  var themesLoading = tlState[0];
-  var setThemesLoading = tlState[1];
-  var errState = useState(null);
-  var error = errState[0];
-  var setError = errState[1];
+  var lc = useLanguage();
+  var t = lc.t;
 
-  var PAGE_SIZE = 20;
-  var currentYear = new Date().getFullYear();
+  // Themes state
+  var ts1 = useState([]); var themes = ts1[0]; var setThemes = ts1[1];
+  var ts2 = useState(INITIAL_THEMES); var showCount = ts2[0]; var setShowCount = ts2[1];
+  var ts3 = useState({}); var themeData = ts3[0]; var setThemeData = ts3[1];
+  var ts4 = useState(true); var themesLoading = ts4[0]; var setThemesLoading = ts4[1];
 
+  // Filter state
+  var fs1 = useState(''); var selTheme = fs1[0]; var setSelTheme = fs1[1];
+  var fs2 = useState(''); var minY = fs2[0]; var setMinY = fs2[1];
+  var fs3 = useState(''); var maxY = fs3[0]; var setMaxY = fs3[1];
+  var fs4 = useState(null); var filterRes = fs4[0]; var setFilterRes = fs4[1];
+  var fs5 = useState(1); var filterPage = fs5[0]; var setFilterPage = fs5[1];
+  var fs6 = useState(false); var filterLoading = fs6[0]; var setFilterLoading = fs6[1];
+  var fs7 = useState(false); var isFiltering = fs7[0]; var setIsFiltering = fs7[1];
+  var fs8 = useState(null); var error = fs8[0]; var setError = fs8[1];
+  var fs9 = useState(false); var filterHasMore = fs9[0]; var setFilterHasMore = fs9[1];
+
+  var sentinelRef = useRef(null);
+  var curYear = new Date().getFullYear();
+
+  // Load all parent themes on mount
   useEffect(function() {
-    async function loadThemes() {
+    (async function() {
       try {
         var data = await getThemes(1, 1000);
-        var parentThemes = data.results.filter(function(th) { return !th.parent_id; });
-        setThemes(parentThemes);
-      } catch (err) {
-        console.error('Theme load failed:', err);
-      } finally {
-        setThemesLoading(false);
-      }
-    }
-    loadThemes();
+        var parent = data.results.filter(function(th) { return !th.parent_id; });
+        setThemes(parent);
+      } catch(e) { console.error(e); }
+      finally { setThemesLoading(false); }
+    })();
   }, []);
 
-  var doFilter = useCallback(async function(filterPage) {
-    setLoading(true);
+  // Load sets for each visible theme
+  useEffect(function() {
+    if (isFiltering) return;
+    var visible = themes.slice(0, showCount);
+    visible.forEach(function(theme) {
+      if (!themeData[theme.id] && !themeData[theme.id + '_loading']) {
+        loadThemeSets(theme.id, 1, false);
+      }
+    });
+  }, [themes, showCount, isFiltering]);
+
+  var loadThemeSets = useCallback(async function(tid, page, append) {
+    setThemeData(function(prev) {
+      var o = {}; o[tid] = Object.assign({}, prev[tid] || {}, { loading: true }); o[tid + '_loading'] = true;
+      return Object.assign({}, prev, o);
+    });
+    try {
+      var data = await filterSets({ themeId: tid, page: page, pageSize: SETS_PER_THEME });
+      setThemeData(function(prev) {
+        var existing = (prev[tid] && prev[tid].sets) || [];
+        var o = {};
+        o[tid] = {
+          sets: append ? existing.concat(data.results) : data.results,
+          count: data.count,
+          page: page,
+          hasMore: data.count > page * SETS_PER_THEME,
+          loading: false,
+        };
+        delete o[tid + '_loading'];
+        return Object.assign({}, prev, o);
+      });
+    } catch(e) {
+      setThemeData(function(prev) {
+        var o = {}; o[tid] = Object.assign({}, prev[tid] || {}, { loading: false });
+        return Object.assign({}, prev, o);
+      });
+    }
+  }, []);
+
+  // Infinite scroll observer
+  useEffect(function() {
+    if (!sentinelRef.current) return;
+    var obs = new IntersectionObserver(function(entries) {
+      if (!entries[0].isIntersecting) return;
+      if (isFiltering && filterHasMore && !filterLoading) {
+        doFilter(filterPage + 1, true);
+      } else if (!isFiltering && showCount < themes.length && !themesLoading) {
+        setShowCount(function(p) { return Math.min(p + LOAD_MORE_THEMES, themes.length); });
+      }
+    }, { rootMargin: '300px' });
+    obs.observe(sentinelRef.current);
+    return function() { obs.disconnect(); };
+  });
+
+  // Filter functions
+  var doFilter = useCallback(async function(page, append) {
+    setFilterLoading(true);
     setError(null);
     try {
       var data = await filterSets({
-        themeId: selectedTheme || undefined,
-        minYear: minYear || undefined,
-        maxYear: maxYear || undefined,
-        page: filterPage,
-        pageSize: PAGE_SIZE,
+        themeId: selTheme || undefined,
+        minYear: minY || undefined,
+        maxYear: maxY || undefined,
+        page: page,
+        pageSize: FILTER_PAGE_SIZE,
       });
-      setResults(data);
-    } catch (err) {
-      setError(t('filterError'));
-    } finally {
-      setLoading(false);
+      if (append && filterRes) {
+        setFilterRes({ count: data.count, results: filterRes.results.concat(data.results) });
+      } else {
+        setFilterRes(data);
+      }
+      setFilterPage(page);
+      setFilterHasMore(data.results.length >= FILTER_PAGE_SIZE);
+    } catch(e) { setError(t('filterError')); }
+    finally { setFilterLoading(false); }
+  }, [selTheme, minY, maxY, filterRes, t]);
+
+  var handleFilter = function() { setIsFiltering(true); setFilterPage(1); doFilter(1, false); };
+  var handleReset = function() { setSelTheme(''); setMinY(''); setMaxY(''); setFilterRes(null); setIsFiltering(false); };
+
+  var yrs = [];
+  for (var y = curYear; y >= 1950; y--) yrs.push(y);
+
+  var visibleThemes = themes.slice(0, showCount);
+
+  // Render filter section
+  var filterEl = React.createElement('div', { className: 'filter-section' },
+    React.createElement('div', { className: 'filter-group' },
+      React.createElement('label', null, t('theme')),
+      React.createElement('select', { value: selTheme, onChange: function(e) { setSelTheme(e.target.value); }, disabled: themesLoading },
+        React.createElement('option', { value: '' }, t('allThemes')),
+        themes.map(function(th) { return React.createElement('option', { key: th.id, value: th.id }, th.name); })
+      )
+    ),
+    React.createElement('div', { className: 'filter-group' },
+      React.createElement('label', null, t('startYear')),
+      React.createElement('select', { value: minY, onChange: function(e) { setMinY(e.target.value); } },
+        React.createElement('option', { value: '' }, t('all')),
+        yrs.map(function(y) { return React.createElement('option', { key: y, value: y }, y + t('yearSuffix')); })
+      )
+    ),
+    React.createElement('div', { className: 'filter-group' },
+      React.createElement('label', null, t('endYear')),
+      React.createElement('select', { value: maxY, onChange: function(e) { setMaxY(e.target.value); } },
+        React.createElement('option', { value: '' }, t('all')),
+        yrs.map(function(y) { return React.createElement('option', { key: y, value: y }, y + t('yearSuffix')); })
+      )
+    ),
+    React.createElement('button', { className: 'filter-btn', onClick: handleFilter, disabled: filterLoading }, filterLoading ? t('searching') : t('applyFilter')),
+    React.createElement('button', { className: 'filter-reset', onClick: handleReset }, t('reset'))
+  );
+
+  // Render main content
+  var content;
+  if (isFiltering) {
+    var items = [];
+    if (error) items.push(React.createElement(ErrorMessage, { key: 'err', message: error }));
+    if (filterRes && filterRes.results && filterRes.results.length > 0) {
+      items.push(React.createElement('div', { key: 'grid', className: 'set-grid' },
+        filterRes.results.map(function(s) { return React.createElement(SetCard, { key: s.set_num, set: s }); })
+      ));
     }
-  }, [selectedTheme, minYear, maxYear, t]);
-
-  var handleFilter = function() {
-    setPage(1);
-    doFilter(1);
-  };
-
-  var handleReset = function() {
-    setSelectedTheme('');
-    setMinYear('');
-    setMaxYear('');
-    setResults(null);
-    setPage(1);
-  };
-
-  var handlePageChange = function(newPage) {
-    setPage(newPage);
-    doFilter(newPage);
-    window.scrollTo(0, 0);
-  };
-
-  var yearOptions = [];
-  for (var y = currentYear; y >= 1950; y--) {
-    yearOptions.push(y);
+    if (filterRes && filterRes.results && filterRes.results.length === 0 && !filterLoading) {
+      items.push(React.createElement(EmptyState, { key: 'empty', title: t('noResults2'), message: t('noFilterResults') }));
+    }
+    if (filterLoading) items.push(React.createElement(Loading, { key: 'load' }));
+    content = items;
+  } else {
+    var sections = [];
+    if (themesLoading) sections.push(React.createElement(Loading, { key: 'tl' }));
+    visibleThemes.forEach(function(theme) {
+      var d = themeData[theme.id];
+      var children = [];
+      children.push(React.createElement('div', { key: 'hdr', className: 'theme-header' },
+        React.createElement('h2', { className: 'theme-title' }, theme.name),
+        d && d.count ? React.createElement('span', { className: 'theme-count' }, d.count.toLocaleString() + t('setsCount')) : null
+      ));
+      if (d && d.sets && d.sets.length > 0) {
+        children.push(React.createElement('div', { key: 'grid', className: 'set-grid' },
+          d.sets.map(function(s) { return React.createElement(SetCard, { key: s.set_num, set: s }); })
+        ));
+        if (d.hasMore && !d.loading) {
+          children.push(React.createElement('div', { key: 'more', className: 'theme-more' },
+            React.createElement('button', { onClick: function() { loadThemeSets(theme.id, d.page + 1, true); } },
+              t('showMore') + ' (' + (d.count - d.sets.length) + ')')
+          ));
+        }
+      }
+      if (d && d.loading) children.push(React.createElement(Loading, { key: 'ld' }));
+      sections.push(React.createElement('div', { key: theme.id, className: 'theme-section' }, children));
+    });
+    content = sections;
   }
 
   return React.createElement('div', null,
-    React.createElement('div', { className: 'filter-section' },
-      React.createElement('div', { className: 'filter-group' },
-        React.createElement('label', null, t('theme')),
-        React.createElement('select', {
-          value: selectedTheme,
-          onChange: function(e) { setSelectedTheme(e.target.value); },
-          disabled: themesLoading
-        },
-          React.createElement('option', { value: '' }, t('allThemes')),
-          themes.map(function(theme) {
-            return React.createElement('option', { key: theme.id, value: theme.id }, theme.name);
-          })
-        )
-      ),
-      React.createElement('div', { className: 'filter-group' },
-        React.createElement('label', null, t('startYear')),
-        React.createElement('select', {
-          value: minYear,
-          onChange: function(e) { setMinYear(e.target.value); }
-        },
-          React.createElement('option', { value: '' }, t('all')),
-          yearOptions.map(function(y) {
-            return React.createElement('option', { key: y, value: y }, y + t('yearSuffix'));
-          })
-        )
-      ),
-      React.createElement('div', { className: 'filter-group' },
-        React.createElement('label', null, t('endYear')),
-        React.createElement('select', {
-          value: maxYear,
-          onChange: function(e) { setMaxYear(e.target.value); }
-        },
-          React.createElement('option', { value: '' }, t('all')),
-          yearOptions.map(function(y) {
-            return React.createElement('option', { key: y, value: y }, y + t('yearSuffix'));
-          })
-        )
-      ),
-      React.createElement('button', {
-        className: 'filter-btn',
-        onClick: handleFilter,
-        disabled: loading
-      }, loading ? t('searching') : t('applyFilter')),
-      React.createElement('button', {
-        className: 'filter-reset',
-        onClick: handleReset
-      }, t('reset'))
-    ),
-    loading && React.createElement(Loading, null),
-    error && React.createElement(ErrorMessage, { message: error, onRetry: function() { doFilter(page); } }),
-    !loading && !error && results && results.results && results.results.length > 0 && React.createElement(React.Fragment, null,
-      React.createElement('div', { className: 'set-grid' },
-        results.results.map(function(set) {
-          return React.createElement(SetCard, { key: set.set_num, set: set });
-        })
-      ),
-      React.createElement(Pagination, { page: page, totalCount: results.count, pageSize: PAGE_SIZE, onPageChange: handlePageChange })
-    ),
-    !loading && !error && results && results.results && results.results.length === 0 && React.createElement(EmptyState, { title: t('noResults2'), message: t('noFilterResults') }),
-    !results && !loading && React.createElement('div', { className: 'empty-state' },
-      React.createElement('h3', null, t('browseTitle')),
-      React.createElement('p', null, t('browseDesc'))
-    )
+    filterEl,
+    content,
+    React.createElement('div', { ref: sentinelRef, style: { height: 1, marginBottom: 40 } })
   );
 }
 
