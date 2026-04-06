@@ -153,9 +153,9 @@ function SearchPage() {
       groups[themeId].sets.push(set);
     });
 
-    // Sort groups: most sets first
+    // Sort groups alphabetically by theme name (가나다순 / ABC order)
     return Object.values(groups).sort(function(a, b) {
-      return b.sets.length - a.sets.length;
+      return a.themeName.localeCompare(b.themeName, 'ko');
     });
   }, [allResults, themeMap, themeNames, lang]);
 
