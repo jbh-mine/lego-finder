@@ -1,103 +1,194 @@
-import React, { useState, useCallback } from 'react';
-import { searchSets } from '../utils/api';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { searchSets, getThemes } from '../utils/api';
 import { translateSearchQuery } from '../utils/searchDict';
+import { useLanguage } from '../contexts/LanguageContext';
 import SetCard from '../components/SetCard';
 import Pagination from '../components/Pagination';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
 
 function SearchPage() {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState(null);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [searched, setSearched] = useState(false);
+  var langCtx = useLanguage();
+  var t = langCtx.t;
 
-  const PAGE_SIZE = 20;
+  var queryState = useState('');
+  var query = queryState[0];
+  var setQuery = queryState[1];
 
-  const doSearch = useCallback(async (searchQuery, searchPage) => {
+  var resultsState = useState(null);
+  var results = resultsState[0];
+  var setResults = resultsState[1];
+
+  var pageState = useState(1);
+  var page = pageState[0];
+  var setPage = pageState[1];
+
+  var loadingState = useState(false);
+  var loading = loadingState[0];
+  var setLoading = loadingState[1];
+
+  var errorState = useState(null);
+  var error = errorState[0];
+  var setError = errorState[1];
+
+  var searchedState = useState(false);
+  var searched = searchedState[0];
+  var setSearched = searchedState[1];
+
+  var themeMapState = useState({});
+  var themeMap = themeMapState[0];
+  var setThemeMap = themeMapState[1];
+
+  var PAGE_SIZE = 100;
+
+  // Load all themes on mount for theme_id -> name mapping
+  useEffect(function() {
+    async function loadThemes() {
+      try {
+        var allThemes = {};
+        var pg = 1;
+        var hasMore = true;
+        while (hasMore) {
+          var data = await getThemes(pg, 1000);
+          data.results.forEach(function(theme) {
+            allThemes[theme.id] = theme.name;
+          });
+          hasMore = data.next != null;
+          pg++;
+        }
+        setThemeMap(allThemes);
+      } catch (err) {
+        console.error('Failed to load themes:', err);
+      }
+    }
+    loadThemes();
+  }, []);
+
+  var doSearch = useCallback(async function(searchQuery, searchPage) {
     if (!searchQuery.trim()) return;
     setLoading(true);
     setError(null);
     try {
-      const translatedQuery = translateSearchQuery(searchQuery.trim());
-      const data = await searchSets(translatedQuery, searchPage, PAGE_SIZE);
+      var translatedQuery = translateSearchQuery(searchQuery.trim());
+      var data = await searchSets(translatedQuery, searchPage, PAGE_SIZE);
       setResults(data);
       setSearched(true);
     } catch (err) {
       setError(
-        err.response?.status === 404
-          ? '검색 결과가 없습니다.'
-          : 'API 호출 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+        err.response && err.response.status === 404
+          ? t('noSearchResults')
+          : t('apiError')
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
-  const handleSearch = (e) => {
+  var handleSearch = function(e) {
     e.preventDefault();
     setPage(1);
     doSearch(query, 1);
   };
 
-  const handlePageChange = (newPage) => {
+  var handlePageChange = function(newPage) {
     setPage(newPage);
     doSearch(query, newPage);
     window.scrollTo(0, 0);
   };
 
-  return (
-    <div>
-      <div className="search-section">
-        <h2>레고 세트 검색</h2>
-        <form className="search-bar" onSubmit={handleSearch}>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="제품번호 또는 이름 입력 (예: 10278, Modular, Star Wars)"
-          />
-          <button type="submit" disabled={loading}>
-            {loading ? '검색 중...' : '검색'}
-          </button>
-        </form>
-      </div>
+  // Group results by theme_id
+  var themeGroups = useMemo(function() {
+    if (!results || !results.results || results.results.length === 0) return [];
 
-      {loading && <Loading />}
+    var groups = {};
+    results.results.forEach(function(set) {
+      var themeId = set.theme_id || 0;
+      if (!groups[themeId]) {
+        groups[themeId] = {
+          themeId: themeId,
+          themeName: themeMap[themeId] || ('Theme ' + themeId),
+          sets: [],
+        };
+      }
+      groups[themeId].sets.push(set);
+    });
 
-      {error && <ErrorMessage message={error} onRetry={() => doSearch(query, page)} />}
+    // Sort groups: most sets first
+    return Object.values(groups).sort(function(a, b) {
+      return b.sets.length - a.sets.length;
+    });
+  }, [results, themeMap]);
 
-      {!loading && !error && results && results.results?.length > 0 && (
-        <>
-          <div className="set-grid">
-            {results.results.map((set) => (
-              <SetCard key={set.set_num} set={set} />
-            ))}
-          </div>
-          <Pagination
-            page={page}
-            totalCount={results.count}
-            pageSize={PAGE_SIZE}
-            onPageChange={handlePageChange}
-          />
-        </>
-      )}
+  // Search form
+  var searchSection = React.createElement('div', { className: 'search-section' },
+    React.createElement('h2', null, t('searchTitle')),
+    React.createElement('form', { className: 'search-bar', onSubmit: handleSearch },
+      React.createElement('input', {
+        type: 'text',
+        value: query,
+        onChange: function(e) { setQuery(e.target.value); },
+        placeholder: t('searchPlaceholder'),
+      }),
+      React.createElement('button', { type: 'submit', disabled: loading },
+        loading ? t('searching') : t('searchBtn')
+      )
+    )
+  );
 
-      {!loading && !error && searched && results?.results?.length === 0 && (
-        <EmptyState
-          title="검색 결과 없음"
-          message={`"${query}"에 대한 결과를 찾을 수 없습니다. 다른 키워드를 시도해보세요.`}
-        />
-      )}
+  // Results grouped by theme
+  var resultsSection = null;
+  if (!loading && !error && themeGroups.length > 0) {
+    var summaryText = t('total') + ' ' + results.count + t('count') + ' ' + t('searchResultsFound');
+    var summary = React.createElement('div', { className: 'search-results-summary' }, summaryText);
 
-      {!searched && !loading && (
-        <div className="empty-state">
-          <h3>레고 세트를 검색해보세요!</h3>
-          <p>제품번호(예: 10278)나 이름(예: Star Wars)을 입력하면 검색 결과가 표시됩니다.</p>
-        </div>
-      )}
-    </div>
+    var themeSections = themeGroups.map(function(group) {
+      var header = React.createElement('div', { className: 'theme-header' },
+        React.createElement('span', { className: 'theme-title' }, group.themeName),
+        React.createElement('span', { className: 'theme-count' }, group.sets.length + t('setsCount'))
+      );
+
+      var grid = React.createElement('div', { className: 'set-grid' },
+        group.sets.map(function(set) {
+          return React.createElement(SetCard, { key: set.set_num, set: set });
+        })
+      );
+
+      return React.createElement('div', { key: group.themeId, className: 'theme-section' }, header, grid);
+    });
+
+    var pagination = React.createElement(Pagination, {
+      page: page,
+      totalCount: results.count,
+      pageSize: PAGE_SIZE,
+      onPageChange: handlePageChange,
+    });
+
+    resultsSection = React.createElement(React.Fragment, null, summary, themeSections, pagination);
+  }
+
+  // Empty / no results / initial states
+  var emptyResults = null;
+  if (!loading && !error && searched && results && results.results && results.results.length === 0) {
+    emptyResults = React.createElement(EmptyState, {
+      title: t('noResults'),
+      message: '"' + query + '"' + t('noResultsDesc'),
+    });
+  }
+
+  var initialState = null;
+  if (!searched && !loading) {
+    initialState = React.createElement('div', { className: 'empty-state' },
+      React.createElement('h3', null, t('searchEmpty')),
+      React.createElement('p', null, t('searchEmptyDesc'))
+    );
+  }
+
+  return React.createElement('div', null,
+    searchSection,
+    loading ? React.createElement(Loading, null) : null,
+    error ? React.createElement(ErrorMessage, { message: error, onRetry: function() { doSearch(query, page); } }) : null,
+    resultsSection,
+    emptyResults,
+    initialState
   );
 }
 

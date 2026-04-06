@@ -9,6 +9,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 ## 주요 기능
 
 - **제품번호/이름 검색** — Rebrickable API를 통한 실시간 레고 세트 검색
+- **검색 결과 테마별 그룹화** — 검색 결과를 테마별로 분리하여 표시
 - **부품 검색** — 부품 이름/번호로 검색, 카테고리 필터, 색상 정보 확인
 - **한국어 자연어 검색** — "모듈러", "스타워즈", "경찰서" 등 한국어 키워드로 검색 가능 (100+ 키워드 매핑)
 - **테마/연도 필터링** — 테마별, 연도별 브라우징 (테마명 한국어 번역 지원)
@@ -44,7 +45,7 @@ src/
 ├── contexts/
 │   └── LanguageContext.js  # 언어 상태 관리 (Context API)
 ├── pages/
-│   ├── SearchPage.js       # 세트 검색 페이지 (한국어 자연어 지원)
+│   ├── SearchPage.js       # 세트 검색 페이지 (테마별 그룹화 + 한국어 자연어 지원)
 │   ├── PartsSearchPage.js  # 부품 검색 페이지 (카테고리 필터)
 │   ├── PartDetailPage.js   # 부품 상세 (색상, 엘리먼트, 세트)
 │   ├── BrowsePage.js       # 테마/연도 브라우징 (무한스크롤)
@@ -82,6 +83,16 @@ npm run deploy
 ## 변경 이력 (Changelog)
 
 ### v0.1.0 — 2026-04-06
+
+#### `NEW` feat: 검색 결과 테마별 그룹화 표시
+- 검색 결과를 theme_id 기준으로 그룹화하여 테마별 섹션으로 표시
+- 테마 이름 매핑을 위해 전체 테마 목록 로드 (Rebrickable API)
+- 페이지 크기를 100으로 증가하여 더 나은 테마 그룹화 제공
+- 테마 헤더에 테마명과 세트 수 표시
+- useLanguage() 적용으로 i18n 지원
+- createElement 패턴으로 한글 인코딩 안정화
+- i18n.js에 searchResultsFound 키 추가
+- App.css에 search-results-summary 스타일 추가
 
 #### `NEW` feat: 부품 검색 탭 추가 (PartsSearchPage + PartDetailPage)
 - 부품 이름/번호로 검색 기능 추가 (`PartsSearchPage.js`)
