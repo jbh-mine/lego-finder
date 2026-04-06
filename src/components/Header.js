@@ -11,6 +11,7 @@ function Header() {
 
   const clearSearchState = () => {
     try { sessionStorage.removeItem('lego_search_state'); } catch(e) {}
+    window.dispatchEvent(new Event('resetSearch'));
     setMenuOpen(false);
   };
 

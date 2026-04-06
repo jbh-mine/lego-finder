@@ -43,6 +43,27 @@ function SearchPage() {
   var curQueryRef = useRef('');
   var matchedThemeRef = useRef(null);
 
+  // Listen for resetSearch event from Header
+  useEffect(function() {
+    var handleReset = function() {
+      setQuery('');
+      setAllResults([]);
+      setTotalCount(0);
+      setPage(1);
+      setSearched(false);
+      setError(null);
+      setHasMore(false);
+      setNameExtras([]);
+      setSortOrder('default');
+      setMatchedThemeId(null);
+      curQueryRef.current = '';
+      matchedThemeRef.current = null;
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('resetSearch', handleReset);
+    return function() { window.removeEventListener('resetSearch', handleReset); };
+  }, []);
+
   // Restore search state from sessionStorage on mount
   useEffect(function() {
     try {
