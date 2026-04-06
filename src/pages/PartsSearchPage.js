@@ -7,7 +7,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
 
 var PH = 'https://rebrickable.com/static/img/nil_mf.jpg';
-var PAGE_SIZE = 40;
+var PAGE_SIZE = 100;
 
 function PartsSearchPage() {
   var nav = useNavigate();
@@ -16,21 +16,14 @@ function PartsSearchPage() {
   var s1 = useState(''); var query = s1[0]; var setQuery = s1[1];
   var s2 = useState([]); var allResults = s2[0]; var setAllResults = s2[1];
   var s3 = useState(0); var totalCount = s3[0]; var setTotalCount = s3[1];
-  var s4 = useState(1); var page = s4[0]; var setPage = s4[1];
   var s5 = useState(false); var loading = s5[0]; var setLoading = s5[1];
   var s6 = useState(null); var error = s6[0]; var setError = s6[1];
   var s7 = useState(false); var searched = s7[0]; var setSearched = s7[1];
   var s8 = useState([]); var categories = s8[0]; var setCategories = s8[1];
   var s9 = useState(''); var selCat = s9[0]; var setSelCat = s9[1];
-  var s10 = useState(false); var hasMore = s10[0]; var setHasMore = s10[1];
 
   // Translated category names { id: name }
   var s11 = useState({}); var catNames = s11[0]; var setCatNames = s11[1];
-
-  var sentinelRef = useRef(null);
-  // Store current query for infinite scroll
-  var curQueryRef = useRef('');
-  var curCatRef = useRef('');
 
   // Load categories
   useEffect(function() {
@@ -73,60 +66,45 @@ function PartsSearchPage() {
     return cat.name;
   };
 
-  var doSearch = useCallback(function(searchQuery, searchPage, catId, append) {
+  // Load all pages of results
+  var doSearchAll = useCallback(async function(searchQuery, catId) {
     if (!searchQuery.trim() && !catId) return;
     setLoading(true);
     setError(null);
-    var translatedQuery = searchQuery.trim() ? translateSearchQuery(searchQuery.trim()) : '';
-    searchParts(translatedQuery || '', searchPage, PAGE_SIZE, catId || null)
-      .then(function(data) {
-        if (append) {
-          setAllResults(function(prev) { return prev.concat(data.results); });
-        } else {
-          setAllResults(data.results);
-        }
+    setAllResults([]);
+    try {
+      var translatedQuery = searchQuery.trim() ? translateSearchQuery(searchQuery.trim()) : '';
+      var all = [];
+      var pg = 1;
+      var more = true;
+      while (more) {
+        var data = await searchParts(translatedQuery || '', pg, PAGE_SIZE, catId || null);
+        all = all.concat(data.results);
         setTotalCount(data.count);
-        setPage(searchPage);
-        setHasMore(data.results.length >= PAGE_SIZE);
-        setSearched(true);
-      })
-      .catch(function(err) {
-        setError(
-          err.response && err.response.status === 404
-            ? t('noSearchResults')
-            : t('apiErrorGeneric')
-        );
-      })
-      .finally(function() {
-        setLoading(false);
-      });
+        setAllResults(all.slice());
+        more = data.results.length >= PAGE_SIZE;
+        pg++;
+      }
+      setSearched(true);
+    } catch (err) {
+      setError(
+        err.response && err.response.status === 404
+          ? t('noSearchResults')
+          : t('apiErrorGeneric')
+      );
+    } finally {
+      setLoading(false);
+    }
   }, [t]);
 
   var handleSearch = function(e) {
     e.preventDefault();
-    setAllResults([]);
-    setPage(1);
-    setHasMore(false);
-    curQueryRef.current = query;
-    curCatRef.current = selCat;
-    doSearch(query, 1, selCat, false);
+    doSearchAll(query, selCat);
   };
 
   var handleCatChange = function(e) {
     setSelCat(e.target.value);
   };
-
-  // Infinite scroll
-  useEffect(function() {
-    if (!sentinelRef.current) return;
-    var obs = new IntersectionObserver(function(entries) {
-      if (entries[0].isIntersecting && hasMore && !loading && searched) {
-        doSearch(curQueryRef.current, page + 1, curCatRef.current, true);
-      }
-    }, { rootMargin: '300px' });
-    obs.observe(sentinelRef.current);
-    return function() { obs.disconnect(); };
-  });
 
   // Group results by category
   var grouped = [];
@@ -179,8 +157,11 @@ function PartsSearchPage() {
   );
 
   var resultsSection = null;
-  if (!loading && !error && grouped.length > 0) {
+  if (grouped.length > 0) {
     var summaryText = t('total') + ' ' + totalCount + t('count') + ' ' + t('searchResultsFound');
+    if (loading) {
+      summaryText += ' (' + allResults.length + '/' + totalCount + ' ' + t('loading') + '...)';
+    }
     var summary = React.createElement('div', { className: 'search-results-summary' }, summaryText);
 
     var sections = grouped.map(function(group) {
@@ -217,12 +198,6 @@ function PartsSearchPage() {
     resultsSection = React.createElement(React.Fragment, null, summary, sections);
   }
 
-  // Loading indicator for infinite scroll (after results)
-  var loadingMore = null;
-  if (loading && allResults.length > 0) {
-    loadingMore = React.createElement(Loading, null);
-  }
-
   var emptyResults = null;
   if (!loading && !error && searched && allResults.length === 0) {
     emptyResults = React.createElement(EmptyState, {
@@ -239,24 +214,25 @@ function PartsSearchPage() {
     );
   }
 
-  // Initial loading (first page)
-  var initialLoading = null;
-  if (loading && allResults.length === 0 && searched) {
-    initialLoading = React.createElement(Loading, null);
+  // Loading indicator
+  var loadingEl = null;
+  if (loading && allResults.length === 0) {
+    loadingEl = React.createElement(Loading, null);
   }
-  if (loading && !searched) {
-    initialLoading = React.createElement(Loading, null);
+  // Loading more indicator (while fetching additional pages)
+  var loadingMore = null;
+  if (loading && allResults.length > 0) {
+    loadingMore = React.createElement(Loading, null);
   }
 
   return React.createElement('div', null,
     searchSection,
-    initialLoading,
-    error ? React.createElement(ErrorMessage, { message: error, onRetry: function() { doSearch(query, page, selCat, false); } }) : null,
+    loadingEl,
+    error ? React.createElement(ErrorMessage, { message: error, onRetry: function() { doSearchAll(query, selCat); } }) : null,
     resultsSection,
     loadingMore,
     emptyResults,
-    initialState,
-    React.createElement('div', { ref: sentinelRef, style: { height: 1, marginBottom: 40 } })
+    initialState
   );
 }
 

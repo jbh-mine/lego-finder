@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import useTranslatedName from '../hooks/useTranslatedName';
 import useInstructions from '../hooks/useInstructions';
@@ -14,6 +14,7 @@ var PH = 'https://rebrickable.com/static/img/nil_mf.jpg';
 function SetDetailPage() {
   var p = useParams(); var setNum = p.setNum;
   var lc = useLanguage(); var t = lc.t;
+  var navigate = useNavigate();
   var s1 = useState(null); var set = s1[0]; var setSet = s1[1];
   var s2 = useState(null); var parts = s2[0]; var setParts = s2[1];
   var s3 = useState(null); var minifigs = s3[0]; var setMinifigs = s3[1];
@@ -31,6 +32,9 @@ function SetDetailPage() {
   var legoProductNumber = insData.legoProductNumber;
   var PPS = 50;
 
+  // Extract Rebrickable number (without suffix)
+  var rebrickableNum = setNum ? setNum.replace(/-.*$/, '') : '';
+
   useEffect(function() {
     (async function() {
       setLoading(true); setError(null);
@@ -40,7 +44,7 @@ function SetDetailPage() {
         var r = await Promise.all([getSetParts(setNum, 1, PPS), getSetMinifigs(setNum)]);
         setParts(r[0]); setMinifigs(r[1]);
       } catch(e) {
-        setError(e.response && e.response.status === 404 ? '\"' + setNum + '\"' + t('setNotFound') : t('apiErrorGeneric'));
+        setError(e.response && e.response.status === 404 ? '"' + setNum + '"' + t('setNotFound') : t('apiErrorGeneric'));
       } finally { setLoading(false); }
     })();
   }, [setNum, t]);
@@ -52,6 +56,10 @@ function SetDetailPage() {
   };
   var togC = function() { if (inC) { removeFromCollection(setNum); setInC(false); } else { addToCollection(set); setInC(true); } };
   var togW = function() { if (inW) { removeFromWishlist(setNum); setInW(false); } else { addToWishlist(set); setInW(true); } };
+
+  var handleBack = function() {
+    navigate(-1);
+  };
 
   if (loading) return React.createElement(Loading, { message: t('setLoading') });
   if (error) return React.createElement(ErrorMessage, { message: error });
@@ -91,7 +99,7 @@ function SetDetailPage() {
   var legoKrUrl = getLegoPageUrl(setNum, legoProductNumber);
 
   return React.createElement('div', null,
-    React.createElement(Link, { to: '/', className: 'back-btn' }, t('back')),
+    React.createElement('button', { className: 'back-btn', onClick: handleBack }, t('back')),
     React.createElement('div', { className: 'set-detail' },
       React.createElement('div', { className: 'set-detail-header' },
         React.createElement('img', { className: 'set-detail-img', src: set.set_img_url || PH, alt: set.name, onError: function(e) { e.target.src = PH; } }),
@@ -103,7 +111,12 @@ function SetDetailPage() {
             React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, t('releaseYear')), React.createElement('span', null, set.year + t('yearSuffix'))),
             React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, t('numParts')), React.createElement('span', null, (set.num_parts || 0).toLocaleString() + t('partsCount'))),
             set.theme_id && React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, t('themeId')), React.createElement('span', null, set.theme_id)),
-            set.set_url && React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, 'Rebrickable'), React.createElement('a', { href: set.set_url, target: '_blank', rel: 'noopener noreferrer' }, t('detailPage'))),
+            set.set_url && React.createElement('div', { className: 'detail-meta-item' },
+              React.createElement('span', { className: 'label' }, 'Rebrickable'),
+              React.createElement('a', { href: set.set_url, target: '_blank', rel: 'noopener noreferrer' },
+                t('detailPage') + ' (' + rebrickableNum + ')'
+              )
+            ),
             React.createElement('div', { className: 'detail-meta-item' },
               React.createElement('span', { className: 'label' }, t('legoKorea')),
               React.createElement('a', { href: legoKrUrl, target: '_blank', rel: 'noopener noreferrer' },

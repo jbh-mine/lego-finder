@@ -44,7 +44,7 @@ function buildQuery(productNumber) {
   });
 }
 
-function parseResponse(data) {
+function parseResponse(data, queryNumber) {
   var instructions = [];
   var legoProductNumber = '';
 
@@ -131,20 +131,23 @@ function parseResponse(data) {
     });
   }
 
-  // Extract the LEGO product number from the first PDF filename
-  // This is the most reliable source (e.g., "4669.pdf" -> "4669")
-  if (instructions.length > 0) {
+  // Determine the LEGO product number with proper priority:
+  // 1. API response: hit._id or source.product_number (already set above)
+  // 2. PDF filename ONLY as fallback when API didn't provide a number
+  // 3. Query number (from Rebrickable set_num) as last resort
+  if (!legoProductNumber && instructions.length > 0) {
     var pdfNum = extractNumFromUrl(instructions[0].url);
     if (pdfNum) {
       legoProductNumber = pdfNum;
     }
   }
+  if (!legoProductNumber && queryNumber) {
+    legoProductNumber = queryNumber;
+  }
 
   instructions.sort(function(a, b) { return a.sequence - b.sequence; });
 
   // Remove duplicates by BOTH URL and sequence number
-  // This prevents showing 1/3, 1/3, 2/3, 2/3 when the same instruction
-  // appears across multiple product_versions with different URLs
   var seenUrl = {};
   var seenSeq = {};
   var filtered = instructions.filter(function(ins) {
@@ -174,7 +177,7 @@ async function tryFetch(proxyPrefix, productNumber) {
 
   if (!res.ok) throw new Error('HTTP ' + res.status);
   var data = await res.json();
-  return parseResponse(data);
+  return parseResponse(data, productNumber);
 }
 
 export async function fetchInstructions(setNum) {
@@ -195,7 +198,8 @@ export async function fetchInstructions(setNum) {
         continue;
       }
     }
-    return { instructions: [], legoProductNumber: '' };
+    // Even if no instructions found, return the queried number as legoProductNumber
+    return { instructions: [], legoProductNumber: num };
   })();
 
   var result = await pendingFetches[num];
