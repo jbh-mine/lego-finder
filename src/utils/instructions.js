@@ -7,22 +7,31 @@ var CORS_PROXIES = [
 var insCache = {};
 var pendingFetches = {};
 
-export function getLegoPageUrl(setNum) {
-  return 'https://www.lego.com/ko-kr/product/' + (setNum ? setNum.replace(/-.*$/, '') : '');
+// Generate LEGO official building instructions URL
+// Accepts optional legoNum (official product number)
+export function getLegoPageUrl(setNum, legoNum) {
+  var num = legoNum || (setNum ? setNum.replace(/-.*$/, '') : '');
+  return 'https://www.lego.com/ko-kr/service/building-instructions/' + num;
 }
 
 // Check if a PDF URL is an "original" file (just digits.pdf)
-// Excludes: Info_Booklet, EN_, FN_, FR_, DE_, etc.
 function isOriginalPdf(url) {
   if (!url) return false;
   var filename = url.split('/').pop().split('?')[0];
-  // Only keep files whose name is purely digits followed by .pdf
   return /^\d+\.pdf$/i.test(filename);
+}
+
+// Extract product number from PDF filename (e.g., "4669.pdf" -> "4669")
+function extractNumFromUrl(url) {
+  if (!url) return '';
+  var filename = url.split('/').pop().split('?')[0];
+  var match = filename.match(/^(\d+)\.pdf$/i);
+  return match ? match[1] : '';
 }
 
 function buildQuery(productNumber) {
   return JSON.stringify({
-    _source: ['product_versions'],
+    _source: ['product_versions', 'product_number'],
     from: 0,
     size: 1,
     query: {
@@ -37,11 +46,21 @@ function buildQuery(productNumber) {
 
 function parseResponse(data) {
   var instructions = [];
+  var legoProductNumber = '';
 
   var hits = (data && data.hits && data.hits.hits) || [];
 
   hits.forEach(function(hit) {
+    // Try to get LEGO product number from Elasticsearch hit _id
+    if (hit._id && !legoProductNumber) {
+      legoProductNumber = String(hit._id);
+    }
+    // Also try from _source.product_number
     var source = hit._source || hit;
+    if (source.product_number && !legoProductNumber) {
+      legoProductNumber = String(source.product_number);
+    }
+
     var versions = source.product_versions || source.productVersions || [];
 
     versions.forEach(function(version) {
@@ -112,14 +131,25 @@ function parseResponse(data) {
     });
   }
 
+  // Extract the LEGO product number from the first PDF filename
+  // This is the most reliable source (e.g., "4669.pdf" -> "4669")
+  if (instructions.length > 0) {
+    var pdfNum = extractNumFromUrl(instructions[0].url);
+    if (pdfNum) {
+      legoProductNumber = pdfNum;
+    }
+  }
+
   instructions.sort(function(a, b) { return a.sequence - b.sequence; });
 
   var seen = {};
-  return instructions.filter(function(ins) {
+  var filtered = instructions.filter(function(ins) {
     if (seen[ins.url]) return false;
     seen[ins.url] = true;
     return true;
   });
+
+  return { instructions: filtered, legoProductNumber: legoProductNumber };
 }
 
 async function tryFetch(proxyPrefix, productNumber) {
@@ -142,7 +172,7 @@ async function tryFetch(proxyPrefix, productNumber) {
 
 export async function fetchInstructions(setNum) {
   var num = setNum ? setNum.replace(/-.*$/, '') : '';
-  if (!num) return [];
+  if (!num) return { instructions: [], legoProductNumber: '' };
   if (insCache[num]) return insCache[num];
   if (pendingFetches[num]) return pendingFetches[num];
 
@@ -150,7 +180,7 @@ export async function fetchInstructions(setNum) {
     for (var i = 0; i < CORS_PROXIES.length; i++) {
       try {
         var result = await tryFetch(CORS_PROXIES[i], num);
-        if (result.length > 0) {
+        if (result.instructions.length > 0) {
           insCache[num] = result;
           return result;
         }
@@ -158,7 +188,7 @@ export async function fetchInstructions(setNum) {
         continue;
       }
     }
-    return [];
+    return { instructions: [], legoProductNumber: '' };
   })();
 
   var result = await pendingFetches[num];

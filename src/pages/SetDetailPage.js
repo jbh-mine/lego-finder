@@ -28,6 +28,7 @@ function SetDetailPage() {
   var insData = useInstructions(setNum);
   var instructions = insData.instructions;
   var insLoading = insData.loading;
+  var legoProductNumber = insData.legoProductNumber;
   var PPS = 50;
 
   useEffect(function() {
@@ -86,8 +87,8 @@ function SetDetailPage() {
     insSection = null;
   }
 
-  // LEGO Korea official site URL
-  var legoKrUrl = getLegoPageUrl(setNum);
+  // LEGO Korea official site URL - use official product number if available
+  var legoKrUrl = getLegoPageUrl(setNum, legoProductNumber);
 
   return React.createElement('div', null,
     React.createElement(Link, { to: '/', className: 'back-btn' }, t('back')),
@@ -103,7 +104,12 @@ function SetDetailPage() {
             React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, t('numParts')), React.createElement('span', null, (set.num_parts || 0).toLocaleString() + t('partsCount'))),
             set.theme_id && React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, t('themeId')), React.createElement('span', null, set.theme_id)),
             set.set_url && React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, 'Rebrickable'), React.createElement('a', { href: set.set_url, target: '_blank', rel: 'noopener noreferrer' }, t('detailPage'))),
-            React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, t('legoKorea')), React.createElement('a', { href: legoKrUrl, target: '_blank', rel: 'noopener noreferrer' }, t('detailPage')))
+            React.createElement('div', { className: 'detail-meta-item' },
+              React.createElement('span', { className: 'label' }, t('legoKorea')),
+              React.createElement('a', { href: legoKrUrl, target: '_blank', rel: 'noopener noreferrer' },
+                t('detailPage') + (legoProductNumber ? ' (' + legoProductNumber + ')' : '')
+              )
+            )
           ),
           React.createElement('div', { className: 'detail-actions' },
             React.createElement('button', { className: 'btn-collection' + (inC ? ' active' : ''), onClick: togC }, inC ? t('removeCollection') : t('addCollection')),
