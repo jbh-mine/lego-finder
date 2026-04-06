@@ -9,11 +9,17 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 ## 주요 기능
 
 - **제품번호/이름 검색** — Rebrickable API를 통한 실시간 레고 세트 검색
+- **한국어 자연어 검색** — "모듈러", "스타워즈", "경찰서", "용마성", "블랙펄", "탐정사무소" 등 한국어 키워드/별명으로 검색 가능 (500+ 키워드 매핑)
+- **한국어 별명 → 제품번호 직접 매핑** — "용마성"→6082, "블랙펄"→10365, "박쥐성"→6097, "탐정사무소"→10246 등 즉시 검색
+- **모듈러 빌딩 전체 키워드** — 카페코너, 그린그로서, 소방대, 펫샵, 타운홀, 팰리스시네마, 탐정사무소, 브릭뱅크, 다운타운다이너, 서점, 재즈클럽, 자연사박물관 등
 - **검색 결과 테마별 그룹화** — 검색 결과를 테마별로 분리하여 표시 (테마명 한국어 번역 지원)
-- **부품 검색** — 부품 이름/번호로 검색, 카테고리 필터, 캫테고리별 그룹화, 색상 정보 확인
+- **테마명 한국어 정확 표시** — 반지의제왕, 해리포터, 캐슬 등 100+ 테마명 하드코딩 번역 (인코딩 깨짐 방지)
+- **부품 검색** — 부품 이름/번호로 검색, 카테고리 필터, 카테고리별 그룹화, 색상 정보 확인
 - **부품 카테고리 한국어 번역** — 한국어 선택 시 부품 카테고리명 자동 번역
+- **신제품 탭** — 최신 레고 신제품 연도별 조회
+- **펀딩제품(BDP) 탭** — BrickLink Designer Program 제품 시리즈별 조회, 연도 필터, 이름 검색
+- **이미지 갤러리 + 스와이프** — 제품 상세에서 Rebrickable + BrickLink CDN 멀티 이미지, 터치 스와이프, 팝업 스와이프
 - **무한 스크롤** — 검색/부품/둘러보기 모두 스크롤 시 데이터 자동 로드
-- **한국어 자연어 검색** — "모듈러", "스타워즈", "경찰서" 등 한국어 키워드로 검색 가능 (100+ 키워드 매핑)
 - **테마/연도 필터링** — 테마별, 연도별 브라우징 (테마명 한국어 번역 지원)
 - **세트 상세 정보** — 부품 목록, 미니피규어, 색상 정보 확인
 - **부품 상세 정보** — 사용 가능한 색상, 엘리먼트 ID, 포함된 세트 목록
@@ -28,6 +34,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **React 19** + React Router (HashRouter)
 - **Axios** + API 캐싱
 - **Rebrickable API v3** — 세트 검색, 부품 검색, 미니피규어 데이터
+- **BrickLink CDN** — 제품 대체 이미지 (SN/ON)
 - **MyMemory Translation API** — 제품명/테마명/카테고리명 한국어 번역 (localStorage 캐싱)
 - **GitHub Pages** (gh-pages) 배포
 
@@ -40,25 +47,26 @@ src/
 ├── App.js                  # 라우팅 설정
 ├── index.js                # 엔트리 포인트
 ├── components/
-│   ├── Header.js           # 네비게이션 + 한/영 전환 토글
+│   ├── Header.js           # 네비게이션 + 한/영 전환 + 검색 초기화
 │   ├── SetCard.js          # 세트 카드
 │   ├── Pagination.js       # 페이지네이션
 │   └── Loading.js          # 로딩/에러/빈 상태 컴포넌트
 ├── contexts/
 │   └── LanguageContext.js  # 언어 상태 관리 (Context API)
 ├── pages/
-│   ├── SearchPage.js       # 세트 검색 (테마별 그룹화 + 무한스크롤 + 한국어 자연어)
+│   ├── SearchPage.js       # 세트 검색 (테마별 그룹화 + 무한스크롤 + 한국어 자연어 + SET_NUM_MAP)
 │   ├── PartsSearchPage.js  # 부품 검색 (카테고리별 그룹화 + 무한스크롤 + 한국어 번역)
 │   ├── PartDetailPage.js   # 부품 상세 (색상, 엘리먼트, 세트)
 │   ├── BrowsePage.js       # 테마/연도 브라우징 (무한스크롤)
-│   ├── SetDetailPage.js    # 세트 상세 (부품, 미니피규어)
+│   ├── SetDetailPage.js    # 세트 상세 (이미지 갤러리 + 스와이프 + 부품 + 미니피규어)
+│   ├── FundingPage.js      # BDP 펀딩제품 (시리즈탭 + 연도필터 + 이름검색)
 │   └── CollectionPage.js   # 내 컬렉션/위시리스트
 ├── styles/
 │   └── App.css             # 전체 스타일 (반응형 포함)
 └── utils/
     ├── api.js              # Rebrickable API 래퍼 (세트 + 부품)
-    ├── searchDict.js       # 한국어→영어 검색 키워드 사전
-    ├── translate.js        # MyMemory 번역 API (제품명/테마명/카테고리명 번역)
+    ├── searchDict.js       # 한국어→영어 검색 키워드 사전 + SET_NUM_MAP (별명→제품번호)
+    ├── translate.js        # 테마명 하드코딩 번역 + MyMemory API 폴백
     ├── i18n.js             # 한/영 UI 번역 리소스
     └── collection.js       # localStorage 컬렉션 관리
 ```
@@ -84,6 +92,44 @@ npm run deploy
 
 ## 변경 이력 (Changelog)
 
+### v0.2.0 — 2026-04-06
+
+#### `NEW` feat: 레고 모듈러 빌딩 전체 키워드 검색
+- 모듈러 빌딩 21종 전체 한국어 키워드 매핑 (카페코너, 그린그로서, 소방대, 펫샵, 타운홀, 팰리스시네마, 탐정사무소, 브릭뱅크 등)
+- SET_NUM_MAP으로 별명 검색 시 해당 제품번호 즉시 반환
+
+#### `NEW` feat: 펀딩제품 페이지 필터 기능
+- 연도별 셀렉트박스 필터 추가
+- 제품명/번호 검색 입력 필드 추가
+- 필터링 결과 카운트 표시 (전체 대비)
+
+#### `FIX` fix: 테마명 한국어 인코딩 깨짐 수정
+- translate.js에 100+ 테마명 하드코딩 번역 맵 추가 (THEME_NAME_MAP)
+- "반지의제왕", "해리포터" 등이 깨진 문자로 표시되던 문제 해결
+- MyMemory API 호출 전 하드코딩 맵 우선 체크
+
+#### `NEW` feat: 한국어 별명 → 제품번호 직접 검색 (SET_NUM_MAP)
+- 올드 캐슬 별명: 용마성(6082), 비룡성(6086), 박쥐성(6097), 유령성(6081), 사자성(6080) 등
+- 해적: 블랙펄(10365), 잭스패로우, 캐리비안의해적
+- 인기 세트: 타이타닉(10294), 콜로세움(10276), 에펠탑(10307) 등
+- SearchPage에서 SET_NUM_MAP 매핑된 제품번호로 즉시 검색
+
+### v0.1.1 — 2026-04-06
+
+#### `NEW` feat: BDP 펀딩제품 탭
+- BrickLink Designer Program 제품 자동 감지 및 시리즈 탭 표시
+- 시리즈별/전체 보기 + 무한 스크롤
+
+#### `NEW` feat: 이미지 갤러리 + 스와이프
+- 제품 상세에 Rebrickable + BrickLink CDN 멀티 이미지 로드
+- 터치 스와이프, 화살표 버튼, 도트 인디케이터, 카운터 뱃지
+- 팝업에서도 스와이프/키보드 지원
+
+#### `FIX` fix: 로고/검색 클릭 시 검색 상태 초기화
+- sessionStorage 클리어 + resetSearch 이벤트로 SearchPage 상태 리셋
+
+#### `FIX` fix: X 클리어 버튼 투명 배경 처리
+
 ### v0.1.0 — 2026-04-06
 
 #### `NEW` feat: 부품 카테고리 한국어 번역 + 검색 결과 무한 스크롤 + 카테고리별 그룹화
@@ -92,53 +138,23 @@ npm run deploy
 - PartsSearchPage: 페이지네이션 → 무한 스크롤 (IntersectionObserver)
 - SearchPage: 페이지네이션 → 무한 스크롤 (IntersectionObserver)
 - SearchPage: 테마명 한국어 번역 지원 (MyMemory API)
-- 두 검색 페이지 모두 둘러보기와 동일한 스크롤 패턴 적용
 
 #### `NEW` feat: 검색 결과 테마별 그룹화 표시
 - 검색 결과를 theme_id 기준으로 그룹화하여 테마별 섹션으로 표시
-- 테마 이름 매핑을 위해 전체 테마 목록 로드 (Rebrickable API)
-- useLanguage() 적용으로 i18n 지원
-- createElement 패턴으로 한글 인코딩 안정화
 
 #### `NEW` feat: 부품 검색 탭 추가 (PartsSearchPage + PartDetailPage)
-- 부품 이름/번호로 검색 기능 추가 (`PartsSearchPage.js`)
+- 부품 이름/번호로 검색 기능 추가
 - 부품 카테고리 필터 드롭다운 지원
-- 부품 상세 페이지: 사용 가능한 색상, 엘리먼트 ID, 포함된 세트 목록 (`PartDetailPage.js`)
-- 한국어 자연어 검색 지원 (부품 검색에도 searchDict 적용)
-- Header 네비게이션에 '부품 검색' 탭 추가
-- api.js에 `searchParts`, `getPartDetail`, `getPartColors`, `getPartCategories`, `getColors` 함수 추가
+- 부품 상세 페이지: 사용 가능한 색상, 엘리먼트 ID, 포함된 세트 목록
 
-#### `9b9d28c` remove: 조립설명서 PDF 다운로드 버튼 및 관련 코드 제거
-- SetCard.js: `useInstructions` 훅, 조립설명서 버튼 전체 제거
-- SetDetailPage.js: 조립설명서 섹션(`ins-title`, `insSection`) 전체 제거
+#### `NEW` feat: 한국어 자연어 검색 + 100+ 키워드 매핑
+- 한국어→영어 검색 키워드 사전 추가 (searchDict.js)
 
-#### `e918056` feat: 한국어 자연어 검색 + LEGO Slingshot API 수정
-- 한국어→영어 검색 키워드 사전 추가 (`searchDict.js`) — 100+ 키워드 매핑
-- SearchPage에서 검색 시 자동으로 한국어를 영어로 변환하여 Rebrickable API에 전달
+#### `NEW` feat: 테마명 번역 + 제품명 한국어 번역
+- MyMemory Translation API 연동
 
-#### `dc5286a` feat: 테마명 번역 + 조립설명서 PDF 다운로드 (북릿 지원)
-- BrowsePage 테마명 한국어 번역 지원 (MyMemory Translation API)
-
-#### `d807d9b` feat: 제품명 한국어 번역 + 테마 섹션 + 무한 스크롤
-- MyMemory Translation API 연동으로 제품명 한국어 자동 번역
-- BrowsePage 테마별 섹션 구분 + 무한 스크롤
-
-#### `77117ec` fix: 한글 인코딩 수정 + 조립설명서 링크 추가
-- `t()` 함수를 통한 한글 인코딩 문제 해결
-
-#### `10ba8f3` feat: 언어 선택 버튼 + 사용 가이드
-- 헤더에 한/영 언어 선택 버튼 추가
-
-#### `2f75805` fix: 한글 인코딩 수정 + 언어 토글 항상 표시
-
-#### `dbca0a7` feat: 한/영 전환 시스템 + 모바일 반응형 강화
-- LanguageContext + i18n 번역 시스템 + 모바일 반응형 CSS 강화
-
-#### `c64f773` feat: LEGO Finder React 앱 초기 구현
+#### `NEW` feat: LEGO Finder React 앱 초기 구현
 - 제품번호/이름 검색, 테마/연도별 필터, 세트 상세, 컬렉션 & 위시리스트, GitHub Pages 배포
-
-#### `bc8d77c` Initial commit
-- 프로젝트 초기 설정
 
 ---
 
