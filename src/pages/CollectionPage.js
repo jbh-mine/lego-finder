@@ -7,130 +7,116 @@ import {
 } from '../utils/collection';
 import { EmptyState } from '../components/Loading';
 
-const PLACEHOLDER_IMG = 'https://rebrickable.com/static/img/nil_mf.jpg';
+var PLACEHOLDER_IMG = 'https://rebrickable.com/static/img/nil_mf.jpg';
 
 function CollectionPage() {
-  const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState('collection');
-  const [collection, setCollection] = useState([]);
-  const [wishlist, setWishlist] = useState([]);
-  const navigate = useNavigate();
+  var lang = useLanguage();
+  var t = lang.t;
+  var tabState = useState('collection');
+  var activeTab = tabState[0];
+  var setActiveTab = tabState[1];
+  var collState = useState([]);
+  var collection = collState[0];
+  var setCollection = collState[1];
+  var wishState = useState([]);
+  var wishlist = wishState[0];
+  var setWishlist = wishState[1];
+  var navigate = useNavigate();
 
-  const loadData = useCallback(() => {
+  var loadData = useCallback(function() {
     setCollection(getCollection());
     setWishlist(getWishlist());
   }, []);
 
-  useEffect(() => {
+  useEffect(function() {
     loadData();
   }, [loadData]);
 
-  const handleRemoveCollection = (e, setNum) => {
+  var handleRemoveCollection = function(e, setNum) {
     e.stopPropagation();
     removeFromCollection(setNum);
     loadData();
   };
 
-  const handleRemoveWishlist = (e, setNum) => {
+  var handleRemoveWishlist = function(e, setNum) {
     e.stopPropagation();
     removeFromWishlist(setNum);
     loadData();
   };
 
-  const currentList = activeTab === 'collection' ? collection : wishlist;
-  const totalParts = collection.reduce((sum, item) => sum + (item.num_parts || 0), 0);
+  var currentList = activeTab === 'collection' ? collection : wishlist;
+  var totalParts = collection.reduce(function(sum, item) { return sum + (item.num_parts || 0); }, 0);
 
-  return (
-    <div>
-      <div className="collection-tabs">
-        <button
-          className={activeTab === 'collection' ? 'active' : ''}
-          onClick={() => setActiveTab('collection')}
-        >
-          {t('collection')} ({collection.length})
-        </button>
-        <button
-          className={activeTab === 'wishlist' ? 'active' : ''}
-          onClick={() => setActiveTab('wishlist')}
-        >
-          {t('wishlist')} ({wishlist.length})
-        </button>
-      </div>
-
-      {activeTab === 'collection' && collection.length > 0 && (
-        <div className="collection-stats">
-          <div className="stat-item">
-            <div className="stat-value">{collection.length}</div>
-            <div className="stat-label">{t('ownedSets')}</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-value">{totalParts.toLocaleString()}</div>
-            <div className="stat-label">{t('totalParts')}</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-value">
-              {collection.length > 0
-                ? Math.min(...collection.map((s) => s.year))
-                : '-'}
-              ~
-              {collection.length > 0
-                ? Math.max(...collection.map((s) => s.year))
-                : '-'}
-            </div>
-            <div className="stat-label">{t('yearRange')}</div>
-          </div>
-        </div>
-      )}
-
-      {currentList.length === 0 ? (
-        <EmptyState
-          title={activeTab === 'collection' ? t('collectionEmpty') : t('wishlistEmpty')}
-          message={activeTab === 'collection' ? t('collectionEmptyDesc') : t('wishlistEmptyDesc')}
-        />
-      ) : (
-        <div className="set-grid">
-          {currentList.map((item) => {
-            const yearLabel = item.year + t('yearSuffix');
-            const partsLabel = (item.num_parts || 0).toLocaleString() + t('partsUnit');
-            return (
-              <div
-                key={item.set_num}
-                className="set-card"
-                onClick={() => navigate(`/set/${item.set_num}`)}
-              >
-                <img
-                  className="set-card-img"
-                  src={item.set_img_url || PLACEHOLDER_IMG}
-                  alt={item.name}
-                  loading="lazy"
-                  onError={(e) => { e.target.src = PLACEHOLDER_IMG; }}
-                />
-                <div className="set-card-body">
-                  <div className="set-card-num">{item.set_num}</div>
-                  <div className="set-card-name">{item.name}</div>
-                  <div className="set-card-meta">
-                    <span>{yearLabel}</span>
-                    <span>{partsLabel}</span>
-                  </div>
-                </div>
-                <div className="set-card-actions">
-                  <button
-                    className="btn-icon wishlist-active"
-                    onClick={(e) =>
-                      activeTab === 'collection'
-                        ? handleRemoveCollection(e, item.set_num)
-                        : handleRemoveWishlist(e, item.set_num)
-                    }
-                  >
-                    {t('remove')}
-                  </button>
-                </div>
-              </div>
+  return React.createElement('div', null,
+    React.createElement('div', { className: 'collection-tabs' },
+      React.createElement('button', {
+        className: activeTab === 'collection' ? 'active' : '',
+        onClick: function() { setActiveTab('collection'); }
+      }, t('collection') + ' (' + collection.length + ')'),
+      React.createElement('button', {
+        className: activeTab === 'wishlist' ? 'active' : '',
+        onClick: function() { setActiveTab('wishlist'); }
+      }, t('wishlist') + ' (' + wishlist.length + ')')
+    ),
+    activeTab === 'collection' && collection.length > 0 && React.createElement('div', { className: 'collection-stats' },
+      React.createElement('div', { className: 'stat-item' },
+        React.createElement('div', { className: 'stat-value' }, collection.length),
+        React.createElement('div', { className: 'stat-label' }, t('ownedSets'))
+      ),
+      React.createElement('div', { className: 'stat-item' },
+        React.createElement('div', { className: 'stat-value' }, totalParts.toLocaleString()),
+        React.createElement('div', { className: 'stat-label' }, t('totalParts'))
+      ),
+      React.createElement('div', { className: 'stat-item' },
+        React.createElement('div', { className: 'stat-value' },
+          (collection.length > 0 ? Math.min.apply(null, collection.map(function(s) { return s.year; })) : '-') +
+          '~' +
+          (collection.length > 0 ? Math.max.apply(null, collection.map(function(s) { return s.year; })) : '-')
+        ),
+        React.createElement('div', { className: 'stat-label' }, t('yearRange'))
+      )
+    ),
+    currentList.length === 0
+      ? React.createElement(EmptyState, {
+          title: activeTab === 'collection' ? t('collectionEmpty') : t('wishlistEmpty'),
+          message: activeTab === 'collection' ? t('collectionEmptyDesc') : t('wishlistEmptyDesc')
+        })
+      : React.createElement('div', { className: 'set-grid' },
+          currentList.map(function(item) {
+            var yearLabel = item.year + t('yearSuffix');
+            var partsLabel = (item.num_parts || 0).toLocaleString() + t('partsUnit');
+            return React.createElement('div', {
+              key: item.set_num,
+              className: 'set-card',
+              onClick: function() { navigate('/set/' + item.set_num); }
+            },
+              React.createElement('img', {
+                className: 'set-card-img',
+                src: item.set_img_url || PLACEHOLDER_IMG,
+                alt: item.name,
+                loading: 'lazy',
+                onError: function(e) { e.target.src = PLACEHOLDER_IMG; }
+              }),
+              React.createElement('div', { className: 'set-card-body' },
+                React.createElement('div', { className: 'set-card-num' }, item.set_num),
+                React.createElement('div', { className: 'set-card-name' }, item.name),
+                React.createElement('div', { className: 'set-card-meta' },
+                  React.createElement('span', null, yearLabel),
+                  React.createElement('span', null, partsLabel)
+                )
+              ),
+              React.createElement('div', { className: 'set-card-actions' },
+                React.createElement('button', {
+                  className: 'btn-icon wishlist-active',
+                  onClick: function(e) {
+                    if (activeTab === 'collection') handleRemoveCollection(e, item.set_num);
+                    else handleRemoveWishlist(e, item.set_num);
+                  }
+                }, t('remove'))
+              )
             );
-          })}
-        </div>
-      )}
-    </div>
+          })
+        )
   );
 }
 

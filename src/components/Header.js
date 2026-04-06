@@ -19,16 +19,16 @@ function Header() {
         <div className="header-right">
           <div className="lang-selector">
             <button
-              className={`lang-btn ${lang === 'ko' ? 'lang-active' : ''}`}
+              className={'lang-btn' + (lang === 'ko' ? ' lang-active' : '')}
               onClick={() => setLang('ko')}
             >
-              \uD55C\uAD6D\uC5B4
+              {t('langKo')}
             </button>
             <button
-              className={`lang-btn ${lang === 'en' ? 'lang-active' : ''}`}
+              className={'lang-btn' + (lang === 'en' ? ' lang-active' : '')}
               onClick={() => setLang('en')}
             >
-              \uC601\uC5B4
+              {t('langEn')}
             </button>
           </div>
 
@@ -37,11 +37,11 @@ function Header() {
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Menu"
           >
-            <span className={`hamburger ${menuOpen ? 'open' : ''}`}></span>
+            <span className={'hamburger' + (menuOpen ? ' open' : '')}></span>
           </button>
         </div>
 
-        <nav className={`header-nav ${menuOpen ? 'nav-open' : ''}`}>
+        <nav className={'header-nav' + (menuOpen ? ' nav-open' : '')}>
           <Link to="/" className={isActive('/')} onClick={() => setMenuOpen(false)}>
             {t('search')}
           </Link>
@@ -51,14 +51,6 @@ function Header() {
           <Link to="/collection" className={isActive('/collection')} onClick={() => setMenuOpen(false)}>
             {t('myCollection')}
           </Link>
-          <a
-            href={process.env.PUBLIC_URL + '/guide.html'}
-            download="LEGO_Finder_Guide.html"
-            className="nav-guide-link"
-            onClick={() => setMenuOpen(false)}
-          >
-            {t('downloadGuide')}
-          </a>
         </nav>
       </div>
     </header>

@@ -6,25 +6,44 @@ import Pagination from '../components/Pagination';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
 
 function BrowsePage() {
-  const { t } = useLanguage();
-  const [themes, setThemes] = useState([]);
-  const [selectedTheme, setSelectedTheme] = useState('');
-  const [minYear, setMinYear] = useState('');
-  const [maxYear, setMaxYear] = useState('');
-  const [results, setResults] = useState(null);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [themesLoading, setThemesLoading] = useState(true);
-  const [error, setError] = useState(null);
+  var lang = useLanguage();
+  var t = lang.t;
+  var themesState = useState([]);
+  var themes = themesState[0];
+  var setThemes = themesState[1];
+  var selThemeState = useState('');
+  var selectedTheme = selThemeState[0];
+  var setSelectedTheme = selThemeState[1];
+  var minYState = useState('');
+  var minYear = minYState[0];
+  var setMinYear = minYState[1];
+  var maxYState = useState('');
+  var maxYear = maxYState[0];
+  var setMaxYear = maxYState[1];
+  var resState = useState(null);
+  var results = resState[0];
+  var setResults = resState[1];
+  var pageState = useState(1);
+  var page = pageState[0];
+  var setPage = pageState[1];
+  var loadState = useState(false);
+  var loading = loadState[0];
+  var setLoading = loadState[1];
+  var tlState = useState(true);
+  var themesLoading = tlState[0];
+  var setThemesLoading = tlState[1];
+  var errState = useState(null);
+  var error = errState[0];
+  var setError = errState[1];
 
-  const PAGE_SIZE = 20;
-  const currentYear = new Date().getFullYear();
+  var PAGE_SIZE = 20;
+  var currentYear = new Date().getFullYear();
 
-  useEffect(() => {
+  useEffect(function() {
     async function loadThemes() {
       try {
-        const data = await getThemes(1, 1000);
-        const parentThemes = data.results.filter((th) => !th.parent_id);
+        var data = await getThemes(1, 1000);
+        var parentThemes = data.results.filter(function(th) { return !th.parent_id; });
         setThemes(parentThemes);
       } catch (err) {
         console.error('Theme load failed:', err);
@@ -35,11 +54,11 @@ function BrowsePage() {
     loadThemes();
   }, []);
 
-  const doFilter = useCallback(async (filterPage) => {
+  var doFilter = useCallback(async function(filterPage) {
     setLoading(true);
     setError(null);
     try {
-      const data = await filterSets({
+      var data = await filterSets({
         themeId: selectedTheme || undefined,
         minYear: minYear || undefined,
         maxYear: maxYear || undefined,
@@ -54,12 +73,12 @@ function BrowsePage() {
     }
   }, [selectedTheme, minYear, maxYear, t]);
 
-  const handleFilter = () => {
+  var handleFilter = function() {
     setPage(1);
     doFilter(1);
   };
 
-  const handleReset = () => {
+  var handleReset = function() {
     setSelectedTheme('');
     setMinYear('');
     setMaxYear('');
@@ -67,87 +86,81 @@ function BrowsePage() {
     setPage(1);
   };
 
-  const handlePageChange = (newPage) => {
+  var handlePageChange = function(newPage) {
     setPage(newPage);
     doFilter(newPage);
     window.scrollTo(0, 0);
   };
 
-  const yearOptions = [];
-  for (let y = currentYear; y >= 1950; y--) {
+  var yearOptions = [];
+  for (var y = currentYear; y >= 1950; y--) {
     yearOptions.push(y);
   }
 
-  return (
-    <div>
-      <div className="filter-section">
-        <div className="filter-group">
-          <label>{t('theme')}</label>
-          <select
-            value={selectedTheme}
-            onChange={(e) => setSelectedTheme(e.target.value)}
-            disabled={themesLoading}
-          >
-            <option value="">{t('allThemes')}</option>
-            {themes.map((theme) => (
-              <option key={theme.id} value={theme.id}>
-                {theme.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="filter-group">
-          <label>{t('startYear')}</label>
-          <select value={minYear} onChange={(e) => setMinYear(e.target.value)}>
-            <option value="">{t('all')}</option>
-            {yearOptions.map((y) => (
-              <option key={y} value={y}>{y}{t('yearSuffix')}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="filter-group">
-          <label>{t('endYear')}</label>
-          <select value={maxYear} onChange={(e) => setMaxYear(e.target.value)}>
-            <option value="">{t('all')}</option>
-            {yearOptions.map((y) => (
-              <option key={y} value={y}>{y}{t('yearSuffix')}</option>
-            ))}
-          </select>
-        </div>
-
-        <button className="filter-btn" onClick={handleFilter} disabled={loading}>
-          {loading ? t('searching') : t('applyFilter')}
-        </button>
-        <button className="filter-reset" onClick={handleReset}>{t('reset')}</button>
-      </div>
-
-      {loading && <Loading />}
-      {error && <ErrorMessage message={error} onRetry={() => doFilter(page)} />}
-
-      {!loading && !error && results && results.results?.length > 0 && (
-        <>
-          <div className="set-grid">
-            {results.results.map((set) => (
-              <SetCard key={set.set_num} set={set} />
-            ))}
-          </div>
-          <Pagination page={page} totalCount={results.count} pageSize={PAGE_SIZE} onPageChange={handlePageChange} />
-        </>
-      )}
-
-      {!loading && !error && results && results.results?.length === 0 && (
-        <EmptyState title={t('noResults2')} message={t('noFilterResults')} />
-      )}
-
-      {!results && !loading && (
-        <div className="empty-state">
-          <h3>{t('browseTitle')}</h3>
-          <p>{t('browseDesc')}</p>
-        </div>
-      )}
-    </div>
+  return React.createElement('div', null,
+    React.createElement('div', { className: 'filter-section' },
+      React.createElement('div', { className: 'filter-group' },
+        React.createElement('label', null, t('theme')),
+        React.createElement('select', {
+          value: selectedTheme,
+          onChange: function(e) { setSelectedTheme(e.target.value); },
+          disabled: themesLoading
+        },
+          React.createElement('option', { value: '' }, t('allThemes')),
+          themes.map(function(theme) {
+            return React.createElement('option', { key: theme.id, value: theme.id }, theme.name);
+          })
+        )
+      ),
+      React.createElement('div', { className: 'filter-group' },
+        React.createElement('label', null, t('startYear')),
+        React.createElement('select', {
+          value: minYear,
+          onChange: function(e) { setMinYear(e.target.value); }
+        },
+          React.createElement('option', { value: '' }, t('all')),
+          yearOptions.map(function(y) {
+            return React.createElement('option', { key: y, value: y }, y + t('yearSuffix'));
+          })
+        )
+      ),
+      React.createElement('div', { className: 'filter-group' },
+        React.createElement('label', null, t('endYear')),
+        React.createElement('select', {
+          value: maxYear,
+          onChange: function(e) { setMaxYear(e.target.value); }
+        },
+          React.createElement('option', { value: '' }, t('all')),
+          yearOptions.map(function(y) {
+            return React.createElement('option', { key: y, value: y }, y + t('yearSuffix'));
+          })
+        )
+      ),
+      React.createElement('button', {
+        className: 'filter-btn',
+        onClick: handleFilter,
+        disabled: loading
+      }, loading ? t('searching') : t('applyFilter')),
+      React.createElement('button', {
+        className: 'filter-reset',
+        onClick: handleReset
+      }, t('reset'))
+    ),
+    loading && React.createElement(Loading, null),
+    error && React.createElement(ErrorMessage, { message: error, onRetry: function() { doFilter(page); } }),
+    !loading && !error && results && results.results && results.results.length > 0 && React.createElement(React.Fragment, null,
+      React.createElement('div', { className: 'set-grid' },
+        results.results.map(function(set) {
+          return React.createElement(SetCard, { key: set.set_num, set: set });
+        })
+      ),
+      React.createElement(Pagination, { page: page, totalCount: results.count, pageSize: PAGE_SIZE, onPageChange: handlePageChange })
+    ),
+    !loading && !error && results && results.results && results.results.length === 0 && React.createElement(EmptyState, { title: t('noResults2'), message: t('noFilterResults') }),
+    !results && !loading && React.createElement('div', { className: 'empty-state' },
+      React.createElement('h3', null, t('browseTitle')),
+      React.createElement('p', null, t('browseDesc'))
+    )
   );
 }
 

@@ -1,37 +1,30 @@
 import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 
-function Loading({ message }) {
-  const { t } = useLanguage();
-  return (
-    <div className="loading">
-      <div className="loading-spinner"></div>
-      <p>{message || t('loading')}</p>
-    </div>
+function Loading(props) {
+  var t = useLanguage().t;
+  return React.createElement('div', { className: 'loading' },
+    React.createElement('div', { className: 'loading-spinner' }),
+    React.createElement('p', null, props.message || t('loading'))
   );
 }
 
-function ErrorMessage({ message, onRetry }) {
-  const { t } = useLanguage();
-  return (
-    <div className="error-message">
-      <p>{message || t('error')}</p>
-      {onRetry && (
-        <button onClick={onRetry} style={{ marginTop: 12, padding: '8px 16px' }}>
-          {t('retry')}
-        </button>
-      )}
-    </div>
+function ErrorMessage(props) {
+  var t = useLanguage().t;
+  return React.createElement('div', { className: 'error-message' },
+    React.createElement('p', null, props.message || t('error')),
+    props.onRetry && React.createElement('button', {
+      onClick: props.onRetry,
+      style: { marginTop: 12, padding: '8px 16px' }
+    }, t('retry'))
   );
 }
 
-function EmptyState({ title, message }) {
-  const { t } = useLanguage();
-  return (
-    <div className="empty-state">
-      <h3>{title || t('noResultsGeneric')}</h3>
-      <p>{message || t('noResultsGenericDesc')}</p>
-    </div>
+function EmptyState(props) {
+  var t = useLanguage().t;
+  return React.createElement('div', { className: 'empty-state' },
+    React.createElement('h3', null, props.title || t('noResultsGeneric')),
+    React.createElement('p', null, props.message || t('noResultsGenericDesc'))
   );
 }
 

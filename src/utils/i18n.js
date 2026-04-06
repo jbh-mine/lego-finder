@@ -3,6 +3,8 @@ const translations = {
     search: '\uAC80\uC0C9',
     browse: '\uB458\uB7EC\uBCF4\uAE30',
     myCollection: '\uB0B4 \uCEEC\uB809\uC158',
+    langKo: '\uD55C\uAD6D\uC5B4',
+    langEn: '\uC601\uC5B4',
     searchTitle: '\uB808\uACE0 \uC138\uD2B8 \uAC80\uC0C9',
     searchPlaceholder: '\uC81C\uD488\uBC88\uD638 \uB610\uB294 \uC774\uB984 \uC785\uB825 (\uC608: 10278, Modular, Star Wars)',
     searchBtn: '\uAC80\uC0C9',
@@ -69,12 +71,14 @@ const translations = {
     page: '\uD398\uC774\uC9C0',
     total: '\uCD1D',
     count: '\uAC1C',
-    downloadGuide: '\uC124\uBA85\uC11C',
+    buildInstructions: '\uC870\uB9BD\uC124\uBA85\uC11C',
   },
   en: {
     search: 'Search',
     browse: 'Browse',
     myCollection: 'Collection',
+    langKo: 'KO',
+    langEn: 'EN',
     searchTitle: 'Search LEGO Sets',
     searchPlaceholder: 'Enter set number or name (e.g., 10278, Modular, Star Wars)',
     searchBtn: 'Search',
@@ -141,7 +145,7 @@ const translations = {
     page: 'page',
     total: 'total',
     count: '',
-    downloadGuide: 'Guide',
+    buildInstructions: 'Instructions',
   },
 };
 
