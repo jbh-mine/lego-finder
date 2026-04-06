@@ -25,6 +25,7 @@ function SetDetailPage() {
   var s8 = useState(false); var inC = s8[0]; var setInC = s8[1];
   var s9 = useState(false); var inW = s9[0]; var setInW = s9[1];
   var s10 = useState('parts'); var tab = s10[0]; var setTab = s10[1];
+  var s15 = useState(false); var imagePopupOpen = s15[0]; var setImagePopupOpen = s15[1];
   var translated = useTranslatedName(set ? set.name : null);
   var insData = useInstructions(setNum);
   var instructions = insData.instructions;
@@ -59,9 +60,28 @@ function SetDetailPage() {
 
   var handleBack = function() { navigate(-1); };
 
+  var openImagePopup = function() { setImagePopupOpen(true); };
+  var closeImagePopup = function() { setImagePopupOpen(false); };
+
+  // Close popup on Escape key and prevent body scroll
+  useEffect(function() {
+    if (!imagePopupOpen) return;
+    var handleKeyDown = function(e) {
+      if (e.key === 'Escape') closeImagePopup();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
+    return function() {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [imagePopupOpen]);
+
   if (loading) return React.createElement(Loading, { message: t('setLoading') });
   if (error) return React.createElement(ErrorMessage, { message: error });
   if (!set) return null;
+
+  var imgSrc = set.set_img_url || PH;
 
   // Build instruction cards section
   var insSection;
@@ -125,11 +145,48 @@ function SetDetailPage() {
   // LEGO Korea official site URL
   var legoKrUrl = getLegoPageUrl(setNum, legoProductNumber);
 
+  // Image zoom popup
+  var imagePopup = null;
+  if (imagePopupOpen) {
+    imagePopup = React.createElement('div', {
+      className: 'image-popup-overlay',
+      onClick: closeImagePopup,
+    },
+      React.createElement('div', {
+        className: 'image-popup-container',
+        onClick: function(e) { e.stopPropagation(); },
+      },
+        React.createElement('button', {
+          className: 'image-popup-close',
+          onClick: closeImagePopup,
+        }, '\u00D7'),
+        React.createElement('div', { className: 'image-popup-content' },
+          React.createElement('img', {
+            className: 'image-popup-img',
+            src: imgSrc,
+            alt: set.name,
+            onError: function(e) { e.target.src = PH; },
+          })
+        ),
+        React.createElement('div', { className: 'image-popup-caption' },
+          set.set_num + ' - ' + (translated || set.name)
+        )
+      )
+    );
+  }
+
   return React.createElement('div', null,
     React.createElement('button', { className: 'back-btn', onClick: handleBack }, t('back')),
     React.createElement('div', { className: 'set-detail' },
       React.createElement('div', { className: 'set-detail-header' },
-        React.createElement('img', { className: 'set-detail-img', src: set.set_img_url || PH, alt: set.name, onError: function(e) { e.target.src = PH; } }),
+        React.createElement('img', {
+          className: 'set-detail-img set-detail-img-clickable',
+          src: imgSrc,
+          alt: set.name,
+          onError: function(e) { e.target.src = PH; },
+          onClick: openImagePopup,
+          title: t('clickToZoom') || '클릭하여 이미지 확대',
+        }),
         React.createElement('div', { className: 'set-detail-info' },
           React.createElement('div', { className: 'set-num' }, set.set_num),
           React.createElement('h1', null, translated || set.name),
@@ -197,7 +254,8 @@ function SetDetailPage() {
             )
           : React.createElement('p', { style: { color: '#999', textAlign: 'center', padding: 20 } }, t('noMinifigs'))
       )
-    )
+    ),
+    imagePopup
   );
 }
 
