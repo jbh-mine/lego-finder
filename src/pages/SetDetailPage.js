@@ -30,9 +30,9 @@ function SetDetailPage() {
   var instructions = insData.instructions;
   var insLoading = insData.loading;
   var legoProductNumber = insData.legoProductNumber;
+  var fileSizes = insData.fileSizes;
   var PPS = 50;
 
-  // Extract Rebrickable number (without suffix)
   var rebrickableNum = setNum ? setNum.replace(/-.*$/, '') : '';
 
   useEffect(function() {
@@ -57,45 +57,72 @@ function SetDetailPage() {
   var togC = function() { if (inC) { removeFromCollection(setNum); setInC(false); } else { addToCollection(set); setInC(true); } };
   var togW = function() { if (inW) { removeFromWishlist(setNum); setInW(false); } else { addToWishlist(set); setInW(true); } };
 
-  var handleBack = function() {
-    navigate(-1);
-  };
+  var handleBack = function() { navigate(-1); };
 
   if (loading) return React.createElement(Loading, { message: t('setLoading') });
   if (error) return React.createElement(ErrorMessage, { message: error });
   if (!set) return null;
 
-  // Build instruction links section
+  // Build instruction cards section
   var insSection;
   if (insLoading) {
     insSection = React.createElement('div', { className: 'ins-section' },
       React.createElement('span', { className: 'ins-loading-text' }, t('instructionLoading'))
     );
   } else if (instructions.length > 0) {
-    var insLinks = instructions.map(function(ins, idx) {
+    var insCards = instructions.map(function(ins, idx) {
       var label;
+      var fileName;
       if (instructions.length === 1) {
-        label = t('buildInstructions') + ' PDF';
+        label = t('buildInstructions');
+        fileName = legoProductNumber ? legoProductNumber + '.pdf' : 'instructions.pdf';
       } else {
         label = t('buildInstructions') + ' ' + ins.sequence + '/' + ins.total;
+        fileName = (legoProductNumber || 'ins') + '_' + ins.sequence + '.pdf';
       }
-      return React.createElement('a', {
-        key: idx,
-        className: 'btn-instructions-detail btn-ins-dl',
+
+      var sizeText = fileSizes[idx] || '';
+
+      // PDF thumbnail
+      var thumbnail = React.createElement('div', { className: 'ins-card-thumb' },
+        React.createElement('div', { className: 'ins-card-thumb-inner' },
+          React.createElement('span', { className: 'ins-card-thumb-icon' }, 'PDF'),
+          instructions.length > 1 ? React.createElement('span', { className: 'ins-card-thumb-seq' }, ins.sequence + '/' + ins.total) : null
+        )
+      );
+
+      // Info section
+      var info = React.createElement('div', { className: 'ins-card-info' },
+        React.createElement('div', { className: 'ins-card-name' }, label),
+        React.createElement('div', { className: 'ins-card-file' }, fileName),
+        sizeText ? React.createElement('div', { className: 'ins-card-size' }, sizeText) : React.createElement('div', { className: 'ins-card-size ins-card-size-loading' }, '...')
+      );
+
+      // Download button
+      var dlBtn = React.createElement('a', {
+        className: 'ins-card-dl',
         href: ins.url,
         target: '_blank',
         rel: 'noopener noreferrer',
+        title: t('download'),
       },
-        React.createElement('span', { className: 'ins-dl-icon' }, '\uD83D\uDCC4'),
-        React.createElement('span', null, label)
+        React.createElement('span', { className: 'ins-card-dl-icon' }, '\u2B07'),
+        React.createElement('span', { className: 'ins-card-dl-text' }, t('download'))
+      );
+
+      return React.createElement('div', { key: idx, className: 'ins-card' },
+        thumbnail,
+        info,
+        dlBtn
       );
     });
-    insSection = React.createElement('div', { className: 'ins-section' }, insLinks);
+
+    insSection = React.createElement('div', { className: 'ins-cards-container' }, insCards);
   } else {
     insSection = null;
   }
 
-  // LEGO Korea official site URL - use official product number if available
+  // LEGO Korea official site URL
   var legoKrUrl = getLegoPageUrl(setNum, legoProductNumber);
 
   return React.createElement('div', null,

@@ -8,20 +8,17 @@ var insCache = {};
 var pendingFetches = {};
 
 // Generate LEGO official building instructions URL
-// Accepts optional legoNum (official product number)
 export function getLegoPageUrl(setNum, legoNum) {
   var num = legoNum || (setNum ? setNum.replace(/-.*$/, '') : '');
   return 'https://www.lego.com/ko-kr/service/building-instructions/' + num;
 }
 
-// Check if a PDF URL is an "original" file (just digits.pdf)
 function isOriginalPdf(url) {
   if (!url) return false;
   var filename = url.split('/').pop().split('?')[0];
   return /^\d+\.pdf$/i.test(filename);
 }
 
-// Extract product number from PDF filename (e.g., "4669.pdf" -> "4669")
 function extractNumFromUrl(url) {
   if (!url) return '';
   var filename = url.split('/').pop().split('?')[0];
@@ -51,11 +48,9 @@ function parseResponse(data, queryNumber) {
   var hits = (data && data.hits && data.hits.hits) || [];
 
   hits.forEach(function(hit) {
-    // Try to get LEGO product number from Elasticsearch hit _id
     if (hit._id && !legoProductNumber) {
       legoProductNumber = String(hit._id);
     }
-    // Also try from _source.product_number
     var source = hit._source || hit;
     if (source.product_number && !legoProductNumber) {
       legoProductNumber = String(source.product_number);
@@ -77,7 +72,6 @@ function parseResponse(data, queryNumber) {
         }
         if (!url) return;
 
-        // Only keep original PDFs (digits-only filename)
         if (!isOriginalPdf(url)) return;
 
         var isAlt = bi.isAlternative || bi.is_alternative || false;
@@ -97,11 +91,22 @@ function parseResponse(data, queryNumber) {
           tot = parseInt(seqMatch[2], 10);
         }
 
+        // Extract file size from API response if available
+        var fileSize = 0;
+        if (bi.file && bi.file.size) {
+          fileSize = bi.file.size;
+        } else if (bi.fileSize) {
+          fileSize = bi.fileSize;
+        } else if (bi.file_size) {
+          fileSize = bi.file_size;
+        }
+
         instructions.push({
           url: url,
           description: desc,
           sequence: seq,
           total: tot,
+          fileSize: fileSize,
         });
       });
     });
@@ -125,16 +130,16 @@ function parseResponse(data, queryNumber) {
           var desc = bi.description || '';
           var seqMatch = desc.match(/(\d+)\s*\/\s*(\d+)\s*$/);
           if (seqMatch) { seq = parseInt(seqMatch[1], 10); tot = parseInt(seqMatch[2], 10); }
-          instructions.push({ url: url, description: desc, sequence: seq, total: tot });
+          var fileSize = 0;
+          if (bi.file && bi.file.size) fileSize = bi.file.size;
+          else if (bi.fileSize) fileSize = bi.fileSize;
+          else if (bi.file_size) fileSize = bi.file_size;
+          instructions.push({ url: url, description: desc, sequence: seq, total: tot, fileSize: fileSize });
         });
       });
     });
   }
 
-  // Determine the LEGO product number with proper priority:
-  // 1. API response: hit._id or source.product_number (already set above)
-  // 2. PDF filename ONLY as fallback when API didn't provide a number
-  // 3. Query number (from Rebrickable set_num) as last resort
   if (!legoProductNumber && instructions.length > 0) {
     var pdfNum = extractNumFromUrl(instructions[0].url);
     if (pdfNum) {
@@ -147,7 +152,6 @@ function parseResponse(data, queryNumber) {
 
   instructions.sort(function(a, b) { return a.sequence - b.sequence; });
 
-  // Remove duplicates by BOTH URL and sequence number
   var seenUrl = {};
   var seenSeq = {};
   var filtered = instructions.filter(function(ins) {
@@ -198,11 +202,31 @@ export async function fetchInstructions(setNum) {
         continue;
       }
     }
-    // Even if no instructions found, return the queried number as legoProductNumber
     return { instructions: [], legoProductNumber: num };
   })();
 
   var result = await pendingFetches[num];
   delete pendingFetches[num];
   return result;
+}
+
+// Fetch PDF file size via HEAD request
+export async function fetchPdfSize(url) {
+  try {
+    var res = await fetch(url, { method: 'HEAD' });
+    if (res.ok) {
+      var len = res.headers.get('content-length');
+      if (len) return parseInt(len, 10);
+    }
+  } catch(e) {
+    // Try with CORS proxy
+    try {
+      var res2 = await fetch('https://corsproxy.io/?' + encodeURIComponent(url), { method: 'HEAD' });
+      if (res2.ok) {
+        var len2 = res2.headers.get('content-length');
+        if (len2) return parseInt(len2, 10);
+      }
+    } catch(e2) {}
+  }
+  return 0;
 }
