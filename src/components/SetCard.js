@@ -10,7 +10,7 @@ const PLACEHOLDER_IMG = 'https://rebrickable.com/static/img/nil_mf.jpg';
 
 function SetCard({ set }) {
   const navigate = useNavigate();
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const [inCollection, setInCollection] = useState(false);
   const [inWishlist, setInWishlist] = useState(false);
 
@@ -41,8 +41,8 @@ function SetCard({ set }) {
     }
   };
 
-  const yearLabel = lang === 'ko' ? `${set.year}년` : set.year;
-  const partsLabel = lang === 'ko' ? `${set.num_parts?.toLocaleString()}개 부품` : `${set.num_parts?.toLocaleString()} parts`;
+  const yearLabel = set.year + t('yearSuffix');
+  const partsLabel = (set.num_parts || 0).toLocaleString() + t('partsUnit');
 
   return (
     <div className="set-card" onClick={() => navigate(`/set/${set.set_num}`)}>

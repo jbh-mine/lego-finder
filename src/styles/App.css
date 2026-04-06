@@ -64,6 +64,13 @@ body {
   color: white;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+}
+
 .header-nav {
   display: flex;
   gap: 8px;
@@ -85,24 +92,25 @@ body {
   background: rgba(255,255,255,0.2);
 }
 
-/* Language Toggle */
+/* Language Toggle - Always Visible */
 .lang-toggle {
-  background: rgba(255,255,255,0.15);
-  color: white;
-  border: 1.5px solid rgba(255,255,255,0.4);
+  background: var(--lego-yellow);
+  color: var(--lego-dark);
+  border: none;
   padding: 6px 14px;
   border-radius: var(--radius);
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 800;
   cursor: pointer;
   transition: all 0.2s;
-  margin-left: 4px;
   white-space: nowrap;
+  min-height: 36px;
+  letter-spacing: 0.5px;
 }
 
 .lang-toggle:hover {
-  background: rgba(255,255,255,0.3);
-  border-color: rgba(255,255,255,0.7);
+  background: white;
+  color: var(--lego-red);
 }
 
 /* Mobile Menu Button */
@@ -720,14 +728,6 @@ body {
     padding: 12px 16px;
     font-size: 1rem;
     border-radius: var(--radius);
-  }
-
-  .lang-toggle {
-    margin-left: 0;
-    margin-top: 4px;
-    padding: 10px 16px;
-    text-align: center;
-    font-size: 0.9rem;
   }
 
   .main-container {

@@ -6,7 +6,7 @@ import Pagination from '../components/Pagination';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
 
 function BrowsePage() {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const [themes, setThemes] = useState([]);
   const [selectedTheme, setSelectedTheme] = useState('');
   const [minYear, setMinYear] = useState('');
@@ -24,7 +24,7 @@ function BrowsePage() {
     async function loadThemes() {
       try {
         const data = await getThemes(1, 1000);
-        const parentThemes = data.results.filter((t) => !t.parent_id);
+        const parentThemes = data.results.filter((th) => !th.parent_id);
         setThemes(parentThemes);
       } catch (err) {
         console.error('Theme load failed:', err);
@@ -102,7 +102,7 @@ function BrowsePage() {
           <select value={minYear} onChange={(e) => setMinYear(e.target.value)}>
             <option value="">{t('all')}</option>
             {yearOptions.map((y) => (
-              <option key={y} value={y}>{y}{t('year')}</option>
+              <option key={y} value={y}>{y}{t('yearSuffix')}</option>
             ))}
           </select>
         </div>
@@ -112,7 +112,7 @@ function BrowsePage() {
           <select value={maxYear} onChange={(e) => setMaxYear(e.target.value)}>
             <option value="">{t('all')}</option>
             {yearOptions.map((y) => (
-              <option key={y} value={y}>{y}{t('year')}</option>
+              <option key={y} value={y}>{y}{t('yearSuffix')}</option>
             ))}
           </select>
         </div>

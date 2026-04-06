@@ -13,7 +13,7 @@ const PLACEHOLDER_IMG = 'https://rebrickable.com/static/img/nil_mf.jpg';
 
 function SetDetailPage() {
   const { setNum } = useParams();
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const [set, setSet] = useState(null);
   const [parts, setParts] = useState(null);
   const [minifigs, setMinifigs] = useState(null);
@@ -46,7 +46,7 @@ function SetDetailPage() {
       } catch (err) {
         setError(
           err.response?.status === 404
-            ? `"${setNum}"${t('setNotFound')}`
+            ? '"' + setNum + '"' + t('setNotFound')
             : t('apiErrorGeneric')
         );
       } finally {
@@ -93,8 +93,8 @@ function SetDetailPage() {
   if (error) return <ErrorMessage message={error} />;
   if (!set) return null;
 
-  const yearLabel = lang === 'ko' ? `${set.year}년` : set.year;
-  const partsLabel = lang === 'ko' ? `${set.num_parts?.toLocaleString()}개` : set.num_parts?.toLocaleString();
+  const yearLabel = set.year + t('yearSuffix');
+  const partsLabel = (set.num_parts || 0).toLocaleString() + t('partsCount');
 
   return (
     <div>
@@ -200,7 +200,7 @@ function SetDetailPage() {
                             width: 10,
                             height: 10,
                             borderRadius: '50%',
-                            background: `#${item.color.rgb}`,
+                            background: '#' + (item.color.rgb || '999'),
                             border: '1px solid #ddd',
                             display: 'inline-block',
                           }}></span>

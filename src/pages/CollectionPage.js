@@ -10,7 +10,7 @@ import { EmptyState } from '../components/Loading';
 const PLACEHOLDER_IMG = 'https://rebrickable.com/static/img/nil_mf.jpg';
 
 function CollectionPage() {
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('collection');
   const [collection, setCollection] = useState([]);
   const [wishlist, setWishlist] = useState([]);
@@ -90,8 +90,8 @@ function CollectionPage() {
       ) : (
         <div className="set-grid">
           {currentList.map((item) => {
-            const yearLabel = lang === 'ko' ? `${item.year}년` : item.year;
-            const partsLabel = lang === 'ko' ? `${item.num_parts?.toLocaleString()}개 부품` : `${item.num_parts?.toLocaleString()} parts`;
+            const yearLabel = item.year + t('yearSuffix');
+            const partsLabel = (item.num_parts || 0).toLocaleString() + t('partsUnit');
             return (
               <div
                 key={item.set_num}
