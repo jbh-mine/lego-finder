@@ -54,6 +54,9 @@ function Header() {
           <Link to="/new" className={isActive('/new')} onClick={() => setMenuOpen(false)}>
             {t('newProducts')}
           </Link>
+          <Link to="/funding" className={isActive('/funding')} onClick={() => setMenuOpen(false)}>
+            {t('fundingProducts')}
+          </Link>
           <Link to="/collection" className={isActive('/collection')} onClick={() => setMenuOpen(false)}>
             {t('myCollection')}
           </Link>

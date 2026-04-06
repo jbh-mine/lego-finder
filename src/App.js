@@ -9,6 +9,7 @@ import CollectionPage from './pages/CollectionPage';
 import PartsSearchPage from './pages/PartsSearchPage';
 import PartDetailPage from './pages/PartDetailPage';
 import NewProductsPage from './pages/NewProductsPage';
+import FundingPage from './pages/FundingPage';
 import './styles/App.css';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
             <Route path="/set/:setNum" element={<SetDetailPage />} />
             <Route path="/collection" element={<CollectionPage />} />
             <Route path="/new" element={<NewProductsPage />} />
+            <Route path="/funding" element={<FundingPage />} />
           </Routes>
         </main>
       </Router>
