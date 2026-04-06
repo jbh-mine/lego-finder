@@ -197,6 +197,49 @@ var WORD_MAP = {
   '\ud06c\ub9ac\uc5d0\uc774\ud130': 'Creator',
   '\ud06c\ub9ac\uc5d0\uc774\ud130 \uc804\ubb38\uac00': 'Creator Expert',
   '\uc544\ud0a4\ud14d\ucc98': 'Architecture',
+  // ===== Common Korean search terms =====
+  '\uACBD\uCC30\uC11C': 'Police Station',
+  '\uACBD\uCC30': 'Police',
+  '\uC18C\uBC29\uC11C': 'Fire Station',
+  '\uC18C\uBC29': 'Fire',
+  '\uBCD1\uC6D0': 'Hospital',
+  '\uD559\uAD50': 'School',
+  '\uACF5\uD56D': 'Airport',
+  '\uD56D\uAD6C': 'Harbor',
+  '\uD56D\uAD6C\uB3C4\uC2DC': 'Harbor City',
+  '\uBC30': 'Ship',
+  '\uBC30\uBC30': 'Ship',
+  '\uBE44\uD589': 'Flight',
+  '\uC18C\uBC29\uCC28': 'Fire Truck',
+  '\uACBD\uCC30\uCC28': 'Police Car',
+  '\uC790\uB3D9\uCC28': 'Car',
+  '\uD2B8\uB7ED': 'Truck',
+  '\uBC84\uC2A4': 'Bus',
+  '\uD5EC\uB9AC\uCF65\uD130': 'Helicopter',
+  '\uC624\uD1A0\uBC14\uC774': 'Motorcycle',
+  '\uB18D\uC7A5': 'Farm',
+  '\uC815\uAE00': 'Jungle',
+  '\uD0D0\uD5D8': 'Exploration',
+  '\uC6B0\uC8FC\uC120': 'Spaceship',
+  '\uB85C\uCF13': 'Rocket',
+  '\uB2EC\uAE30\uC9C0': 'Moon Base',
+  '\uD654\uC131': 'Mars',
+  '\uACF5\uB8E1': 'Dinosaur',
+  '\uC5F0\uB9BD': 'United',
+  '\uBC15\uBB3C\uAD00': 'Museum',
+  '\uB3C4\uC11C\uAD00': 'Library',
+  '\uC2DD\uB2F9': 'Restaurant',
+  '\uCE74\uD398': 'Cafe',
+  '\uD638\uD154': 'Hotel',
+  '\uC601\uD654\uAD00': 'Cinema',
+  '\uAC00\uAC8C': 'Shop',
+  '\uC0C1\uC810': 'Store',
+  '\uC2DC\uC7A5': 'Market',
+  '\uB808\uC2A4\uD1A0\uB791': 'Restaurant',
+  '\uC740\uD589': 'Bank',
+  '\uC6B0\uCCB4\uAD6D': 'Post Office',
+  '\uC8FC\uC720\uC18C': 'Gas Station',
+  '\uC815\uBE44\uC18C': 'Garage',
 };
 
 function translateSearchQuery(q) {
@@ -204,27 +247,19 @@ function translateSearchQuery(q) {
 
   var trimmed = q.trim();
 
-  // Check SET_NUM_MAP first (direct nickname to set number)
+  // 1. Check SET_NUM_MAP exact match first (nickname -> set number)
   if (SET_NUM_MAP[trimmed]) {
     return SET_NUM_MAP[trimmed];
   }
 
-  // Check SET_NUM_MAP with prefix matching
-  var setKeys = Object.keys(SET_NUM_MAP);
-  for (var sk = 0; sk < setKeys.length; sk++) {
-    if (setKeys[sk].indexOf(trimmed) === 0 && trimmed.length >= 2) {
-      return SET_NUM_MAP[setKeys[sk]];
-    }
-  }
-
-  // Check phrase map (exact priority)
+  // 2. Check PHRASE_MAP (exact phrase in query)
   for (var i = 0; i < PHRASE_MAP.length; i++) {
     if (trimmed.indexOf(PHRASE_MAP[i][0]) !== -1) {
       return PHRASE_MAP[i][1];
     }
   }
 
-  // Word-based translation
+  // 3. Word-based translation (WORD_MAP) - check BEFORE prefix matching
   var words = trimmed.split(' ');
   var newWords = [];
   var anyTranslated = false;
@@ -241,7 +276,7 @@ function translateSearchQuery(q) {
     return newWords.join(' ');
   }
 
-  // Partial word match
+  // 4. Partial word match from WORD_MAP
   var bestWord = null;
   var bestWordLen = 0;
   var keys = Object.keys(WORD_MAP);
@@ -258,6 +293,14 @@ function translateSearchQuery(q) {
   }
   if (bestWord) {
     return bestWord;
+  }
+
+  // 5. SET_NUM_MAP prefix matching (LAST, strict: query must cover >= 60% of key)
+  var setKeys = Object.keys(SET_NUM_MAP);
+  for (var sk = 0; sk < setKeys.length; sk++) {
+    if (setKeys[sk].indexOf(trimmed) === 0 && trimmed.length >= 2 && trimmed.length >= setKeys[sk].length * 0.6) {
+      return SET_NUM_MAP[setKeys[sk]];
+    }
   }
 
   return trimmed;
