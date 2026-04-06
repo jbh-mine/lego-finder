@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { searchSets, getThemes, filterSets } from '../utils/api';
-import { translateSearchQuery } from '../utils/searchDict';
+import { translateSearchQuery, SET_NUM_MAP } from '../utils/searchDict';
 import { getCachedTranslation, translateName } from '../utils/translate';
 import { useLanguage } from '../contexts/LanguageContext';
 import SetCard from '../components/SetCard';
@@ -218,6 +218,26 @@ function SearchPage() {
     setError(null);
     try {
       var translatedQuery = translateSearchQuery(searchQuery.trim());
+      
+      // If translated query is a set number (from SET_NUM_MAP), search by set number
+      if (/^\d[\d\-]*$/.test(translatedQuery) && translatedQuery !== searchQuery.trim()) {
+        // This was a Korean nickname mapped to a set number
+        var data = await searchSets(translatedQuery, 1, PAGE_SIZE);
+        if (data.results.length > 0) {
+          matchedThemeRef.current = null;
+          setMatchedThemeId(null);
+          setNameExtras([]);
+          setAllResults(data.results);
+          setTotalCount(data.count);
+          setPage(1);
+          setHasMore(data.results.length >= PAGE_SIZE);
+          setSearched(true);
+          setLoading(false);
+          return;
+        }
+        // If no results by number, fall through to normal search
+      }
+      
       var matchedThemeIds = findMatchingThemeIds(translatedQuery);
 
       if (matchedThemeIds.length > 0) {

@@ -25,6 +25,10 @@ function FundingPage() {
   var s11 = useState({}); var themeMap = s11[0]; var setThemeMap = s11[1];
   var s12 = useState({}); var themeNames = s12[0]; var setThemeNames = s12[1];
 
+  // NEW: year filter and name search
+  var s13 = useState('all'); var selYear = s13[0]; var setSelYear = s13[1];
+  var s14 = useState(''); var searchName = s14[0]; var setSearchName = s14[1];
+
   var sentinelRef = useRef(null);
   var currentSeriesRef = useRef('all');
 
@@ -139,6 +143,8 @@ function FundingPage() {
     setPage(1);
     setHasMore(false);
     setLoaded(false);
+    setSelYear('all');
+    setSearchName('');
     var themeId = selSeries === 'all' ? bdpParentId : selSeries;
     doFetch(themeId, 1, false);
   }, [bdpParentId, selSeries]);
@@ -156,13 +162,40 @@ function FundingPage() {
     return function() { obs.disconnect(); };
   });
 
+  // Extract available years from results
+  var availableYears = useMemo(function() {
+    var years = {};
+    allResults.forEach(function(set) {
+      if (set.year) years[set.year] = true;
+    });
+    return Object.keys(years).map(Number).sort(function(a, b) { return b - a; });
+  }, [allResults]);
+
+  // Filter results by year and name
+  var filteredResults = useMemo(function() {
+    var results = allResults;
+    if (selYear !== 'all') {
+      var yr = parseInt(selYear);
+      results = results.filter(function(set) { return set.year === yr; });
+    }
+    if (searchName.trim()) {
+      var q = searchName.trim().toLowerCase();
+      results = results.filter(function(set) {
+        var name = (set.name || '').toLowerCase();
+        var num = (set.set_num || '').toLowerCase();
+        return name.indexOf(q) >= 0 || num.indexOf(q) >= 0;
+      });
+    }
+    return results;
+  }, [allResults, selYear, searchName]);
+
   // Group by series (sub-theme) when viewing all, or by year when viewing a specific series
   var displayGroups = useMemo(function() {
-    if (allResults.length === 0) return [];
+    if (filteredResults.length === 0) return [];
 
     if (selSeries === 'all') {
       var groups = {};
-      allResults.forEach(function(set) {
+      filteredResults.forEach(function(set) {
         var tid = set.theme_id || 0;
         if (!groups[tid]) {
           groups[tid] = { id: tid, name: getThemeName(tid), sets: [], maxYear: 0 };
@@ -173,16 +206,31 @@ function FundingPage() {
       return Object.values(groups).sort(function(a, b) { return b.maxYear - a.maxYear; });
     } else {
       var yearGroups = {};
-      allResults.forEach(function(set) {
+      filteredResults.forEach(function(set) {
         var year = set.year || 0;
         if (!yearGroups[year]) {
-          yearGroups[year] = { id: year, name: year + (lang === 'ko' ? '\uB144' : ''), sets: [] };
+          yearGroups[year] = { id: year, name: year + (lang === 'ko' ? '년' : ''), sets: [] };
         }
         yearGroups[year].sets.push(set);
       });
       return Object.values(yearGroups).sort(function(a, b) { return b.id - a.id; });
     }
-  }, [allResults, selSeries, themeMap, themeNames, lang]);
+  }, [filteredResults, selSeries, themeMap, themeNames, lang]);
+
+  // Handle year change
+  var handleYearChange = function(e) {
+    setSelYear(e.target.value);
+  };
+
+  // Handle search name change
+  var handleSearchChange = function(e) {
+    setSearchName(e.target.value);
+  };
+
+  // Clear search
+  var handleClearSearch = function() {
+    setSearchName('');
+  };
 
   // Header section
   var headerSection = React.createElement('div', { className: 'search-section' },
@@ -191,7 +239,7 @@ function FundingPage() {
       React.createElement('p', { className: 'new-products-desc' }, t('fundingDesc'))
     ),
     React.createElement('div', { className: 'funding-info-notice' },
-      React.createElement('span', { className: 'funding-info-icon' }, '\u2139\uFE0F'),
+      React.createElement('span', { className: 'funding-info-icon' }, 'ℹ️'),
       React.createElement('span', null, t('fundingNotice'))
     ),
     bdpSeries.length > 0 ? React.createElement('div', { className: 'funding-series-tabs' },
@@ -206,13 +254,49 @@ function FundingPage() {
           onClick: function() { setSelSeries(String(series.id)); },
         }, getSeriesName(series));
       })
+    ) : null,
+    // Filter row: year select + name search
+    loaded && allResults.length > 0 ? React.createElement('div', { className: 'funding-filter-row' },
+      React.createElement('div', { className: 'funding-filter-year' },
+        React.createElement('select', {
+          className: 'funding-year-select',
+          value: selYear,
+          onChange: handleYearChange,
+        },
+          React.createElement('option', { value: 'all' }, t('all') + ' ' + (lang === 'ko' ? '연도' : 'Years')),
+          availableYears.map(function(yr) {
+            return React.createElement('option', { key: yr, value: String(yr) }, yr + (lang === 'ko' ? '년' : ''));
+          })
+        )
+      ),
+      React.createElement('div', { className: 'funding-filter-search' },
+        React.createElement('div', { className: 'search-input-wrapper' },
+          React.createElement('input', {
+            type: 'text',
+            className: 'funding-search-input',
+            value: searchName,
+            onChange: handleSearchChange,
+            placeholder: lang === 'ko' ? '제품명 또는 번호 검색' : 'Search by name or number',
+          }),
+          searchName ? React.createElement('button', {
+            type: 'button',
+            className: 'search-clear-btn',
+            onClick: handleClearSearch,
+            'aria-label': 'Clear search',
+          }, '×') : null
+        )
+      )
     ) : null
   );
 
-  // Results
+  // Results count (show filtered count)
   var resultsSection = null;
   if (displayGroups.length > 0) {
-    var summaryText = t('total') + ' ' + totalCount + t('count') + ' ' + t('fundingProductsFound');
+    var displayCount = filteredResults.length;
+    var summaryText = t('total') + ' ' + displayCount + t('count') + ' ' + t('fundingProductsFound');
+    if ((selYear !== 'all' || searchName.trim()) && displayCount !== totalCount) {
+      summaryText += ' (' + (lang === 'ko' ? '전체 ' : 'of ') + totalCount + (lang === 'ko' ? '개' : '') + ')';
+    }
     var summary = React.createElement('div', { className: 'search-results-summary' }, summaryText);
 
     var sections = displayGroups.map(function(group) {
@@ -231,6 +315,13 @@ function FundingPage() {
     resultsSection = React.createElement(React.Fragment, null, summary, sections);
   }
 
+  // No filter results message
+  var noFilterResults = !loading && !error && loaded && filteredResults.length === 0 && allResults.length > 0 ?
+    React.createElement(EmptyState, {
+      title: t('noResults'),
+      message: lang === 'ko' ? '해당 조건에 맞는 펀딩 제품이 없습니다.' : 'No funding products match the selected filters.'
+    }) : null;
+
   var loadingMore = loading && allResults.length > 0 ? React.createElement(Loading, null) : null;
   var initialLoading = loading && allResults.length === 0 && !error ? React.createElement(Loading, null) : null;
   var emptyResults = !loading && !error && loaded && allResults.length === 0 ?
@@ -246,6 +337,7 @@ function FundingPage() {
       }
     }}) : null,
     resultsSection,
+    noFilterResults,
     loadingMore,
     emptyResults,
     React.createElement('div', { ref: sentinelRef, style: { height: 1, marginBottom: 40 } })
