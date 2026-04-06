@@ -9,9 +9,11 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 ## 주요 기능
 
 - **제품번호/이름 검색** — Rebrickable API를 통한 실시간 레고 세트 검색
+- **부품 검색** — 부품 이름/번호로 검색, 카테고리 필터, 색상 정보 확인
 - **한국어 자연어 검색** — "모듈러", "스타워즈", "경찰서" 등 한국어 키워드로 검색 가능 (100+ 키워드 매핑)
 - **테마/연도 필터링** — 테마별, 연도별 브라우징 (테마명 한국어 번역 지원)
 - **세트 상세 정보** — 부품 목록, 미니피규어, 색상 정보 확인
+- **부품 상세 정보** — 사용 가능한 색상, 엘리먼트 ID, 포함된 세트 목록
 - **내 컬렉션 관리** — localStorage 기반 컬렉션 및 위시리스트
 - **한/영 전환** — 헤더 토글 버튼으로 언어 전환
 - **모바일 반응형** — 햄버거 메뉴, 터치 영역 확대 등 모바일 최적화
@@ -22,7 +24,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 
 - **React 19** + React Router (HashRouter)
 - **Axios** + API 캐싱
-- **Rebrickable API v3** — 세트 검색, 부품, 미니피규어 데이터
+- **Rebrickable API v3** — 세트 검색, 부품 검색, 미니피규어 데이터
 - **MyMemory Translation API** — 제품명/테마명 한국어 번역 (localStorage 캐싱)
 - **GitHub Pages** (gh-pages) 배포
 
@@ -42,14 +44,16 @@ src/
 ├── contexts/
 │   └── LanguageContext.js  # 언어 상태 관리 (Context API)
 ├── pages/
-│   ├── SearchPage.js       # 검색 페이지 (한국어 자연어 지원)
+│   ├── SearchPage.js       # 세트 검색 페이지 (한국어 자연어 지원)
+│   ├── PartsSearchPage.js  # 부품 검색 페이지 (카테고리 필터)
+│   ├── PartDetailPage.js   # 부품 상세 (색상, 엘리먼트, 세트)
 │   ├── BrowsePage.js       # 테마/연도 브라우징 (무한스크롤)
 │   ├── SetDetailPage.js    # 세트 상세 (부품, 미니피규어)
 │   └── CollectionPage.js   # 내 컬렉션/위시리스트
 ├── styles/
 │   └── App.css             # 전체 스타일 (반응형 포함)
 └── utils/
-    ├── api.js              # Rebrickable API 래퍼
+    ├── api.js              # Rebrickable API 래퍼 (세트 + 부품)
     ├── searchDict.js       # 한국어→영어 검색 키워드 사전
     ├── translate.js        # MyMemory 번역 API (제품명 번역)
     ├── i18n.js             # 한/영 UI 번역 리소스
@@ -79,7 +83,17 @@ npm run deploy
 
 ### v0.1.0 — 2026-04-06
 
-#### `NEW` remove: 조립설명서 PDF 다운로드 버튼 및 관련 코드 제거
+#### `NEW` feat: 부품 검색 탭 추가 (PartsSearchPage + PartDetailPage)
+- 부품 이름/번호로 검색 기능 추가 (`PartsSearchPage.js`)
+- 부품 카테고리 필터 드롭다운 지원
+- 부품 상세 페이지: 사용 가능한 색상, 엘리먼트 ID, 포함된 세트 목록 (`PartDetailPage.js`)
+- 한국어 자연어 검색 지원 (부품 검색에도 searchDict 적용)
+- Header 네비게이션에 '부품 검색' 탭 추가
+- api.js에 `searchParts`, `getPartDetail`, `getPartColors`, `getPartCategories`, `getColors` 함수 추가
+- i18n.js에 부품 검색 관련 번역 키 추가 (ko/en)
+- 부품 검색 및 상세 페이지 CSS 스타일 추가 (모바일 반응형 포함)
+
+#### `9b9d28c` remove: 조립설명서 PDF 다운로드 버튼 및 관련 코드 제거
 - SetCard.js: `useInstructions` 훅, 조립설명서 버튼 전체 제거
 - SetDetailPage.js: 조립설명서 섹션(`ins-title`, `insSection`) 전체 제거
 - `useInstructions.js`, `instructions.js`: 더 이상 사용하지 않는 파일 제거
@@ -88,7 +102,6 @@ npm run deploy
 - 한국어→영어 검색 키워드 사전 추가 (`searchDict.js`) — 100+ 키워드 매핑
   - 구문 매핑: 스타워즈→Star Wars, 해리포터→Harry Potter, 밀레니엄팔콘→Millennium Falcon 등
   - 단어 매핑: 모듈러→Modular, 테크닉→Technic, 자동차→Car, 공룡→Dinosaur 등
-  - 테마, 차량, 건물, 캐릭터, 자연, 기타 카테고리 전체 커버
 - SearchPage에서 검색 시 자동으로 한국어를 영어로 변환하여 Rebrickable API에 전달
 
 #### `dc5286a` feat: 테마명 번역 + 조립설명서 PDF 다운로드 (북릿 지원)

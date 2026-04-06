@@ -38,6 +38,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .filter-btn:hover{background:#3da649}
 .filter-reset{padding:8px 16px;background:#999;color:#fff;border:none;border-radius:var(--radius);cursor:pointer;transition:background .2s;min-height:44px}
 .filter-reset:hover{background:#777}
+/* Parts Filter Row */
+.parts-filter-row{display:flex;gap:16px;margin-top:16px;align-items:flex-end}
+.parts-cat-filter{min-width:200px;flex:0 1 auto}
 /* Theme Sections */
 .theme-section{margin-bottom:32px}
 .theme-header{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;padding-bottom:8px;border-bottom:3px solid var(--lego-red)}
@@ -61,18 +64,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .btn-icon:hover{background:var(--lego-gray)}
 .btn-icon.active{background:var(--lego-yellow);border-color:var(--lego-yellow)}
 .btn-icon.wishlist-active{background:var(--lego-red);border-color:var(--lego-red);color:#fff}
-.btn-instructions{background:var(--lego-blue)!important;color:#fff!important;border-color:var(--lego-blue)!important;font-weight:600}
-.btn-instructions:hover{background:#005a96!important}
-.btn-ins-booklet{font-size:.75rem!important;padding:5px 8px!important}
-/* Instructions Section in Detail */
-.ins-title{font-size:1rem;font-weight:700;color:var(--lego-dark);margin-top:20px;margin-bottom:8px;padding-top:16px;border-top:1px solid var(--lego-border)}
-.ins-section{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.ins-loading-text{font-size:.85rem;color:#999}
-.btn-ins-dl{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:var(--radius);font-weight:600;font-size:.9rem;min-height:44px;text-decoration:none;background:var(--lego-blue);color:#fff;border:2px solid var(--lego-blue);cursor:pointer;transition:all .2s}
-.btn-ins-dl:hover{background:#005a96;border-color:#005a96}
-.ins-dl-icon{font-size:1.1rem}
-.btn-instructions-detail{display:inline-flex;align-items:center;padding:10px 20px;border-radius:var(--radius);font-weight:600;font-size:.95rem;min-height:44px;text-decoration:none;background:var(--lego-blue);color:#fff;border:2px solid var(--lego-blue);cursor:pointer;transition:all .2s}
-.btn-instructions-detail:hover{background:#005a96;border-color:#005a96}
+/* Parts Result Grid */
+.parts-result-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+.part-result-card{background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);transition:transform .2s,box-shadow .2s;cursor:pointer;text-align:center}
+.part-result-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.part-result-img{width:100%;height:140px;object-fit:contain;background:#f9f9f9;padding:10px}
+.part-result-body{padding:10px 12px}
+.part-result-num{font-size:.75rem;color:var(--lego-blue);font-weight:700}
+.part-result-name{font-size:.85rem;font-weight:600;margin:4px 0;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.part-result-cat{font-size:.7rem;color:#999;margin-top:2px}
+/* Part Detail Sections */
+.part-detail-section{margin-top:28px;padding-top:20px;border-top:1px solid var(--lego-border)}
+.part-section-title{font-size:1.05rem;font-weight:700;color:var(--lego-dark);margin-bottom:14px}
+.part-colors-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.part-color-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--radius);background:var(--lego-gray);cursor:pointer;transition:all .2s;border:2px solid transparent}
+.part-color-item:hover{border-color:var(--lego-blue);background:#fff}
+.part-color-item.part-color-selected{border-color:var(--lego-blue);background:#e8f4fd;box-shadow:var(--shadow-sm)}
+.part-color-swatch{display:inline-block;width:20px;height:20px;border-radius:50%;border:2px solid rgba(0,0,0,.15);flex-shrink:0}
+.part-color-name{font-size:.8rem;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.part-color-count{font-size:.7rem;color:#999;white-space:nowrap}
+.part-selected-color{display:flex;align-items:center;gap:8px;margin-top:16px;padding:10px 14px;background:var(--lego-gray);border-radius:var(--radius);font-size:.9rem}
+.part-color-sets-count{color:#999;font-size:.85rem}
+.part-elements-list{display:flex;flex-wrap:wrap;gap:6px}
+.part-element-badge{display:inline-block;padding:4px 10px;background:var(--lego-gray);border:1px solid var(--lego-border);border-radius:var(--radius);font-size:.8rem;font-weight:600;color:var(--lego-dark)}
+.part-sets-hint{font-size:.9rem;color:#666}
+.part-sets-hint a{color:var(--lego-blue);text-decoration:none;font-weight:600}
+.part-sets-hint a:hover{text-decoration:underline}
 /* Detail */
 .set-detail{background:#fff;border-radius:var(--radius);padding:32px;box-shadow:var(--shadow-sm)}
 .set-detail-header{display:flex;gap:32px;margin-bottom:32px}
@@ -126,20 +143,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .search-section{padding:16px}
 .search-bar{flex-direction:column;gap:8px}
 .search-bar button{width:100%}
+.parts-filter-row{flex-direction:column}
+.parts-cat-filter{min-width:100%;width:100%}
 .set-detail-header{flex-direction:column}
 .set-detail-img{width:100%}
 .set-detail{padding:20px 16px}
 .set-detail-info h1{font-size:1.4rem}
 .detail-actions{flex-direction:column}
 .detail-actions button,.detail-actions a{width:100%;justify-content:center;text-align:center}
-.ins-section{flex-direction:column}
-.btn-ins-dl{width:100%;justify-content:center}
 .filter-section{flex-direction:column;padding:16px}
 .filter-group{width:100%}
 .filter-btn,.filter-reset{width:100%}
 .collection-stats{flex-direction:column;gap:16px}
 .set-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .set-card-img{height:140px}
+.parts-result-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.part-result-img{height:110px}
+.part-colors-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
 .collection-tabs button{flex:1;padding:10px 12px;font-size:.85rem;text-align:center}
 .parts-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
 .part-card img{width:50px;height:50px}
@@ -151,6 +171,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 }
 @media(max-width:380px){
 .set-grid{grid-template-columns:1fr}
+.parts-result-grid{grid-template-columns:1fr}
 .header-logo{font-size:1.3rem}
 .stat-item .stat-value{font-size:1.4rem}
 .set-detail-info h1{font-size:1.2rem}

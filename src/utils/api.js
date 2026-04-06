@@ -90,3 +90,31 @@ export async function filterSets({ search, themeId, minYear, maxYear, page = 1, 
 
   return cachedRequest('/sets/', params);
 }
+
+// Parts API
+export async function searchParts(query, page = 1, pageSize = 20, partCatId = null) {
+  const params = {
+    search: query,
+    page,
+    page_size: pageSize,
+    ordering: 'name',
+  };
+  if (partCatId) params.part_cat_id = partCatId;
+  return cachedRequest('/parts/', params);
+}
+
+export async function getPartDetail(partNum) {
+  return cachedRequest(`/parts/${partNum}/`);
+}
+
+export async function getPartColors(partNum) {
+  return cachedRequest(`/parts/${partNum}/colors/`, { page_size: 200 });
+}
+
+export async function getPartCategories() {
+  return cachedRequest('/part_categories/', { page_size: 200, ordering: 'name' });
+}
+
+export async function getColors() {
+  return cachedRequest('/colors/', { page_size: 200, ordering: 'name' });
+}

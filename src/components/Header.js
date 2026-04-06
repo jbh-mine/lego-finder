@@ -45,6 +45,9 @@ function Header() {
           <Link to="/" className={isActive('/')} onClick={() => setMenuOpen(false)}>
             {t('search')}
           </Link>
+          <Link to="/parts" className={isActive('/parts')} onClick={() => setMenuOpen(false)}>
+            {t('partsSearch')}
+          </Link>
           <Link to="/browse" className={isActive('/browse')} onClick={() => setMenuOpen(false)}>
             {t('browse')}
           </Link>
