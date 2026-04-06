@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { searchSets, getThemes } from '../utils/api';
+import { searchSets, getThemes, filterSets } from '../utils/api';
 import { translateSearchQuery } from '../utils/searchDict';
 import { getCachedTranslation, translateName } from '../utils/translate';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -26,8 +26,12 @@ function SearchPage() {
   // Translated theme names { id: translatedName }
   var s10 = useState({}); var themeNames = s10[0]; var setThemeNames = s10[1];
 
+  // Extra name-search results (loaded once on first page)
+  var s11 = useState([]); var nameExtras = s11[0]; var setNameExtras = s11[1];
+
   var sentinelRef = useRef(null);
   var curQueryRef = useRef('');
+  var matchedThemeRef = useRef(null); // Store matched theme_id for infinite scroll
 
   // Load all themes on mount for theme_id -> name mapping
   useEffect(function() {
@@ -53,7 +57,6 @@ function SearchPage() {
   // Translate theme names when lang is ko and results change
   useEffect(function() {
     if (lang !== 'ko' || allResults.length === 0) return;
-    // Collect unique theme IDs from results
     var themeIds = {};
     allResults.forEach(function(set) {
       if (set.theme_id && themeMap[set.theme_id]) {
@@ -88,22 +91,103 @@ function SearchPage() {
     return themeMap[themeId] || ('Theme ' + themeId);
   };
 
+  // Find theme IDs that match the search query
+  var findMatchingThemeIds = function(translatedQuery) {
+    var q = translatedQuery.toLowerCase().trim();
+    if (!q || q.length < 2) return [];
+    var matches = [];
+    Object.keys(themeMap).forEach(function(tid) {
+      var name = themeMap[tid].toLowerCase();
+      // Exact match or contains match
+      if (name === q || name.indexOf(q) >= 0 || q.indexOf(name) >= 0) {
+        matches.push(parseInt(tid));
+      }
+    });
+    return matches;
+  };
+
   var doSearch = useCallback(async function(searchQuery, searchPage, append) {
     if (!searchQuery.trim()) return;
     setLoading(true);
     setError(null);
     try {
       var translatedQuery = translateSearchQuery(searchQuery.trim());
-      var data = await searchSets(translatedQuery, searchPage, PAGE_SIZE);
-      if (append) {
-        setAllResults(function(prev) { return prev.concat(data.results); });
+      var matchedThemeIds = findMatchingThemeIds(translatedQuery);
+
+      if (matchedThemeIds.length > 0) {
+        // Theme match found! Use theme-based search as primary
+        var primaryThemeId = matchedThemeIds[0];
+        matchedThemeRef.current = primaryThemeId;
+
+        if (searchPage === 1) {
+          // First page: fetch both theme results and name results in parallel
+          var promises = [
+            filterSets({ themeId: primaryThemeId, page: 1, pageSize: PAGE_SIZE }),
+            searchSets(translatedQuery, 1, PAGE_SIZE)
+          ];
+          // Also fetch from child themes (additional matched themes)
+          for (var i = 1; i < matchedThemeIds.length && i < 3; i++) {
+            promises.push(filterSets({ themeId: matchedThemeIds[i], page: 1, pageSize: PAGE_SIZE }));
+          }
+
+          var results = await Promise.all(promises);
+          var themeData = results[0];
+          var nameData = results[1];
+
+          // Merge: theme results first
+          var seen = {};
+          var merged = [];
+          // Add all theme results
+          themeData.results.forEach(function(s) {
+            if (!seen[s.set_num]) { seen[s.set_num] = true; merged.push(s); }
+          });
+          // Add results from additional themes
+          for (var j = 2; j < results.length; j++) {
+            results[j].results.forEach(function(s) {
+              if (!seen[s.set_num]) { seen[s.set_num] = true; merged.push(s); }
+            });
+          }
+          // Add name search results that aren't duplicates
+          var extras = [];
+          nameData.results.forEach(function(s) {
+            if (!seen[s.set_num]) { seen[s.set_num] = true; merged.push(s); extras.push(s); }
+          });
+          setNameExtras(extras);
+
+          setAllResults(merged);
+          setTotalCount(themeData.count + extras.length);
+          setPage(1);
+          setHasMore(themeData.results.length >= PAGE_SIZE);
+          setSearched(true);
+        } else {
+          // Subsequent pages: only paginate theme results
+          var themeData = await filterSets({ themeId: primaryThemeId, page: searchPage, pageSize: PAGE_SIZE });
+          if (append) {
+            setAllResults(function(prev) {
+              var seen = {};
+              prev.forEach(function(s) { seen[s.set_num] = true; });
+              var newItems = themeData.results.filter(function(s) { return !seen[s.set_num]; });
+              return prev.concat(newItems);
+            });
+          }
+          setPage(searchPage);
+          setHasMore(themeData.results.length >= PAGE_SIZE);
+        }
       } else {
-        setAllResults(data.results);
+        // No theme match: regular name-only search
+        matchedThemeRef.current = null;
+        setNameExtras([]);
+        var data = await searchSets(translatedQuery, searchPage, PAGE_SIZE);
+        if (append) {
+          setAllResults(function(prev) { return prev.concat(data.results); });
+        } else {
+          setAllResults(data.results);
+        }
+        setTotalCount(data.count);
+        setPage(searchPage);
+        setHasMore(data.results.length >= PAGE_SIZE);
+        setSearched(true);
       }
-      setTotalCount(data.count);
-      setPage(searchPage);
-      setHasMore(data.results.length >= PAGE_SIZE);
-      setSearched(true);
     } catch (err) {
       setError(
         err.response && err.response.status === 404
@@ -113,13 +197,15 @@ function SearchPage() {
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, themeMap]);
 
   var handleSearch = function(e) {
     e.preventDefault();
     setAllResults([]);
+    setNameExtras([]);
     setPage(1);
     setHasMore(false);
+    matchedThemeRef.current = null;
     curQueryRef.current = query;
     doSearch(query, 1, false);
   };
@@ -153,7 +239,7 @@ function SearchPage() {
       groups[themeId].sets.push(set);
     });
 
-    // Sort groups alphabetically by theme name (가나다순 / ABC order)
+    // Sort groups alphabetically by theme name
     return Object.values(groups).sort(function(a, b) {
       return a.themeName.localeCompare(b.themeName, 'ko');
     });
@@ -199,19 +285,16 @@ function SearchPage() {
     resultsSection = React.createElement(React.Fragment, null, summary, themeSections);
   }
 
-  // Loading more indicator (infinite scroll)
   var loadingMore = null;
   if (loading && allResults.length > 0) {
     loadingMore = React.createElement(Loading, null);
   }
 
-  // Initial loading (first page)
   var initialLoading = null;
   if (loading && allResults.length === 0) {
     initialLoading = React.createElement(Loading, null);
   }
 
-  // Empty / no results / initial states
   var emptyResults = null;
   if (!loading && !error && searched && allResults.length === 0) {
     emptyResults = React.createElement(EmptyState, {
