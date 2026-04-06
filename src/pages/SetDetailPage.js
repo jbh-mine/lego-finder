@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext';
 import { getSetDetail, getSetParts, getSetMinifigs } from '../utils/api';
 import {
   isInCollection, addToCollection, removeFromCollection,
@@ -12,6 +13,7 @@ const PLACEHOLDER_IMG = 'https://rebrickable.com/static/img/nil_mf.jpg';
 
 function SetDetailPage() {
   const { setNum } = useParams();
+  const { t, lang } = useLanguage();
   const [set, setSet] = useState(null);
   const [parts, setParts] = useState(null);
   const [minifigs, setMinifigs] = useState(null);
@@ -44,15 +46,15 @@ function SetDetailPage() {
       } catch (err) {
         setError(
           err.response?.status === 404
-            ? `\uC138\uD2B8 "${setNum}"\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.`
-            : 'API \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.'
+            ? `"${setNum}"${t('setNotFound')}`
+            : t('apiErrorGeneric')
         );
       } finally {
         setLoading(false);
       }
     }
     loadSet();
-  }, [setNum]);
+  }, [setNum, t]);
 
   const loadPartsPage = async (newPage) => {
     setPartsLoading(true);
@@ -87,13 +89,16 @@ function SetDetailPage() {
     }
   };
 
-  if (loading) return <Loading message="\uC138\uD2B8 \uC815\uBCF4\uB97C \uBD88\uB7EC\uC624\uB294 \uC911..." />;
+  if (loading) return <Loading message={t('setLoading')} />;
   if (error) return <ErrorMessage message={error} />;
   if (!set) return null;
 
+  const yearLabel = lang === 'ko' ? `${set.year}년` : set.year;
+  const partsLabel = lang === 'ko' ? `${set.num_parts?.toLocaleString()}개` : set.num_parts?.toLocaleString();
+
   return (
     <div>
-      <Link to="/" className="back-btn">\u2190 \uB4A4\uB85C\uAC00\uAE30</Link>
+      <Link to="/" className="back-btn">{t('back')}</Link>
 
       <div className="set-detail">
         <div className="set-detail-header">
@@ -109,16 +114,16 @@ function SetDetailPage() {
 
             <div className="detail-meta">
               <div className="detail-meta-item">
-                <span className="label">\uCD9C\uC2DC \uC5F0\uB3C4</span>
-                <span>{set.year}\uB144</span>
+                <span className="label">{t('releaseYear')}</span>
+                <span>{yearLabel}</span>
               </div>
               <div className="detail-meta-item">
-                <span className="label">\uBD80\uD488 \uC218</span>
-                <span>{set.num_parts?.toLocaleString()}\uAC1C</span>
+                <span className="label">{t('numParts')}</span>
+                <span>{partsLabel}</span>
               </div>
               {set.theme_id && (
                 <div className="detail-meta-item">
-                  <span className="label">\uD14C\uB9C8 ID</span>
+                  <span className="label">{t('themeId')}</span>
                   <span>{set.theme_id}</span>
                 </div>
               )}
@@ -126,7 +131,7 @@ function SetDetailPage() {
                 <div className="detail-meta-item">
                   <span className="label">Rebrickable</span>
                   <a href={set.set_url} target="_blank" rel="noopener noreferrer">
-                    \uC0C1\uC138 \uD398\uC774\uC9C0 \u2192
+                    {t('detailPage')}
                   </a>
                 </div>
               )}
@@ -137,13 +142,13 @@ function SetDetailPage() {
                 className={`btn-collection ${inCollection ? 'active' : ''}`}
                 onClick={toggleCollection}
               >
-                {inCollection ? '\u2605 \uCEEC\uB809\uC158\uC5D0\uC11C \uC81C\uAC70' : '\u2606 \uB0B4 \uCEEC\uB809\uC158\uC5D0 \uCD94\uAC00'}
+                {inCollection ? t('removeCollection') : t('addCollection')}
               </button>
               <button
                 className={`btn-wishlist ${inWish ? 'active' : ''}`}
                 onClick={toggleWishlist}
               >
-                {inWish ? '\u2665 \uC704\uC2DC\uB9AC\uC2A4\uD2B8\uC5D0\uC11C \uC81C\uAC70' : '\u2661 \uC704\uC2DC\uB9AC\uC2A4\uD2B8\uC5D0 \uCD94\uAC00'}
+                {inWish ? t('removeWishlist') : t('addWishlist')}
               </button>
             </div>
           </div>
@@ -154,20 +159,20 @@ function SetDetailPage() {
             className={activeTab === 'parts' ? 'active' : ''}
             onClick={() => setActiveTab('parts')}
           >
-            \uBD80\uD488 \uBAA9\uB85D ({parts?.count || 0})
+            {t('partsList')} ({parts?.count || 0})
           </button>
           <button
             className={activeTab === 'minifigs' ? 'active' : ''}
             onClick={() => setActiveTab('minifigs')}
           >
-            \uBBF8\uB2C8\uD53C\uADDC\uC5B4 ({minifigs?.count || 0})
+            {t('minifigures')} ({minifigs?.count || 0})
           </button>
         </div>
 
         {activeTab === 'parts' && (
           <div className="parts-section">
             {partsLoading ? (
-              <Loading message="\uBD80\uD488 \uB85C\uB529 \uC911..." />
+              <Loading message={t('partsLoading')} />
             ) : parts?.results?.length > 0 ? (
               <>
                 <div className="parts-grid">
@@ -213,7 +218,7 @@ function SetDetailPage() {
                 />
               </>
             ) : (
-              <p style={{ color: '#999', textAlign: 'center', padding: 20 }}>\uBD80\uD488 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.</p>
+              <p style={{ color: '#999', textAlign: 'center', padding: 20 }}>{t('noParts')}</p>
             )}
           </div>
         )}
@@ -236,7 +241,7 @@ function SetDetailPage() {
                 ))}
               </div>
             ) : (
-              <p style={{ color: '#999', textAlign: 'center', padding: 20 }}>\uBBF8\uB2C8\uD53C\uADDC\uC5B4 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.</p>
+              <p style={{ color: '#999', textAlign: 'center', padding: 20 }}>{t('noMinifigs')}</p>
             )}
           </div>
         )}

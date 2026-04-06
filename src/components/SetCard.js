@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext';
 import {
   isInCollection, addToCollection, removeFromCollection,
   isInWishlist, addToWishlist, removeFromWishlist,
@@ -9,6 +10,7 @@ const PLACEHOLDER_IMG = 'https://rebrickable.com/static/img/nil_mf.jpg';
 
 function SetCard({ set }) {
   const navigate = useNavigate();
+  const { t, lang } = useLanguage();
   const [inCollection, setInCollection] = useState(false);
   const [inWishlist, setInWishlist] = useState(false);
 
@@ -39,6 +41,9 @@ function SetCard({ set }) {
     }
   };
 
+  const yearLabel = lang === 'ko' ? `${set.year}년` : set.year;
+  const partsLabel = lang === 'ko' ? `${set.num_parts?.toLocaleString()}개 부품` : `${set.num_parts?.toLocaleString()} parts`;
+
   return (
     <div className="set-card" onClick={() => navigate(`/set/${set.set_num}`)}>
       <img
@@ -52,24 +57,22 @@ function SetCard({ set }) {
         <div className="set-card-num">{set.set_num}</div>
         <div className="set-card-name">{set.name}</div>
         <div className="set-card-meta">
-          <span>{set.year}년</span>
-          <span>{set.num_parts?.toLocaleString()}개 부품</span>
+          <span>{yearLabel}</span>
+          <span>{partsLabel}</span>
         </div>
       </div>
       <div className="set-card-actions">
         <button
           className={`btn-icon ${inCollection ? 'active' : ''}`}
           onClick={handleCollectionToggle}
-          title={inCollection ? '컬렉션에서 제거' : '컬렉션에 추가'}
         >
-          {inCollection ? '★ 보유' : '☆ 보유'}
+          {inCollection ? t('owned') : t('notOwned')}
         </button>
         <button
           className={`btn-icon ${inWishlist ? 'wishlist-active' : ''}`}
           onClick={handleWishlistToggle}
-          title={inWishlist ? '위시리스트에서 제거' : '위시리스트에 추가'}
         >
-          {inWishlist ? '♥ 위시' : '♡ 위시'}
+          {inWishlist ? t('wished') : t('notWished')}
         </button>
       </div>
     </div>

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
 import { getThemes, filterSets } from '../utils/api';
 import SetCard from '../components/SetCard';
 import Pagination from '../components/Pagination';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
 
 function BrowsePage() {
+  const { t, lang } = useLanguage();
   const [themes, setThemes] = useState([]);
   const [selectedTheme, setSelectedTheme] = useState('');
   const [minYear, setMinYear] = useState('');
@@ -46,11 +48,11 @@ function BrowsePage() {
       });
       setResults(data);
     } catch (err) {
-      setError('필터링 중 오류가 발생했습니다.');
+      setError(t('filterError'));
     } finally {
       setLoading(false);
     }
-  }, [selectedTheme, minYear, maxYear]);
+  }, [selectedTheme, minYear, maxYear, t]);
 
   const handleFilter = () => {
     setPage(1);
@@ -80,13 +82,13 @@ function BrowsePage() {
     <div>
       <div className="filter-section">
         <div className="filter-group">
-          <label>테마</label>
+          <label>{t('theme')}</label>
           <select
             value={selectedTheme}
             onChange={(e) => setSelectedTheme(e.target.value)}
             disabled={themesLoading}
           >
-            <option value="">전체 테마</option>
+            <option value="">{t('allThemes')}</option>
             {themes.map((theme) => (
               <option key={theme.id} value={theme.id}>
                 {theme.name}
@@ -96,33 +98,32 @@ function BrowsePage() {
         </div>
 
         <div className="filter-group">
-          <label>시작 연도</label>
+          <label>{t('startYear')}</label>
           <select value={minYear} onChange={(e) => setMinYear(e.target.value)}>
-            <option value="">전체</option>
+            <option value="">{t('all')}</option>
             {yearOptions.map((y) => (
-              <option key={y} value={y}>{y}년</option>
+              <option key={y} value={y}>{y}{t('year')}</option>
             ))}
           </select>
         </div>
 
         <div className="filter-group">
-          <label>끝 연도</label>
+          <label>{t('endYear')}</label>
           <select value={maxYear} onChange={(e) => setMaxYear(e.target.value)}>
-            <option value="">전체</option>
+            <option value="">{t('all')}</option>
             {yearOptions.map((y) => (
-              <option key={y} value={y}>{y}년</option>
+              <option key={y} value={y}>{y}{t('year')}</option>
             ))}
           </select>
         </div>
 
         <button className="filter-btn" onClick={handleFilter} disabled={loading}>
-          {loading ? '검색 중...' : '필터 적용'}
+          {loading ? t('searching') : t('applyFilter')}
         </button>
-        <button className="filter-reset" onClick={handleReset}>초기화</button>
+        <button className="filter-reset" onClick={handleReset}>{t('reset')}</button>
       </div>
 
       {loading && <Loading />}
-
       {error && <ErrorMessage message={error} onRetry={() => doFilter(page)} />}
 
       {!loading && !error && results && results.results?.length > 0 && (
@@ -132,23 +133,18 @@ function BrowsePage() {
               <SetCard key={set.set_num} set={set} />
             ))}
           </div>
-          <Pagination
-            page={page}
-            totalCount={results.count}
-            pageSize={PAGE_SIZE}
-            onPageChange={handlePageChange}
-          />
+          <Pagination page={page} totalCount={results.count} pageSize={PAGE_SIZE} onPageChange={handlePageChange} />
         </>
       )}
 
       {!loading && !error && results && results.results?.length === 0 && (
-        <EmptyState title="결과 없음" message="해당 조건에 맞는 세트가 없습니다." />
+        <EmptyState title={t('noResults2')} message={t('noFilterResults')} />
       )}
 
       {!results && !loading && (
         <div className="empty-state">
-          <h3>테마와 연도로 둘러보기</h3>
-          <p>필터를 설정하고 "필터 적용" 버튼을 눌러보세요.</p>
+          <h3>{t('browseTitle')}</h3>
+          <p>{t('browseDesc')}</p>
         </div>
       )}
     </div>

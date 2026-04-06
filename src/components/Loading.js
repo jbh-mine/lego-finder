@@ -1,32 +1,36 @@
 import React from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
 
-function Loading({ message = '데이터를 불러오는 중...' }) {
+function Loading({ message }) {
+  const { t } = useLanguage();
   return (
     <div className="loading">
       <div className="loading-spinner"></div>
-      <p>{message}</p>
+      <p>{message || t('loading')}</p>
     </div>
   );
 }
 
-function ErrorMessage({ message = '오류가 발생했습니다.', onRetry }) {
+function ErrorMessage({ message, onRetry }) {
+  const { t } = useLanguage();
   return (
     <div className="error-message">
-      <p>{message}</p>
+      <p>{message || t('error')}</p>
       {onRetry && (
         <button onClick={onRetry} style={{ marginTop: 12, padding: '8px 16px' }}>
-          다시 시도
+          {t('retry')}
         </button>
       )}
     </div>
   );
 }
 
-function EmptyState({ title = '결과 없음', message = '검색 결과가 없습니다.' }) {
+function EmptyState({ title, message }) {
+  const { t } = useLanguage();
   return (
     <div className="empty-state">
-      <h3>{title}</h3>
-      <p>{message}</p>
+      <h3>{title || t('noResultsGeneric')}</h3>
+      <p>{message || t('noResultsGenericDesc')}</p>
     </div>
   );
 }
