@@ -121,20 +121,21 @@ function BrowsePage() {
     setError(null);
     try {
       var allResults = [];
+      var lastData;
       for (var pg = 1; pg <= targetPage; pg++) {
-        var data = await filterSets({
+        lastData = await filterSets({
           themeId: theme || undefined,
           minYear: minYear || undefined,
           maxYear: maxYear || undefined,
           page: pg,
           pageSize: FILTER_PAGE_SIZE,
         });
-        allResults = allResults.concat(data.results);
+        allResults = allResults.concat(lastData.results);
         if (pg === targetPage) {
-          setFilterHasMore(data.results.length >= FILTER_PAGE_SIZE);
+          setFilterHasMore(lastData.results.length >= FILTER_PAGE_SIZE);
         }
       }
-      setFilterRes({ count: data.count, results: allResults });
+      setFilterRes({ count: lastData.count, results: allResults });
       setFilterPage(targetPage);
     } catch(e) { setError(t('filterError')); }
     finally { setFilterLoading(false); }
@@ -170,7 +171,7 @@ function BrowsePage() {
     return theme.name;
   };
 
-  // Sorted themes for the select dropdown (가나다/ABC order)
+  // Sorted themes for both the select dropdown AND the main display
   var sortedThemes = useMemo(function() {
     return themes.slice().sort(function(a, b) {
       var nameA = getThemeName(a);
@@ -179,16 +180,18 @@ function BrowsePage() {
     });
   }, [themes, themeNames, lang]);
 
+  // visibleThemes uses sorted list so main page shows themes in alphabetical order
+  var visibleThemes = sortedThemes.slice(0, showCount);
+
   // Load sets for each visible theme
   useEffect(function() {
     if (isFiltering) return;
-    var visible = themes.slice(0, showCount);
-    visible.forEach(function(theme) {
+    visibleThemes.forEach(function(theme) {
       if (!themeData[theme.id] && !themeData[theme.id + '_loading']) {
         loadThemeSets(theme.id, 1, false);
       }
     });
-  }, [themes, showCount, isFiltering]);
+  }, [sortedThemes, showCount, isFiltering]);
 
   var loadThemeSets = useCallback(async function(tid, page, append) {
     setThemeData(function(prev) {
@@ -225,8 +228,8 @@ function BrowsePage() {
       if (!entries[0].isIntersecting) return;
       if (isFiltering && filterHasMore && !filterLoading) {
         doFilter(filterPage + 1, true);
-      } else if (!isFiltering && showCount < themes.length && !themesLoading) {
-        setShowCount(function(p) { return Math.min(p + LOAD_MORE_THEMES, themes.length); });
+      } else if (!isFiltering && showCount < sortedThemes.length && !themesLoading) {
+        setShowCount(function(p) { return Math.min(p + LOAD_MORE_THEMES, sortedThemes.length); });
       }
     }, { rootMargin: '300px' });
     obs.observe(sentinelRef.current);
@@ -264,8 +267,6 @@ function BrowsePage() {
 
   var yrs = [];
   for (var y = curYear; y >= 1950; y--) yrs.push(y);
-
-  var visibleThemes = themes.slice(0, showCount);
 
   // Render filter section - use sortedThemes for the dropdown
   var filterEl = React.createElement('div', { className: 'filter-section' },
