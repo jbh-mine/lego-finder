@@ -1,27 +1,38 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { searchParts, getPartCategories } from '../utils/api';
 import { translateSearchQuery } from '../utils/searchDict';
+import { getCachedTranslation, translateName } from '../utils/translate';
 import { useLanguage } from '../contexts/LanguageContext';
-import Pagination from '../components/Pagination';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
 
 var PH = 'https://rebrickable.com/static/img/nil_mf.jpg';
+var PAGE_SIZE = 40;
 
 function PartsSearchPage() {
   var nav = useNavigate();
-  var lc = useLanguage(); var t = lc.t;
+  var lc = useLanguage(); var t = lc.t; var lang = lc.lang;
+
   var s1 = useState(''); var query = s1[0]; var setQuery = s1[1];
-  var s2 = useState(null); var results = s2[0]; var setResults = s2[1];
-  var s3 = useState(1); var page = s3[0]; var setPage = s3[1];
-  var s4 = useState(false); var loading = s4[0]; var setLoading = s4[1];
-  var s5 = useState(null); var error = s5[0]; var setError = s5[1];
-  var s6 = useState(false); var searched = s6[0]; var setSearched = s6[1];
-  var s7 = useState([]); var categories = s7[0]; var setCategories = s7[1];
-  var s8 = useState(''); var selCat = s8[0]; var setSelCat = s8[1];
+  var s2 = useState([]); var allResults = s2[0]; var setAllResults = s2[1];
+  var s3 = useState(0); var totalCount = s3[0]; var setTotalCount = s3[1];
+  var s4 = useState(1); var page = s4[0]; var setPage = s4[1];
+  var s5 = useState(false); var loading = s5[0]; var setLoading = s5[1];
+  var s6 = useState(null); var error = s6[0]; var setError = s6[1];
+  var s7 = useState(false); var searched = s7[0]; var setSearched = s7[1];
+  var s8 = useState([]); var categories = s8[0]; var setCategories = s8[1];
+  var s9 = useState(''); var selCat = s9[0]; var setSelCat = s9[1];
+  var s10 = useState(false); var hasMore = s10[0]; var setHasMore = s10[1];
 
-  var PAGE_SIZE = 20;
+  // Translated category names { id: name }
+  var s11 = useState({}); var catNames = s11[0]; var setCatNames = s11[1];
 
+  var sentinelRef = useRef(null);
+  // Store current query for infinite scroll
+  var curQueryRef = useRef('');
+  var curCatRef = useRef('');
+
+  // Load categories
   useEffect(function() {
     getPartCategories().then(function(data) {
       var cats = data.results || data;
@@ -32,14 +43,51 @@ function PartsSearchPage() {
     }).catch(function() {});
   }, []);
 
-  var doSearch = useCallback(function(searchQuery, searchPage, catId) {
-    if (!searchQuery.trim()) return;
+  // Translate category names when lang is ko
+  useEffect(function() {
+    if (lang !== 'ko' || categories.length === 0) return;
+    categories.forEach(function(cat) {
+      if (catNames[cat.id]) return;
+      var cached = getCachedTranslation(cat.name);
+      if (cached) {
+        setCatNames(function(prev) {
+          var o = {}; o[cat.id] = cached;
+          return Object.assign({}, prev, o);
+        });
+      } else {
+        translateName(cat.name).then(function(result) {
+          if (result && result !== cat.name) {
+            setCatNames(function(prev) {
+              var o = {}; o[cat.id] = result;
+              return Object.assign({}, prev, o);
+            });
+          }
+        });
+      }
+    });
+  }, [categories, lang]);
+
+  // Helper to get translated category name
+  var getCatName = function(cat) {
+    if (lang === 'ko' && catNames[cat.id]) return catNames[cat.id];
+    return cat.name;
+  };
+
+  var doSearch = useCallback(function(searchQuery, searchPage, catId, append) {
+    if (!searchQuery.trim() && !catId) return;
     setLoading(true);
     setError(null);
-    var translatedQuery = translateSearchQuery(searchQuery.trim());
-    searchParts(translatedQuery, searchPage, PAGE_SIZE, catId || null)
+    var translatedQuery = searchQuery.trim() ? translateSearchQuery(searchQuery.trim()) : '';
+    searchParts(translatedQuery || '', searchPage, PAGE_SIZE, catId || null)
       .then(function(data) {
-        setResults(data);
+        if (append) {
+          setAllResults(function(prev) { return prev.concat(data.results); });
+        } else {
+          setAllResults(data.results);
+        }
+        setTotalCount(data.count);
+        setPage(searchPage);
+        setHasMore(data.results.length >= PAGE_SIZE);
         setSearched(true);
       })
       .catch(function(err) {
@@ -56,96 +104,159 @@ function PartsSearchPage() {
 
   var handleSearch = function(e) {
     e.preventDefault();
+    setAllResults([]);
     setPage(1);
-    doSearch(query, 1, selCat);
-  };
-
-  var handlePageChange = function(newPage) {
-    setPage(newPage);
-    doSearch(query, newPage, selCat);
-    window.scrollTo(0, 0);
+    setHasMore(false);
+    curQueryRef.current = query;
+    curCatRef.current = selCat;
+    doSearch(query, 1, selCat, false);
   };
 
   var handleCatChange = function(e) {
     setSelCat(e.target.value);
   };
 
-  return React.createElement('div', null,
-    React.createElement('div', { className: 'search-section' },
-      React.createElement('h2', null, t('partsSearch')),
-      React.createElement('form', { className: 'search-bar', onSubmit: handleSearch },
-        React.createElement('input', {
-          type: 'text',
-          value: query,
-          onChange: function(e) { setQuery(e.target.value); },
-          placeholder: t('partsSearchPlaceholder'),
-        }),
-        React.createElement('button', { type: 'submit', disabled: loading },
-          loading ? t('searching') : t('searchBtn')
-        )
-      ),
-      React.createElement('div', { className: 'parts-filter-row' },
-        React.createElement('div', { className: 'filter-group parts-cat-filter' },
-          React.createElement('label', null, t('partCategory')),
-          React.createElement('select', { value: selCat, onChange: handleCatChange },
-            React.createElement('option', { value: '' }, t('allCategories')),
-            categories.map(function(cat) {
-              return React.createElement('option', { key: cat.id, value: cat.id }, cat.name);
-            })
-          )
-        )
+  // Infinite scroll
+  useEffect(function() {
+    if (!sentinelRef.current) return;
+    var obs = new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting && hasMore && !loading && searched) {
+        doSearch(curQueryRef.current, page + 1, curCatRef.current, true);
+      }
+    }, { rootMargin: '300px' });
+    obs.observe(sentinelRef.current);
+    return function() { obs.disconnect(); };
+  });
+
+  // Group results by category
+  var grouped = [];
+  if (allResults.length > 0) {
+    var groups = {};
+    allResults.forEach(function(part) {
+      var catId = part.part_cat_id || 0;
+      if (!groups[catId]) {
+        var catObj = categories.find(function(c) { return c.id === catId; });
+        var catName = '';
+        if (catObj) {
+          catName = getCatName(catObj);
+        } else {
+          catName = 'Category ' + catId;
+        }
+        groups[catId] = { catId: catId, catName: catName, parts: [] };
+      }
+      groups[catId].parts.push(part);
+    });
+    grouped = Object.values(groups).sort(function(a, b) {
+      return b.parts.length - a.parts.length;
+    });
+  }
+
+  // Render
+  var searchSection = React.createElement('div', { className: 'search-section' },
+    React.createElement('h2', null, t('partsSearch')),
+    React.createElement('form', { className: 'search-bar', onSubmit: handleSearch },
+      React.createElement('input', {
+        type: 'text',
+        value: query,
+        onChange: function(e) { setQuery(e.target.value); },
+        placeholder: t('partsSearchPlaceholder'),
+      }),
+      React.createElement('button', { type: 'submit', disabled: loading },
+        loading ? t('searching') : t('searchBtn')
       )
     ),
-
-    loading && React.createElement(Loading, null),
-
-    error && React.createElement(ErrorMessage, { message: error, onRetry: function() { doSearch(query, page, selCat); } }),
-
-    !loading && !error && results && results.results && results.results.length > 0 &&
-      React.createElement(React.Fragment, null,
-        React.createElement('div', { className: 'parts-result-grid' },
-          results.results.map(function(part) {
-            return React.createElement('div', {
-              key: part.part_num,
-              className: 'part-result-card',
-              onClick: function() { nav('/part/' + encodeURIComponent(part.part_num)); },
-            },
-              React.createElement('img', {
-                className: 'part-result-img',
-                src: part.part_img_url || PH,
-                alt: part.name,
-                loading: 'lazy',
-                onError: function(e) { e.target.src = PH; },
-              }),
-              React.createElement('div', { className: 'part-result-body' },
-                React.createElement('div', { className: 'part-result-num' }, part.part_num),
-                React.createElement('div', { className: 'part-result-name' }, part.name),
-                part.part_cat_id && React.createElement('div', { className: 'part-result-cat' },
-                  (categories.find(function(c) { return c.id === part.part_cat_id; }) || {}).name || ''
-                )
-              )
-            );
+    React.createElement('div', { className: 'parts-filter-row' },
+      React.createElement('div', { className: 'filter-group parts-cat-filter' },
+        React.createElement('label', null, t('partCategory')),
+        React.createElement('select', { value: selCat, onChange: handleCatChange },
+          React.createElement('option', { value: '' }, t('allCategories')),
+          categories.map(function(cat) {
+            return React.createElement('option', { key: cat.id, value: cat.id }, getCatName(cat));
           })
-        ),
-        React.createElement(Pagination, {
-          page: page,
-          totalCount: results.count,
-          pageSize: PAGE_SIZE,
-          onPageChange: handlePageChange,
-        })
-      ),
-
-    !loading && !error && searched && results && results.results && results.results.length === 0 &&
-      React.createElement(EmptyState, {
-        title: t('noResults'),
-        message: '"' + query + '"' + t('noResultsDesc'),
-      }),
-
-    !searched && !loading &&
-      React.createElement('div', { className: 'empty-state' },
-        React.createElement('h3', null, t('partsSearchEmpty')),
-        React.createElement('p', null, t('partsSearchEmptyDesc'))
+        )
       )
+    )
+  );
+
+  var resultsSection = null;
+  if (!loading && !error && grouped.length > 0) {
+    var summaryText = t('total') + ' ' + totalCount + t('count') + ' ' + t('searchResultsFound');
+    var summary = React.createElement('div', { className: 'search-results-summary' }, summaryText);
+
+    var sections = grouped.map(function(group) {
+      var header = React.createElement('div', { className: 'theme-header' },
+        React.createElement('span', { className: 'theme-title' }, group.catName),
+        React.createElement('span', { className: 'theme-count' }, group.parts.length + t('partsCount'))
+      );
+
+      var grid = React.createElement('div', { className: 'parts-result-grid' },
+        group.parts.map(function(part) {
+          return React.createElement('div', {
+            key: part.part_num,
+            className: 'part-result-card',
+            onClick: function() { nav('/part/' + encodeURIComponent(part.part_num)); },
+          },
+            React.createElement('img', {
+              className: 'part-result-img',
+              src: part.part_img_url || PH,
+              alt: part.name,
+              loading: 'lazy',
+              onError: function(e) { e.target.src = PH; },
+            }),
+            React.createElement('div', { className: 'part-result-body' },
+              React.createElement('div', { className: 'part-result-num' }, part.part_num),
+              React.createElement('div', { className: 'part-result-name' }, part.name)
+            )
+          );
+        })
+      );
+
+      return React.createElement('div', { key: group.catId, className: 'theme-section' }, header, grid);
+    });
+
+    resultsSection = React.createElement(React.Fragment, null, summary, sections);
+  }
+
+  // Loading indicator for infinite scroll (after results)
+  var loadingMore = null;
+  if (loading && allResults.length > 0) {
+    loadingMore = React.createElement(Loading, null);
+  }
+
+  var emptyResults = null;
+  if (!loading && !error && searched && allResults.length === 0) {
+    emptyResults = React.createElement(EmptyState, {
+      title: t('noResults'),
+      message: '"' + query + '"' + t('noResultsDesc'),
+    });
+  }
+
+  var initialState = null;
+  if (!searched && !loading) {
+    initialState = React.createElement('div', { className: 'empty-state' },
+      React.createElement('h3', null, t('partsSearchEmpty')),
+      React.createElement('p', null, t('partsSearchEmptyDesc'))
+    );
+  }
+
+  // Initial loading (first page)
+  var initialLoading = null;
+  if (loading && allResults.length === 0 && searched) {
+    initialLoading = React.createElement(Loading, null);
+  }
+  if (loading && !searched) {
+    initialLoading = React.createElement(Loading, null);
+  }
+
+  return React.createElement('div', null,
+    searchSection,
+    initialLoading,
+    error ? React.createElement(ErrorMessage, { message: error, onRetry: function() { doSearch(query, page, selCat, false); } }) : null,
+    resultsSection,
+    loadingMore,
+    emptyResults,
+    initialState,
+    React.createElement('div', { ref: sentinelRef, style: { height: 1, marginBottom: 40 } })
   );
 }
 
