@@ -42,6 +42,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* Parts Filter Row */
 .parts-filter-row{display:flex;gap:16px;margin-top:16px;align-items:flex-end}
 .parts-cat-filter{min-width:200px;flex:0 1 auto}
+/* New Products */
+.new-products-header{margin-bottom:8px}
+.new-products-desc{font-size:.9rem;color:#888;margin-top:2px}
+.new-products-filters{margin-top:12px}
+.new-products-year-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.new-year-tab{padding:10px 20px;border:2px solid var(--lego-border);border-radius:var(--radius);background:#fff;color:var(--lego-dark);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;min-height:44px}
+.new-year-tab:hover{border-color:var(--lego-blue);color:var(--lego-blue)}
+.new-year-tab.active{background:var(--lego-red);border-color:var(--lego-red);color:#fff}
 /* Theme Sections */
 .theme-section{margin-bottom:32px}
 .theme-header{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;padding-bottom:8px;border-bottom:3px solid var(--lego-red)}
@@ -178,6 +186,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .ins-card-dl{padding:8px 12px;min-width:68px}
 .ins-card-dl-icon{font-size:1rem}
 .ins-card-name{font-size:.88rem}
+.new-products-year-tabs{flex-direction:column}
+.new-year-tab{width:100%;text-align:center}
 .filter-section{flex-direction:column;padding:16px}
 .filter-group{width:100%}
 .filter-btn,.filter-reset{width:100%}

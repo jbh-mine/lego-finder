@@ -8,6 +8,7 @@ import SetDetailPage from './pages/SetDetailPage';
 import CollectionPage from './pages/CollectionPage';
 import PartsSearchPage from './pages/PartsSearchPage';
 import PartDetailPage from './pages/PartDetailPage';
+import NewProductsPage from './pages/NewProductsPage';
 import './styles/App.css';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
             <Route path="/part/:partNum" element={<PartDetailPage />} />
             <Route path="/set/:setNum" element={<SetDetailPage />} />
             <Route path="/collection" element={<CollectionPage />} />
+            <Route path="/new" element={<NewProductsPage />} />
           </Routes>
         </main>
       </Router>
