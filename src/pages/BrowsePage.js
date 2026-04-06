@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getThemes, filterSets } from '../utils/api';
 import { getCachedTranslation, translateName } from '../utils/translate';
@@ -101,7 +101,6 @@ function BrowsePage() {
   useEffect(function() {
     if (restoredRef.current && themes.length > 0) {
       restoredRef.current = false;
-      // Re-run filter search to restore results
       doFilterRestore(selTheme, minY, maxY, filterPage);
     }
   }, [themes]);
@@ -170,6 +169,15 @@ function BrowsePage() {
     if (lang === 'ko' && themeNames[theme.id]) return themeNames[theme.id];
     return theme.name;
   };
+
+  // Sorted themes for the select dropdown (가나다/ABC order)
+  var sortedThemes = useMemo(function() {
+    return themes.slice().sort(function(a, b) {
+      var nameA = getThemeName(a);
+      var nameB = getThemeName(b);
+      return nameA.localeCompare(nameB, 'ko');
+    });
+  }, [themes, themeNames, lang]);
 
   // Load sets for each visible theme
   useEffect(function() {
@@ -251,7 +259,6 @@ function BrowsePage() {
   var handleFilter = function() { setIsFiltering(true); setFilterPage(1); doFilter(1, false); };
   var handleReset = function() {
     setSelTheme(''); setMinY(''); setMaxY(''); setFilterRes(null); setIsFiltering(false);
-    // Clear saved state on reset
     try { sessionStorage.removeItem(STORAGE_KEY); } catch(e) {}
   };
 
@@ -260,13 +267,13 @@ function BrowsePage() {
 
   var visibleThemes = themes.slice(0, showCount);
 
-  // Render filter section
+  // Render filter section - use sortedThemes for the dropdown
   var filterEl = React.createElement('div', { className: 'filter-section' },
     React.createElement('div', { className: 'filter-group' },
       React.createElement('label', null, t('theme')),
       React.createElement('select', { value: selTheme, onChange: function(e) { setSelTheme(e.target.value); }, disabled: themesLoading },
         React.createElement('option', { value: '' }, t('allThemes')),
-        themes.map(function(th) { return React.createElement('option', { key: th.id, value: th.id }, getThemeName(th)); })
+        sortedThemes.map(function(th) { return React.createElement('option', { key: th.id, value: th.id }, getThemeName(th)); })
       )
     ),
     React.createElement('div', { className: 'filter-group' },
