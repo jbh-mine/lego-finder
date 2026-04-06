@@ -69,7 +69,7 @@ const translations = {
     page: '\uD398\uC774\uC9C0',
     total: '\uCD1D',
     count: '\uAC1C',
-    langToggle: 'EN',
+    downloadGuide: '\uC124\uBA85\uC11C',
   },
   en: {
     search: 'Search',
@@ -141,7 +141,7 @@ const translations = {
     page: 'page',
     total: 'total',
     count: '',
-    langToggle: 'KO',
+    downloadGuide: 'Guide',
   },
 };
 

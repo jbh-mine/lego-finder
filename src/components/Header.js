@@ -4,7 +4,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 function Header() {
   const location = useLocation();
-  const { t, lang, toggleLang } = useLanguage();
+  const { t, lang, setLang } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const isActive = (path) => location.pathname === path ? 'active' : '';
@@ -17,9 +17,20 @@ function Header() {
         </Link>
 
         <div className="header-right">
-          <button className="lang-toggle" onClick={toggleLang}>
-            {lang === 'ko' ? 'EN' : 'KO'}
-          </button>
+          <div className="lang-selector">
+            <button
+              className={`lang-btn ${lang === 'ko' ? 'lang-active' : ''}`}
+              onClick={() => setLang('ko')}
+            >
+              \uD55C\uAD6D\uC5B4
+            </button>
+            <button
+              className={`lang-btn ${lang === 'en' ? 'lang-active' : ''}`}
+              onClick={() => setLang('en')}
+            >
+              \uC601\uC5B4
+            </button>
+          </div>
 
           <button
             className="mobile-menu-btn"
@@ -40,6 +51,14 @@ function Header() {
           <Link to="/collection" className={isActive('/collection')} onClick={() => setMenuOpen(false)}>
             {t('myCollection')}
           </Link>
+          <a
+            href={process.env.PUBLIC_URL + '/guide.html'}
+            download="LEGO_Finder_Guide.html"
+            className="nav-guide-link"
+            onClick={() => setMenuOpen(false)}
+          >
+            {t('downloadGuide')}
+          </a>
         </nav>
       </div>
     </header>

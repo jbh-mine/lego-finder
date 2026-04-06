@@ -4,7 +4,7 @@ import translations from '../utils/i18n';
 const LanguageContext = createContext();
 
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState(() => {
+  const [lang, setLangState] = useState(() => {
     try {
       return localStorage.getItem('lego_lang') || 'ko';
     } catch {
@@ -12,12 +12,9 @@ export function LanguageProvider({ children }) {
     }
   });
 
-  const toggleLang = useCallback(() => {
-    setLang((prev) => {
-      const next = prev === 'ko' ? 'en' : 'ko';
-      try { localStorage.setItem('lego_lang', next); } catch {}
-      return next;
-    });
+  const setLang = useCallback((newLang) => {
+    setLangState(newLang);
+    try { localStorage.setItem('lego_lang', newLang); } catch {}
   }, []);
 
   const t = useCallback((key) => {
@@ -25,7 +22,7 @@ export function LanguageProvider({ children }) {
   }, [lang]);
 
   return (
-    <LanguageContext.Provider value={{ lang, toggleLang, t }}>
+    <LanguageContext.Provider value={{ lang, setLang, t }}>
       {children}
     </LanguageContext.Provider>
   );

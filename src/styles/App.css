@@ -92,25 +92,52 @@ body {
   background: rgba(255,255,255,0.2);
 }
 
-/* Language Toggle - Always Visible */
-.lang-toggle {
-  background: var(--lego-yellow);
-  color: var(--lego-dark);
-  border: none;
-  padding: 6px 14px;
+/* Guide Download Link in Nav */
+.nav-guide-link {
+  color: var(--lego-yellow) !important;
+  font-weight: 600 !important;
+  border: 1.5px solid var(--lego-yellow);
+  font-size: 0.85rem !important;
+}
+
+.nav-guide-link:hover {
+  background: var(--lego-yellow) !important;
+  color: var(--lego-dark) !important;
+}
+
+/* Language Selector - Always Visible */
+.lang-selector {
+  display: flex;
   border-radius: var(--radius);
-  font-size: 0.85rem;
-  font-weight: 800;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.4);
+}
+
+.lang-btn {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+  border: none;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
-  min-height: 36px;
-  letter-spacing: 0.5px;
 }
 
-.lang-toggle:hover {
-  background: white;
-  color: var(--lego-red);
+.lang-btn:first-child {
+  border-right: 1px solid rgba(255,255,255,0.3);
+}
+
+.lang-btn.lang-active {
+  background: var(--lego-yellow);
+  color: var(--lego-dark);
+  font-weight: 800;
+}
+
+.lang-btn:hover:not(.lang-active) {
+  background: rgba(255,255,255,0.25);
+  color: white;
 }
 
 /* Mobile Menu Button */
@@ -730,6 +757,11 @@ body {
     border-radius: var(--radius);
   }
 
+  .nav-guide-link {
+    text-align: center;
+    margin-top: 4px;
+  }
+
   .main-container {
     padding: 16px 12px;
   }
@@ -833,6 +865,11 @@ body {
   .pagination .page-info {
     font-size: 0.8rem;
   }
+
+  .lang-btn {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+  }
 }
 
 /* ============================
@@ -853,5 +890,10 @@ body {
 
   .set-detail-info h1 {
     font-size: 1.2rem;
+  }
+
+  .lang-btn {
+    padding: 4px 8px;
+    font-size: 0.7rem;
   }
 }
