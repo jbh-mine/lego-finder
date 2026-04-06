@@ -103,7 +103,12 @@ function PartsSearchPage() {
   };
 
   var handleCatChange = function(e) {
-    setSelCat(e.target.value);
+    var newCat = e.target.value;
+    setSelCat(newCat);
+    // Immediately trigger search when a category is selected
+    if (newCat) {
+      doSearchAll(query, newCat);
+    }
   };
 
   // Group results by category
