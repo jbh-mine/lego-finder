@@ -196,7 +196,7 @@ function SearchPage() {
 
   var getThemeName = function(themeId) {
     if (lang === 'ko' && themeNames[themeId]) return themeNames[themeId];
-    return themeMap[themeId] || ('Theme ' + themeId);
+    return themeMap[themeId] || (t('themePrefix') + ' ' + themeId);
   };
 
   var findMatchingThemeIds = function(translatedQuery) {
@@ -411,7 +411,7 @@ function SearchPage() {
     type: 'button',
     className: 'search-clear-btn',
     onClick: handleClearQuery,
-    'aria-label': 'Clear search',
+    'aria-label': t('clearSearch'),
   }, '\u00D7') : null;
 
   var searchSection = React.createElement('div', { className: 'search-section' },
