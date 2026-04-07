@@ -28,6 +28,18 @@ var SET_NUM_MAP = {
   '잭 스패로우': '10365',
   '쳨리비안의해적': '10365',
   '쳨리비안 해적': '10365',
+  // ===== Pirates of Barracuda Bay (21322) =====
+  '바라쿠다': '21322',
+  '바라쿠다베이': '21322',
+  '바라쿠다 베이': '21322',
+  '바라쿠다베이의해적': '21322',
+  '바라쿠다 베이의 해적': '21322',
+  '바라쿠다베이해적': '21322',
+  '바라쿠다 베이 해적': '21322',
+  '바라쿠다섬': '21322',
+  '바라쿠다 섬': '21322',
+  '아이디어해적선': '21322',
+  '아이디어 해적선': '21322',
   '타이타닉': '10294',
   '콜로세움': '10276',
   '에펄탑': '10307',
@@ -125,6 +137,10 @@ var PHRASE_MAP = [
   ['잭스패로우', 'Jack Sparrow'],
   ['잭 스패로우', 'Jack Sparrow'],
   ['쳪턴 잭 스패로우', 'Captain Jack Sparrow'],
+  ['바라쿠다 베이', 'Barracuda Bay'],
+  ['바라쿠다베이', 'Barracuda Bay'],
+  ['바라쿠다 베이의 해적', 'Pirates of Barracuda Bay'],
+  ['바라쿠다베이의 해적', 'Pirates of Barracuda Bay'],
 
   // ===== Modular Buildings =====
   ['카페코너', 'Cafe Corner'],
@@ -246,6 +262,8 @@ var WORD_MAP = {
   '마법': 'Magic',
   '성': 'Castle',
   '해적': 'Pirate',
+  '바라쿠다': 'Barracuda',
+  '바라쿠다베이': 'Barracuda Bay',
   '우주': 'Space',
   '도시': 'City',
   '기차': 'Train',
@@ -749,6 +767,9 @@ var IP_SEARCH_MAP = {
   'star wars': ['Star Wars', 'Millennium Falcon', 'X-Wing', 'TIE Fighter', 'AT-AT', 'Death Star', 'Mandalorian'],
   '만달로리안': ['Mandalorian', 'Razor Crest', 'Grogu'],
   '클론': ['Clone Trooper', 'Clone Wars'],
+  // Pirates / Pirates of Barracuda Bay
+  '바라쿠다': ['Barracuda', 'Barracuda Bay', 'Pirates of Barracuda Bay'],
+  'barracuda': ['Barracuda', 'Barracuda Bay', 'Pirates of Barracuda Bay'],
   // Harry Potter umbrella
   '해리포터': ['Harry Potter', 'Hogwarts', 'Diagon Alley', 'Hogsmeade'],
   '해리 포터': ['Harry Potter', 'Hogwarts', 'Diagon Alley', 'Hogsmeade'],
