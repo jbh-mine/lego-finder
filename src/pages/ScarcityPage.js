@@ -328,6 +328,20 @@ function ScarcityPage() {
   var valueStyle = { fontSize: '1.05rem', color: 'var(--color-text, #222)', fontWeight: 600 };
   var statusStyle = { fontSize: '0.8rem', color: 'var(--color-text-secondary, #666)', fontFamily: 'monospace', background: 'var(--color-surface-soft, #f5f7fa)', padding: 10, borderRadius: 4, marginBottom: 12, whiteSpace: 'pre-wrap' };
 
+  // Recharts uses inline SVG that can't read CSS variables — use neutral mid colors
+  // that read on both light and dark backgrounds.
+  var chartGridStroke = 'rgba(128,128,128,0.3)';
+  var chartAxisFill = '#9aa3b2';
+  var chartTooltipContentStyle = {
+    background: 'rgba(20,22,28,0.92)',
+    border: '1px solid rgba(255,255,255,0.15)',
+    borderRadius: 6,
+    color: '#f0f2f6',
+    fontSize: 12
+  };
+  var chartTooltipLabelStyle = { color: '#e6e6e6', fontWeight: 600 };
+  var chartTooltipItemStyle = { color: '#f0f2f6' };
+
   var headerEl = React.createElement('div', null,
     React.createElement('h1', { style: titleStyle }, t('scarcityPageTitle')),
     React.createElement('div', { style: subStyle }, t('scarcityPageDesc'))
@@ -414,7 +428,7 @@ function ScarcityPage() {
             )
           ),
           React.createElement('div', {
-            style: { fontSize: '0.8rem', color: '#0066cc', whiteSpace: 'nowrap', fontWeight: 600 }
+            style: { fontSize: '0.8rem', color: '#4a9eff', whiteSpace: 'nowrap', fontWeight: 600 }
           }, t('scarcityClickToAnalyze') + ' \u2192')
         );
       });
@@ -428,7 +442,11 @@ function ScarcityPage() {
   ) : null;
 
   var errorEl = error ? React.createElement('div', {
-    style: Object.assign({}, cardStyle, { borderColor: '#f5b5b5', background: '#fff6f6', color: '#b00020' })
+    style: Object.assign({}, cardStyle, {
+      borderColor: 'rgba(220,80,80,0.5)',
+      background: 'rgba(220,80,80,0.12)',
+      color: '#ff8a8a'
+    })
   }, error) : null;
 
   // ---------- Result rendering ----------
@@ -441,7 +459,7 @@ function ScarcityPage() {
       onClick: onBackToResults,
       style: {
         marginBottom: 12, padding: '8px 14px', background: 'var(--color-surface, #fff)',
-        border: '1px solid #0066cc', color: '#0066cc', borderRadius: 4,
+        border: '1px solid #4a9eff', color: '#4a9eff', borderRadius: 4,
         cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600
       }
     }, t('scarcityBackToResults')) : null;
@@ -462,7 +480,7 @@ function ScarcityPage() {
         ),
         React.createElement(Link, {
           to: '/set/' + result.setNum,
-          style: { fontSize: '0.8rem', color: '#0066cc', textDecoration: 'none' }
+          style: { fontSize: '0.8rem', color: '#4a9eff', textDecoration: 'none' }
         }, '\u2192 ' + t('detailPage'))
       )
     );
@@ -470,7 +488,9 @@ function ScarcityPage() {
     // Banner shown when MSRP is not the official LEGO Korea price
     var msrpWarnEl = (!result.msrp.official) ? React.createElement('div', {
       style: {
-        background: '#fff8e1', border: '1px solid #ffd88a', color: '#7a5200',
+        background: 'var(--color-info-bg, #fff8e1)',
+        border: '1px solid var(--color-info-border, #ffd88a)',
+        color: 'var(--color-info-text, #7a5200)',
         padding: '8px 12px', borderRadius: 6, marginBottom: 12, fontSize: '0.82rem'
       }
     },
@@ -480,14 +500,16 @@ function ScarcityPage() {
       React.createElement('a', {
         href: getLegoKrProductUrl(result.setNum),
         target: '_blank', rel: 'noopener noreferrer',
-        style: { color: '#0066cc', fontWeight: 600 }
+        style: { color: '#4a9eff', fontWeight: 600 }
       }, '\u2192 \uB808\uACE0 \uACF5\uC2DD \uD55C\uAD6D \uC0AC\uC774\uD2B8\uC5D0\uC11C \uC815\uAC00 \uD655\uC778')
     ) : null;
 
     // Banner shown when chosen period exceeds the actual age of the theme
     var extrapolatedEl = (result.themeInfo && result.themeInfo.extrapolated) ? React.createElement('div', {
       style: {
-        background: '#fff8e1', border: '1px solid #ffd88a', color: '#7a5200',
+        background: 'var(--color-info-bg, #fff8e1)',
+        border: '1px solid var(--color-info-border, #ffd88a)',
+        color: 'var(--color-info-text, #7a5200)',
         padding: '8px 12px', borderRadius: 6, marginBottom: 12, fontSize: '0.82rem'
       }
     }, t('scarcityExtrapolatedNote')) : null;
@@ -497,7 +519,7 @@ function ScarcityPage() {
         React.createElement('div', { style: { flex: '1 1 140px' } },
           React.createElement('div', { style: labelStyle }, t('scarcityMsrp')),
           React.createElement('div', { style: valueStyle }, fmtKRW(result.msrp.value)),
-          React.createElement('div', { style: { fontSize: '0.7rem', color: result.msrp.official ? '#0a8a4e' : '#c97a00' } },
+          React.createElement('div', { style: { fontSize: '0.7rem', color: result.msrp.official ? '#3ec47a' : '#ffb84d' } },
             (result.msrp.official ? '\u2713 ' : '\u26A0 ') + result.msrp.source)
         ),
         React.createElement('div', { style: { flex: '1 1 140px' } },
@@ -507,7 +529,7 @@ function ScarcityPage() {
         ),
         React.createElement('div', { style: { flex: '1 1 140px' } },
           React.createElement('div', { style: labelStyle }, t('scarcityReturn')),
-          React.createElement('div', { style: Object.assign({}, valueStyle, { color: s.returnPct >= 0 ? '#0a8a4e' : '#d33' }) },
+          React.createElement('div', { style: Object.assign({}, valueStyle, { color: s.returnPct >= 0 ? '#3ec47a' : '#ff6b6b' }) },
             (s.returnPct >= 0 ? '+' : '') + s.returnPct + '%'),
           React.createElement('div', { style: { fontSize: '0.7rem', color: 'var(--color-text-muted, #999)' } },
             t('scarcityThemeAvg') + ' (' + result.themeInfo.years + 'y): ' + result.themeInfo.avgReturnPct + '%')
@@ -552,12 +574,18 @@ function ScarcityPage() {
       React.createElement('div', { style: { width: '100%', height: 240 } },
         React.createElement(ResponsiveContainer, { width: '100%', height: '100%' },
           React.createElement(LineChart, { data: result.pastSeries, margin: { top: 8, right: 16, left: 4, bottom: 4 } },
-            React.createElement(CartesianGrid, { strokeDasharray: '3 3', stroke: '#eee' }),
-            React.createElement(XAxis, { dataKey: 'label', tick: { fontSize: 10, fill: '#888' } }),
-            React.createElement(YAxis, { tick: { fontSize: 10, fill: '#888' }, tickFormatter: function(v) { return Math.round(v / 1000) + 'k'; } }),
-            React.createElement(Tooltip, { formatter: function(v) { return fmtKRW(v); } }),
-            React.createElement(Legend, { wrapperStyle: { fontSize: 11 } }),
-            React.createElement(Line, { type: 'monotone', dataKey: 'theme', name: t('scarcityChartThemeAvg'), stroke: '#0066cc', strokeWidth: 2, dot: false }),
+            React.createElement(CartesianGrid, { strokeDasharray: '3 3', stroke: chartGridStroke }),
+            React.createElement(XAxis, { dataKey: 'label', tick: { fontSize: 10, fill: chartAxisFill }, stroke: chartAxisFill }),
+            React.createElement(YAxis, { tick: { fontSize: 10, fill: chartAxisFill }, stroke: chartAxisFill, tickFormatter: function(v) { return Math.round(v / 1000) + 'k'; } }),
+            React.createElement(Tooltip, {
+              formatter: function(v) { return fmtKRW(v); },
+              contentStyle: chartTooltipContentStyle,
+              labelStyle: chartTooltipLabelStyle,
+              itemStyle: chartTooltipItemStyle,
+              cursor: { stroke: chartAxisFill, strokeWidth: 1 }
+            }),
+            React.createElement(Legend, { wrapperStyle: { fontSize: 11, color: chartAxisFill } }),
+            React.createElement(Line, { type: 'monotone', dataKey: 'theme', name: t('scarcityChartThemeAvg'), stroke: '#4a9eff', strokeWidth: 2, dot: false }),
             React.createElement(Line, { type: 'monotone', dataKey: 'market', name: t('scarcityChartCurrentMarket'), stroke: '#d4af37', strokeWidth: 0, dot: { r: 6, fill: '#d4af37' } })
           )
         )
@@ -571,12 +599,18 @@ function ScarcityPage() {
       React.createElement('div', { style: { width: '100%', height: 220 } },
         React.createElement(ResponsiveContainer, { width: '100%', height: '100%' },
           React.createElement(LineChart, { data: result.projSeries, margin: { top: 8, right: 16, left: 4, bottom: 4 } },
-            React.createElement(CartesianGrid, { strokeDasharray: '3 3', stroke: '#eee' }),
-            React.createElement(XAxis, { dataKey: 'label', tick: { fontSize: 10, fill: '#888' } }),
-            React.createElement(YAxis, { tick: { fontSize: 10, fill: '#888' }, tickFormatter: function(v) { return Math.round(v / 1000) + 'k'; } }),
-            React.createElement(Tooltip, { formatter: function(v) { return fmtKRW(v); } }),
-            React.createElement(ReferenceLine, { y: result.market.value, stroke: '#888', strokeDasharray: '4 4', label: { value: t('scarcityChartCurrentMarket'), position: 'insideTopRight', fill: '#888', fontSize: 10 } }),
-            React.createElement(Line, { type: 'monotone', dataKey: 'projected', name: t('scarcityChartProjected'), stroke: '#0a8a4e', strokeWidth: 2, dot: { r: 3 } })
+            React.createElement(CartesianGrid, { strokeDasharray: '3 3', stroke: chartGridStroke }),
+            React.createElement(XAxis, { dataKey: 'label', tick: { fontSize: 10, fill: chartAxisFill }, stroke: chartAxisFill }),
+            React.createElement(YAxis, { tick: { fontSize: 10, fill: chartAxisFill }, stroke: chartAxisFill, tickFormatter: function(v) { return Math.round(v / 1000) + 'k'; } }),
+            React.createElement(Tooltip, {
+              formatter: function(v) { return fmtKRW(v); },
+              contentStyle: chartTooltipContentStyle,
+              labelStyle: chartTooltipLabelStyle,
+              itemStyle: chartTooltipItemStyle,
+              cursor: { stroke: chartAxisFill, strokeWidth: 1 }
+            }),
+            React.createElement(ReferenceLine, { y: result.market.value, stroke: chartAxisFill, strokeDasharray: '4 4', label: { value: t('scarcityChartCurrentMarket'), position: 'insideTopRight', fill: chartAxisFill, fontSize: 10 } }),
+            React.createElement(Line, { type: 'monotone', dataKey: 'projected', name: t('scarcityChartProjected'), stroke: '#3ec47a', strokeWidth: 2, dot: { r: 3 } })
           )
         )
       ),
