@@ -2,7 +2,7 @@
 //
 // Strategy:
 //   1. Build-time static JSON (legoImages.json + bdpImages.json) — always reliable.
-//      Updated by `npm run fetch-images` and the GitHub Action `auto-update-images.yml`.
+//      Updated by `npm run fetch-images` and the GitHub Action `update-images.yml`.
 //   2. localStorage cache (lego_set_images_cache_v2) — for sets fetched at runtime.
 //   3. Runtime fetch via public CORS proxy chain — best-effort live update for sets
 //      not yet in the static JSON. (Most public proxies are unreliable from
@@ -23,14 +23,17 @@ export function getStaticImageIds(setNum) {
 var CACHE_KEY = 'lego_set_images_cache_v2';
 var LEGACY_CACHE_KEY = 'lego_set_images_cache';
 var CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+// allorigins serves the full HTML reliably for rebrickable; codetabs truncates
+// long pages (~5KB cap) and is therefore unusable as primary. Reorder so the
+// reliable proxy is tried first, fallbacks after.
 var CORS_PROXIES = [
-  function(u) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); },
-  function(u) { return 'https://corsproxy.io/?' + encodeURIComponent(u); },
   function(u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
+  function(u) { return 'https://corsproxy.io/?' + encodeURIComponent(u); },
+  function(u) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); },
   function(u) { return 'https://thingproxy.freeboard.io/fetch/' + u; },
   function(u) { return 'https://cors.eu.org/' + u; },
 ];
-var FETCH_TIMEOUT_MS = 8000;
+var FETCH_TIMEOUT_MS = 25000;
 
 var pending = {};
 
@@ -92,15 +95,24 @@ async function fetchVia(proxyBuilder, url) {
   return res.text();
 }
 
+// Make sure the body really came from rebrickable and isn't a truncated
+// "OK" stub from a misbehaving proxy or a Cloudflare challenge page.
+function isValidRebrickableSetHtml(text) {
+  if (!text || text.length < 10000) return false;
+  return text.indexOf('rebrickable') >= 0 && (
+    text.indexOf('/media/thumbs/sets/') >= 0 ||
+    text.indexOf('og:image') >= 0
+  );
+}
+
 async function fetchFromProxies(setNum) {
   var url = 'https://rebrickable.com/sets/' + setNum + '/';
   for (var i = 0; i < CORS_PROXIES.length; i++) {
     try {
       var html = await fetchVia(CORS_PROXIES[i], url);
-      if (html && html.length > 0) {
-        var found = extractImageIds(html, setNum);
-        if (found.length > 0) return found;
-      }
+      if (!isValidRebrickableSetHtml(html)) continue;
+      var found = extractImageIds(html, setNum);
+      if (found.length > 0) return found;
     } catch (e) { /* try next */ }
   }
   return [];
