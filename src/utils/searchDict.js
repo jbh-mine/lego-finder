@@ -427,6 +427,104 @@ var WORD_MAP = {
   '마리오': 'Mario',
 };
 
+// ============================================================================
+// IP / Franchise Multi-Keyword Expansion (added 2026-04)
+// ----------------------------------------------------------------------------
+// Rebrickable's /sets/?search=... only matches set NAMES (not theme names),
+// so umbrella keywords like "Marvel" return zero results because no set name
+// contains the word "Marvel". For these umbrella franchise keywords we instead
+// fan out into multiple parallel searches against terms that DO appear in set
+// names (Spider-Man, Iron Man, Avengers, Hulk, ...) and merge the results.
+// Both Korean (raw) and English (translated) keys are accepted.
+// ============================================================================
+var IP_SEARCH_MAP = {
+  // Marvel umbrella
+  '마블': ['Spider-Man', 'Iron Man', 'Avengers', 'Hulk', 'Captain America', 'Thor', 'Black Panther', 'Doctor Strange', 'Spidey', 'Guardians', 'Ant-Man'],
+  'marvel': ['Spider-Man', 'Iron Man', 'Avengers', 'Hulk', 'Captain America', 'Thor', 'Black Panther', 'Doctor Strange', 'Spidey', 'Guardians', 'Ant-Man'],
+  '어벤져스': ['Avengers', 'Iron Man', 'Hulk', 'Thor', 'Captain America', 'Black Widow'],
+  '어벤저스': ['Avengers', 'Iron Man', 'Hulk', 'Thor', 'Captain America', 'Black Widow'],
+  'avengers': ['Avengers', 'Iron Man', 'Hulk', 'Thor', 'Captain America', 'Black Widow'],
+  '아이언맨': ['Iron Man', 'Hulkbuster', 'Stark'],
+  'iron man': ['Iron Man', 'Hulkbuster', 'Stark'],
+  '헐크': ['Hulk', 'Hulkbuster'],
+  'hulk': ['Hulk', 'Hulkbuster'],
+  '스파이더맨': ['Spider-Man', 'Spidey'],
+  'spider-man': ['Spider-Man', 'Spidey'],
+  'spiderman': ['Spider-Man', 'Spidey'],
+  '캡틴아메리카': ['Captain America'],
+  '캡틴 아메리카': ['Captain America'],
+  '토르': ['Thor'],
+  'thor': ['Thor'],
+  '블랙위도우': ['Black Widow'],
+  '블랙 위도우': ['Black Widow'],
+  '블랙팬서': ['Black Panther'],
+  '블랙 팬서': ['Black Panther'],
+  '닥터스트레인지': ['Doctor Strange'],
+  '닥터 스트레인지': ['Doctor Strange'],
+  '가디언즈': ['Guardians', 'Star-Lord'],
+  '가디언즈오브갤럭시': ['Guardians', 'Star-Lord'],
+  '앤트맨': ['Ant-Man'],
+  // DC umbrella
+  '디씨': ['Batman', 'Superman', 'Wonder Woman', 'Joker', 'Aquaman', 'Justice League'],
+  'dc': ['Batman', 'Superman', 'Wonder Woman', 'Joker', 'Aquaman', 'Justice League'],
+  '저스티스리그': ['Justice League'],
+  '슈퍼맨': ['Superman'],
+  '원더우먼': ['Wonder Woman'],
+  '원더 우먼': ['Wonder Woman'],
+  '아쿠아맨': ['Aquaman'],
+  '플래시': ['Flash'],
+  '조커': ['Joker'],
+  '배트맨': ['Batman', 'Batmobile', 'Batcave'],
+  // Star Wars umbrella
+  '스타워즈': ['Star Wars', 'Millennium Falcon', 'X-Wing', 'TIE Fighter', 'AT-AT', 'Death Star', 'Mandalorian', 'Clone'],
+  '스타 워즈': ['Star Wars', 'Millennium Falcon', 'X-Wing', 'TIE Fighter', 'AT-AT', 'Death Star', 'Mandalorian'],
+  'star wars': ['Star Wars', 'Millennium Falcon', 'X-Wing', 'TIE Fighter', 'AT-AT', 'Death Star', 'Mandalorian'],
+  '만달로리안': ['Mandalorian', 'Razor Crest', 'Grogu'],
+  '클론': ['Clone Trooper', 'Clone Wars'],
+  // Harry Potter umbrella
+  '해리포터': ['Harry Potter', 'Hogwarts', 'Diagon Alley', 'Hogsmeade'],
+  '해리 포터': ['Harry Potter', 'Hogwarts', 'Diagon Alley', 'Hogsmeade'],
+  'harry potter': ['Harry Potter', 'Hogwarts', 'Diagon Alley', 'Hogsmeade'],
+  // Disney
+  '디즈니': ['Disney', 'Mickey', 'Minnie', 'Frozen', 'Lion King', 'Toy Story'],
+  'disney': ['Disney', 'Mickey', 'Minnie', 'Frozen', 'Lion King', 'Toy Story'],
+  '겨울왕국': ['Frozen', 'Elsa', 'Anna'],
+  'frozen': ['Frozen', 'Elsa', 'Anna'],
+  // Other movies / IPs
+  '쥬라기월드': ['Jurassic World', 'T. rex', 'Velociraptor'],
+  '쥬라기 월드': ['Jurassic World', 'T. rex', 'Velociraptor'],
+  'jurassic world': ['Jurassic World', 'T. rex', 'Velociraptor'],
+  '쥬라기공원': ['Jurassic Park'],
+  '쥬라기 공원': ['Jurassic Park'],
+  '인디아나존스': ['Indiana Jones'],
+  '인디아나 존스': ['Indiana Jones'],
+  '슈퍼마리오': ['Super Mario', 'Mario', 'Luigi', 'Bowser', 'Peach'],
+  '슈퍼 마리오': ['Super Mario', 'Mario', 'Luigi', 'Bowser', 'Peach'],
+  'super mario': ['Super Mario', 'Mario', 'Luigi', 'Bowser', 'Peach'],
+  '미니언즈': ['Minions'],
+  'minions': ['Minions'],
+  '반지의제왕': ['Lord of the Rings', 'Hobbit'],
+  '반지의 제왕': ['Lord of the Rings', 'Hobbit'],
+  '레고무비': ['LEGO Movie'],
+  '레고 무비': ['LEGO Movie'],
+  // Speed Champions / cars umbrella
+  '스피드챔피언': ['Speed Champions', 'Porsche', 'Ferrari', 'Lamborghini', 'McLaren', 'Bugatti'],
+  '스피드 챔피언': ['Speed Champions', 'Porsche', 'Ferrari', 'Lamborghini', 'McLaren', 'Bugatti'],
+};
+
+// Returns an array of English search terms for an umbrella IP/franchise query,
+// or null if the query is not a known umbrella keyword. Accepts both raw
+// Korean and pre-translated English (case-insensitive).
+function getIpSearchTerms(query) {
+  if (!query) return null;
+  var trimmed = String(query).trim();
+  if (!trimmed) return null;
+  if (IP_SEARCH_MAP[trimmed]) return IP_SEARCH_MAP[trimmed];
+  var lower = trimmed.toLowerCase();
+  if (IP_SEARCH_MAP[lower]) return IP_SEARCH_MAP[lower];
+  return null;
+}
+
 function translateSearchQuery(q) {
   if (!q) return '';
 
@@ -491,4 +589,4 @@ function translateSearchQuery(q) {
   return trimmed;
 }
 
-export { translateSearchQuery, SET_NUM_MAP };
+export { translateSearchQuery, SET_NUM_MAP, getIpSearchTerms };
