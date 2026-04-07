@@ -52,6 +52,7 @@ function MocsPage() {
     }
   }, [t]);
 
+  // Initial load
   useEffect(function() {
     stateRef.current = { query: '', theme: '', sort: '', page: 1 };
     doFetch({ page: 1 }, false);
@@ -79,6 +80,7 @@ function MocsPage() {
     doFetch({ q: query, theme: theme, sort: v, page: 1 }, false);
   };
 
+  // Infinite scroll
   useEffect(function() {
     if (!sentinelRef.current) return;
     var obs = new IntersectionObserver(function(entries) {
@@ -164,13 +166,34 @@ function MocsPage() {
           state: { moc: moc },
           className: 'set-card moc-card-link'
         },
-          React.createElement('img', {
-            className: 'set-card-img',
-            src: moc.img,
-            alt: moc.name,
-            loading: 'lazy',
-            onError: function(e) { e.target.style.opacity = '0.3'; }
-          }),
+          moc.img
+            ? React.createElement('img', {
+                className: 'set-card-img',
+                src: moc.img,
+                alt: moc.name,
+                loading: 'lazy',
+                onError: function(e) {
+                  // If the lazy-load extraction failed, fall back to the
+                  // primary CDN guess via the canonical MOC page route.
+                  if (e.target.dataset.fallbackTried) {
+                    e.target.style.opacity = '0.3';
+                    return;
+                  }
+                  e.target.dataset.fallbackTried = '1';
+                  e.target.src = 'https://cdn.rebrickable.com/media/thumbs/mocs/' + moc.mocNum + '/' + (moc.variant || '1') + '.jpg/300x300p.jpg';
+                }
+              })
+            : React.createElement('div', {
+                className: 'set-card-img',
+                style: {
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: '#f0f0f0',
+                  color: '#999',
+                  fontSize: '12px'
+                }
+              }, moc.mocNum),
           React.createElement('div', { className: 'set-card-body' },
             React.createElement('div', { className: 'set-card-num' }, moc.mocNum),
             React.createElement('div', { className: 'set-card-name' }, moc.name),

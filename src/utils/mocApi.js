@@ -2,7 +2,9 @@
 // rebrickable.com/mocs/ HTML via a chain of CORS proxies and parse the
 // `.set-tn` cards. Results are cached in localStorage for a short window.
 
-var CACHE_KEY = 'lego_moc_cache';
+// v2: bumped after fixing the lazy-load image extraction so previously cached
+// search results (which had empty img fields) are invalidated.
+var CACHE_KEY = 'lego_moc_cache_v2';
 var CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
 var DETAIL_CACHE_KEY = 'lego_moc_detail_cache';
 var DETAIL_CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 1 day
@@ -118,10 +120,43 @@ function parseMocCards(html) {
     }
     if (!mocNum) continue;
 
-    // Image
-    var imgMatch = chunk.match(/<img[^>]+src="([^"]+)"/);
-    var img = imgMatch ? imgMatch[1] : '';
+    // Image. Rebrickable's MOC listing uses lazy loading, so the real image
+    // URL lives in data-src / data-original / srcset, while the plain `src`
+    // attribute is a tiny placeholder (data:image/gif;base64,... or similar).
+    // Try in order: data-src, data-original, srcset (first URL),
+    // src that points at cdn.rebrickable.com, then any /media/thumbs/mocs/
+    // URL anywhere in the chunk as a final fallback.
+    var img = '';
+    var dataSrcMatch = chunk.match(/<img[^>]+\bdata-src="([^"]+)"/i) ||
+                       chunk.match(/<img[^>]+\bdata-original="([^"]+)"/i) ||
+                       chunk.match(/<img[^>]+\bdata-lazy="([^"]+)"/i);
+    if (dataSrcMatch) {
+      img = dataSrcMatch[1];
+    } else {
+      var srcsetMatch = chunk.match(/<img[^>]+srcset="([^"\s]+)/i);
+      if (srcsetMatch) img = srcsetMatch[1];
+    }
+    if (!img) {
+      // Pull every src=, prefer the first one that isn't a data: placeholder
+      var srcRe = /<img[^>]+src="([^"]+)"/g;
+      var sm;
+      while ((sm = srcRe.exec(chunk)) !== null) {
+        if (sm[1].indexOf('data:') !== 0 && sm[1].indexOf('blank.gif') === -1) {
+          img = sm[1];
+          break;
+        }
+      }
+    }
+    if (!img) {
+      // Last resort: any rebrickable CDN URL inside the chunk
+      var cdnMatch = chunk.match(/https?:\/\/cdn\.rebrickable\.com\/[^"'\s]+\.(?:jpg|jpeg|png|webp)[^"'\s]*/i) ||
+                     chunk.match(/\/\/cdn\.rebrickable\.com\/[^"'\s]+\.(?:jpg|jpeg|png|webp)[^"'\s]*/i) ||
+                     chunk.match(/\/media\/thumbs\/mocs\/[^"'\s]+\.(?:jpg|jpeg|png|webp)[^"'\s]*/i);
+      if (cdnMatch) img = cdnMatch[0];
+    }
     if (img && img.indexOf('//') === 0) img = 'https:' + img;
+    if (img && img.indexOf('/') === 0 && img.indexOf('//') !== 0) img = 'https://rebrickable.com' + img;
+    if (img && img.indexOf('data:') === 0) img = ''; // never keep placeholders
 
     // Name
     var nameMatch = chunk.match(/data-set_name="([^"]*)"/) ||
