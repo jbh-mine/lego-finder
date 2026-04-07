@@ -560,29 +560,58 @@ function ScarcityPage() {
       )
     );
 
-    var gaugePct = s.finalScore;
-    var gaugeWrap = { position: 'relative', height: 28, background: 'linear-gradient(to right, #e74c3c 0%, #f39c12 35%, #f1c40f 50%, #2ecc71 65%, #d4af37 90%)', borderRadius: 14, overflow: 'hidden' };
-    var markerStyle = { position: 'absolute', left: gaugePct + '%', top: -4, transform: 'translateX(-50%)', width: 4, height: 36, background: 'var(--color-text, #222)', borderRadius: 2 };
-    var gaugeLabelStyle = { display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--color-text-muted, #888)', marginTop: 6 };
+    // ---- Brick stack score gauge (replaces flat gradient bar) ----
+    // Stacks of 10 LEGO bricks fill from the bottom; the brick color
+    // matches the grade (S=gold, A=green, B=blue, C=orange, D=red).
+    var brickStackEl = React.createElement('div', {
+      className: 'brick-stack',
+      'data-grade': s.grade,
+      'aria-label': 'score ' + s.finalScore + ' of 100'
+    },
+      React.createElement('div', { className: 'brick-stack-track' },
+        React.createElement('div', {
+          className: 'brick-stack-fill',
+          style: { height: s.finalScore + '%' }
+        })
+      ),
+      React.createElement('div', { className: 'brick-stack-label' },
+        s.finalScore + ' / 100'
+      )
+    );
+
+    var gradeBadgeEl = React.createElement('div', {
+      className: 'brick-badge',
+      'data-grade': s.grade,
+      title: 'Grade ' + s.grade
+    }, s.grade);
+
+    var gradeMarkers = ['S', 'A', 'B', 'C', 'D'].map(function(g) {
+      var pts = g === 'S' ? '80+' : g === 'A' ? '65+' : g === 'B' ? '50+' : g === 'C' ? '35+' : '0+';
+      var dim = g !== s.grade;
+      return React.createElement('div', {
+        key: g,
+        style: {
+          display: 'flex', alignItems: 'center', gap: 8,
+          opacity: dim ? 0.45 : 1,
+          fontWeight: dim ? 500 : 700
+        }
+      },
+        React.createElement('div', { className: 'brick-badge', 'data-grade': g, style: { width: 36, height: 22, fontSize: '0.85rem', marginTop: 4 } }, g),
+        React.createElement('span', { style: { fontSize: '0.78rem', color: 'var(--color-text-secondary, #666)' } }, pts)
+      );
+    });
 
     var gaugeEl = React.createElement('div', { style: cardStyle },
-      React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 } },
-        React.createElement('div', { style: { fontSize: '1rem', fontWeight: 700, color: 'var(--color-text, #222)' } }, t('scarcityScoreTitle')),
-        React.createElement('div', null,
-          React.createElement('span', { style: { fontSize: '2rem', fontWeight: 800, color: s.gradeColor } }, s.grade),
-          React.createElement('span', { style: { fontSize: '1.4rem', fontWeight: 700, color: 'var(--color-text, #222)', marginLeft: 10 } }, s.finalScore),
-          React.createElement('span', { style: { fontSize: '0.85rem', color: 'var(--color-text-muted, #888)', marginLeft: 4 } }, '/ 100')
-        )
-      ),
-      React.createElement('div', { style: gaugeWrap },
-        React.createElement('div', { style: markerStyle })
-      ),
-      React.createElement('div', { style: gaugeLabelStyle },
-        React.createElement('span', null, '0 (D)'),
-        React.createElement('span', null, '35 (C)'),
-        React.createElement('span', null, '50 (B)'),
-        React.createElement('span', null, '65 (A)'),
-        React.createElement('span', null, '80+ (S)')
+      React.createElement('div', { style: { fontSize: '1rem', fontWeight: 700, color: 'var(--color-text, #222)', marginBottom: 14 } }, t('scarcityScoreTitle')),
+      React.createElement('div', {
+        style: { display: 'flex', gap: 28, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-around' }
+      },
+        brickStackEl,
+        React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 } },
+          gradeBadgeEl,
+          React.createElement('div', { style: { fontSize: '0.78rem', color: 'var(--color-text-muted, #888)', textTransform: 'uppercase', letterSpacing: 0.5 } }, 'Grade')
+        ),
+        React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, gradeMarkers)
       )
     );
 
