@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 function Header() {
   const location = useLocation();
   const { t, lang, setLang } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const isActive = (path) => location.pathname === path ? 'active' : '';
@@ -15,6 +17,9 @@ function Header() {
     setMenuOpen(false);
   };
 
+  const isDark = theme === 'dark';
+  const themeBtnTitle = isDark ? t('themeToLight') : t('themeToDark');
+
   return (
     <header className="header">
       <div className="header-inner">
@@ -23,6 +28,16 @@ function Header() {
         </Link>
 
         <div className="header-right">
+          <button
+            type="button"
+            className="theme-toggle-btn"
+            onClick={toggleTheme}
+            aria-label={themeBtnTitle}
+            title={themeBtnTitle}
+          >
+            <span aria-hidden="true">{isDark ? '☀' : '☾'}</span>
+          </button>
+
           <div className="lang-selector">
             <button
               className={'lang-btn' + (lang === 'ko' ? ' lang-active' : '')}
