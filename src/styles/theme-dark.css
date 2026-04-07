@@ -1,0 +1,265 @@
+/* ============================================================
+ * Dark Mode Theme Overrides
+ * Activated by setting `data-theme="dark"` on <html>
+ * via ThemeContext. CSS variable based — no JS color manipulation.
+ * Light mode is the default and remains unchanged in App.css.
+ * ============================================================ */
+
+:root {
+  --color-bg: #F5F5F5;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f9f9f9;
+  --color-surface-elevated: #ffffff;
+  --color-text: #1D1D1B;
+  --color-text-secondary: #666666;
+  --color-text-muted: #999999;
+  --color-border: #E0E0E0;
+  --color-overlay: rgba(0,0,0,0.85);
+  --color-shadow: rgba(0,0,0,0.1);
+  --color-accent-soft: #e8f4fd;
+  --color-info-bg: #FFF8E1;
+  --color-info-border: #FFE082;
+  --color-info-text: #795548;
+}
+
+[data-theme="dark"] {
+  --color-bg: #0f1115;
+  --color-surface: #1a1d23;
+  --color-surface-soft: #21262e;
+  --color-surface-elevated: #232831;
+  --color-text: #e6e6e6;
+  --color-text-secondary: #b0b6c0;
+  --color-text-muted: #8a91a0;
+  --color-border: #353a45;
+  --color-overlay: rgba(0,0,0,0.92);
+  --color-shadow: rgba(0,0,0,0.5);
+  --color-accent-soft: #1c2a3a;
+  --color-info-bg: #2a2418;
+  --color-info-border: #4a3a18;
+  --color-info-text: #e0c895;
+
+  /* Override LEGO design tokens used as gray surfaces */
+  --lego-gray: #21262e;
+  --lego-border: #353a45;
+  --lego-dark: #e6e6e6;
+}
+
+/* ----- Base ----- */
+[data-theme="dark"] body {
+  background: #0f1115;
+  color: #e6e6e6;
+}
+
+/* Header keeps the iconic LEGO red */
+
+/* ----- Surfaces (cards, sections, panels) ----- */
+[data-theme="dark"] .search-section,
+[data-theme="dark"] .search-results-summary,
+[data-theme="dark"] .filter-section,
+[data-theme="dark"] .set-card,
+[data-theme="dark"] .part-result-card,
+[data-theme="dark"] .set-detail,
+[data-theme="dark"] .collection-stats,
+[data-theme="dark"] .error-message {
+  background: #1a1d23;
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .search-section h2,
+[data-theme="dark"] .theme-title,
+[data-theme="dark"] .part-section-title,
+[data-theme="dark"] .ins-title,
+[data-theme="dark"] .set-detail-info h1 {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .search-results-summary,
+[data-theme="dark"] .set-card-meta,
+[data-theme="dark"] .set-name-original,
+[data-theme="dark"] .stat-item .stat-label,
+[data-theme="dark"] .pagination .page-info,
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .empty-state h3,
+[data-theme="dark"] .loading,
+[data-theme="dark"] .moc-desc,
+[data-theme="dark"] .moc-designer,
+[data-theme="dark"] .part-sets-hint,
+[data-theme="dark"] .new-products-desc,
+[data-theme="dark"] .filter-group label,
+[data-theme="dark"] .ins-card-file {
+  color: #b0b6c0;
+}
+
+[data-theme="dark"] .theme-count,
+[data-theme="dark"] .set-card-name-en,
+[data-theme="dark"] .part-result-cat,
+[data-theme="dark"] .part-color-count,
+[data-theme="dark"] .part-color-sets-count {
+  color: #8a91a0;
+}
+
+/* ----- Inputs / Selects / Buttons (form-like) ----- */
+[data-theme="dark"] .search-bar input,
+[data-theme="dark"] .search-sort-select,
+[data-theme="dark"] .filter-group select,
+[data-theme="dark"] .filter-group input,
+[data-theme="dark"] .moc-search-form input,
+[data-theme="dark"] .moc-filter-row select,
+[data-theme="dark"] .funding-year-select,
+[data-theme="dark"] .funding-search-input {
+  background: #21262e;
+  color: #e6e6e6;
+  border-color: #353a45;
+}
+
+[data-theme="dark"] .search-bar input::placeholder,
+[data-theme="dark"] .funding-search-input::placeholder,
+[data-theme="dark"] .moc-search-form input::placeholder,
+[data-theme="dark"] .filter-group input::placeholder {
+  color: #6a7180;
+}
+
+[data-theme="dark"] .search-clear-btn { color: #8a91a0; }
+[data-theme="dark"] .search-clear-btn:hover { color: #e6e6e6; }
+
+/* Tabs / pill buttons */
+[data-theme="dark"] .new-year-tab,
+[data-theme="dark"] .moc-sort-tab,
+[data-theme="dark"] .funding-series-tab,
+[data-theme="dark"] .collection-tabs button,
+[data-theme="dark"] .pagination button,
+[data-theme="dark"] .theme-more button,
+[data-theme="dark"] .back-btn,
+[data-theme="dark"] .btn-icon {
+  background: #21262e;
+  color: #e6e6e6;
+  border-color: #353a45;
+}
+
+[data-theme="dark"] .back-btn { color: #b0b6c0; }
+[data-theme="dark"] .back-btn:hover { background: #2a3038; color: #ffffff; }
+[data-theme="dark"] .btn-icon:hover { background: #2a3038; }
+
+[data-theme="dark"] .new-year-tab.active { background: var(--lego-red); border-color: var(--lego-red); color: #fff; }
+[data-theme="dark"] .moc-sort-tab.active { background: var(--lego-green); border-color: var(--lego-green); color: #fff; }
+[data-theme="dark"] .funding-series-tab.active { background: var(--lego-blue); border-color: var(--lego-blue); color: #fff; }
+[data-theme="dark"] .collection-tabs button.active { background: var(--lego-yellow); color: #1D1D1B; }
+
+/* Pagination active hover keeps blue */
+[data-theme="dark"] .pagination button:hover:not(:disabled) {
+  background: var(--lego-blue);
+  border-color: var(--lego-blue);
+  color: #fff;
+}
+
+/* ----- Image surfaces (use a slightly lighter dark for visual separation) ----- */
+[data-theme="dark"] .set-card-img,
+[data-theme="dark"] .part-result-img,
+[data-theme="dark"] .set-detail-img,
+[data-theme="dark"] .image-gallery,
+[data-theme="dark"] .gallery-thumb,
+[data-theme="dark"] .part-card {
+  background: #2a3038;
+  border-color: #353a45;
+}
+
+/* ----- Theme section divider keeps red ----- */
+[data-theme="dark"] .theme-header {
+  border-bottom-color: var(--lego-red);
+}
+
+/* ----- Instruction cards ----- */
+[data-theme="dark"] .ins-card {
+  background: #21262e;
+  border-color: #353a45;
+}
+[data-theme="dark"] .ins-card:hover {
+  background: #2a3038;
+  border-color: var(--lego-blue);
+}
+[data-theme="dark"] .ins-card-name { color: #e6e6e6; }
+
+/* ----- Part color picker ----- */
+[data-theme="dark"] .part-color-item {
+  background: #21262e;
+  color: #e6e6e6;
+}
+[data-theme="dark"] .part-color-item:hover {
+  background: #2a3038;
+}
+[data-theme="dark"] .part-color-item.part-color-selected {
+  background: #1c2a3a;
+  border-color: var(--lego-blue);
+}
+[data-theme="dark"] .part-element-badge {
+  background: #21262e;
+  border-color: #353a45;
+  color: #e6e6e6;
+}
+[data-theme="dark"] .part-selected-color {
+  background: #21262e;
+}
+
+/* ----- Funding info notice (light yellow → muted gold) ----- */
+[data-theme="dark"] .funding-info-notice {
+  background: #2a2418;
+  border-color: #4a3a18;
+  color: #e0c895;
+}
+
+/* ----- New products source notice (blue gradient) ----- */
+[data-theme="dark"] .new-products-source-notice {
+  background: linear-gradient(135deg,#0d2238 0%,#143557 100%);
+  border-color: #2a5a8a;
+  border-left-color: #4a8ec5;
+}
+[data-theme="dark"] .new-products-source-text,
+[data-theme="dark"] .new-products-source-link {
+  color: #cfe3f5;
+}
+[data-theme="dark"] .new-products-source-link:hover { color: #ff8a80; }
+
+/* ----- Detail meta labels ----- */
+[data-theme="dark"] .detail-meta-item .label {
+  color: #b0b6c0;
+}
+
+/* ----- Mobile nav background ----- */
+@media (max-width: 768px) {
+  [data-theme="dark"] .header-nav {
+    background: var(--lego-red);
+  }
+}
+
+/* ----- Theme toggle button (in header) ----- */
+.theme-toggle-btn {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-radius: var(--radius);
+  padding: 5px 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 30px;
+  transition: background 0.2s, color 0.2s;
+  line-height: 1;
+}
+.theme-toggle-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+.theme-toggle-btn:focus {
+  outline: 2px solid var(--lego-yellow);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .theme-toggle-btn {
+    padding: 4px 8px;
+    min-width: 32px;
+    font-size: 0.95rem;
+  }
+}
