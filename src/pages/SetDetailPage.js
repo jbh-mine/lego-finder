@@ -185,19 +185,6 @@ function SetDetailPage() {
     }, '\u203A'));
   }
 
-  // Dots
-  if (showNav) {
-    galleryChildren.push(React.createElement('div', { key: 'dots', className: 'gallery-dots' },
-      allImages.map(function(_, i) {
-        return React.createElement('span', {
-          key: i,
-          className: 'gallery-dot' + (i === imgIdx ? ' active' : ''),
-          onClick: function(e) { e.stopPropagation(); setImgIdx(i); },
-        });
-      })
-    ));
-  }
-
   // Counter badge
   if (showNav) {
     galleryChildren.push(React.createElement('span', {
@@ -206,12 +193,43 @@ function SetDetailPage() {
     }, (imgIdx + 1) + ' / ' + allImages.length));
   }
 
-  var galleryEl = React.createElement('div', {
+  var mainGalleryEl = React.createElement('div', {
     className: 'image-gallery',
     onTouchStart: handleTouchStart,
     onTouchMove: handleTouchMove,
     onTouchEnd: handleTouchEnd,
   }, galleryChildren);
+
+  // Thumbnail strip
+  var thumbsEl = null;
+  if (showNav) {
+    var thumbButtons = allImages.map(function(url, i) {
+      // Use smaller Rebrickable variant for thumbnails if applicable
+      var thumbUrl = url.indexOf('/1000x800p.jpg') !== -1
+        ? url.replace('/1000x800p.jpg', '/230x180p.jpg')
+        : url;
+      return React.createElement('button', {
+        key: i,
+        className: 'gallery-thumb' + (i === imgIdx ? ' active' : ''),
+        onClick: function(e) { e.stopPropagation(); setImgIdx(i); },
+        'aria-label': 'Image ' + (i + 1),
+      },
+        React.createElement('img', {
+          src: thumbUrl,
+          alt: '',
+          loading: 'lazy',
+          onError: function(e) { e.target.src = PH; },
+          draggable: false,
+        })
+      );
+    });
+    thumbsEl = React.createElement('div', { className: 'gallery-thumbs' }, thumbButtons);
+  }
+
+  var galleryEl = React.createElement('div', { className: 'image-gallery-wrapper' },
+    mainGalleryEl,
+    thumbsEl
+  );
 
   // Build instruction cards section
   var insSection;
