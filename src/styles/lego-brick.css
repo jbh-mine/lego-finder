@@ -7,7 +7,7 @@
  *
  * Design tokens:
  *   --brick-radius        : 6px  (LEGO brick rounding feel: 4~8px range)
- *   --brick-stud-color    : top-row stud pseudo dots
+ *   --brick-accent        : top edge accent color (LEGO red)
  *   --brick-shadow        : subtle bottom shadow that mimics a stud edge
  * ============================================================ */
 
@@ -15,6 +15,8 @@
   --brick-radius: 6px;
   --brick-radius-sm: 4px;
   --brick-radius-lg: 8px;
+  --brick-accent: #DA291C;             /* LEGO red */
+  --brick-accent-soft: rgba(218, 41, 28, 0.85);
   --brick-stud-color: rgba(255, 255, 255, 0.55);
   --brick-stud-shadow: rgba(0, 0, 0, 0.18);
   --brick-shadow: 0 2px 0 rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
@@ -22,6 +24,8 @@
 }
 
 [data-theme="dark"] {
+  --brick-accent: #ff5147;
+  --brick-accent-soft: rgba(255, 81, 71, 0.85);
   --brick-stud-color: rgba(255, 255, 255, 0.18);
   --brick-stud-shadow: rgba(0, 0, 0, 0.6);
   --brick-shadow: 0 2px 0 rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.35);
@@ -81,34 +85,68 @@ body {
   border-radius: var(--brick-radius-sm) !important;
 }
 
-/* ----- Brick stud row on top of every set card -----
- * 4 small dots applied via the ::before pseudo-element so we
- * don't need to touch any JSX. The stud row is intentionally
- * subtle (not full LEGO logo) so it doesn't compete with the
- * product image. */
+/* ============================================================
+ * Set / MOC card brick top-edge accent
+ *
+ * Previous design had 4 awkward radial-gradient stud dots in the
+ * top-left area of every card. Replaced with a clean LEGO-red
+ * top edge bar that mimics the colored top of a LEGO brick.
+ * The bar has a soft inner highlight + bottom shadow so it
+ * reads as a 3D brick edge instead of a flat ribbon.
+ * ============================================================ */
 .set-card,
 .moc-card-link {
   position: relative;
   box-shadow: var(--brick-shadow);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
 }
 
 .set-card::before,
 .moc-card-link::before {
   content: "";
   position: absolute;
-  top: 4px;
-  left: 8px;
-  right: 8px;
-  height: 6px;
-  background-image:
-    radial-gradient(circle at 12px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px),
-    radial-gradient(circle at 36px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px),
-    radial-gradient(circle at 60px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px),
-    radial-gradient(circle at 84px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background:
+    linear-gradient(
+      180deg,
+      var(--brick-accent) 0%,
+      var(--brick-accent) 60%,
+      rgba(0, 0, 0, 0.18) 100%
+    );
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
   pointer-events: none;
-  opacity: 0.85;
-  z-index: 1;
+  z-index: 2;
+}
+
+/* A small corner stud nub on the top-left as a refined brand mark.
+ * Single tasteful dot replaces the old 4-dot row. */
+.set-card::after,
+.moc-card-link::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.4) 35%,
+      rgba(255, 255, 255, 0.05) 70%
+    ),
+    var(--brick-accent);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  z-index: 3;
 }
 
 .set-card:hover,
@@ -135,7 +173,7 @@ body {
   background: var(--color-surface, #fff);
   border: 1px solid var(--color-border, #e0e0e0);
   border-radius: var(--brick-radius);
-  padding: 16px;
+  padding: 18px 16px 16px 16px;
   box-shadow: var(--brick-shadow);
   position: relative;
   overflow: hidden;
@@ -144,22 +182,24 @@ body {
 .bento-cell::before {
   content: "";
   position: absolute;
-  top: 4px;
-  left: 8px;
-  right: 8px;
-  height: 6px;
-  background-image:
-    radial-gradient(circle at 12px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px),
-    radial-gradient(circle at 36px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px),
-    radial-gradient(circle at 60px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background:
+    linear-gradient(
+      180deg,
+      var(--brick-accent-soft) 0%,
+      var(--brick-accent-soft) 60%,
+      rgba(0, 0, 0, 0.14) 100%
+    );
   pointer-events: none;
-  opacity: 0.7;
 }
 
 .bento-cell-content {
   position: relative;
   z-index: 2;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 /* Cell sizing helpers — used by ScarcityPage result layout */
