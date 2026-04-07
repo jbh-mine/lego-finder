@@ -111,6 +111,37 @@ npm run fetch-prices --refresh
 
 ## 변경 이력 (Changelog)
 
+> 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다.
+
+### v0.4.0 — 2026-04-07
+
+#### `NEW` feat: 제품 상세 이미지 갤러리 확대 및 썸네일 스트립
+- 메인 갤러리 이미지 크기 확대 (400px → 560px, aspect-ratio 4/3)
+- 슬라이드 점(dots) 네비게이션을 Rebrickable 스타일 썸네일 스트립(74x60)으로 교체
+- 썸네일은 Rebrickable CDN `230x180p` 변형 사용으로 로딩 최적화
+- 활성 썸네일 파란색 테두리 강조 + hover 효과
+- 모바일 반응형: 썸네일 64x52 축소, wrapper full-width
+- 모든 제품 상세 페이지에 일괄 적용
+
+#### `NEW` feat: BDP 펀딩제품 갤러리 6장 이미지 + 한국어 부품/미니피규어 번역
+- BDP 제품 상세에 Rebrickable 갤러리 이미지 전체 표시 (이전에는 1~2장만)
+- `src/data/bdpImages.json` — BDP 63개 세트의 모든 갤러리 이미지 ID 사전 수집
+- `src/components/TranslatedName.js` — map 루프 내에서 useTranslatedName 훅 사용을 위한 래퍼 컴포넌트
+- 한국어 모드에서 부품 이름과 미니피규어 이름 자동 번역
+
+#### `FIX` fix: Rebrickable 이미지 갤러리 정확도 개선
+- BrickLink CDN 폴백 이미지 제거하여 Rebrickable과 정확히 일치시킴
+- Gold Mine Expedition 등 BDP 제품 이미지 수/종류 Rebrickable 기준 정합성 확보
+
+#### `NEW` feat: BDP 펀딩제품 가격 데이터 추가
+- BDP 제품 USD 가격 데이터 추가 (KRW 환산 표시)
+
+### v0.3.1 — 2026-04-06
+
+#### `FIX` fix: 한국어 검색 로직 개선
+- 누락된 한국어 단어 추가
+- WORD_MAP이 SET_NUM_MAP prefix 매칭보다 먼저 실행되도록 순서 조정
+
 ### v0.3.0 — 2026-04-06
 
 #### `NEW` feat: 한국 레고 가격 표시
@@ -179,6 +210,12 @@ npm run fetch-prices --refresh
 
 #### `NEW` feat: 한국어 자연어 검색 + 100+ 키워드 매핑
 - 한국어→영어 검색 키워드 사전 추가 (searchDict.js)
+
+#### `NEW` feat: 테마명 번역 + 제품명 한국어 번역
+- MyMemory Translation API 연동
+
+#### `NEW` feat: LEGO Finder React 앱 초기 구현
+- 제품번호/이름 검색, 테마/연도별 필터, 세트 상세, 컬렉션 & 위시리스트, GitHub Pages 배포
 
 #### `NEW` feat: 테마명 번역 + 제품명 한국어 번역
 - MyMemory Translation API 연동
