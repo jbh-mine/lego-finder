@@ -1,0 +1,85 @@
+name: Auto-update LEGO images & prices
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy to gh-pages after update'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Refresh LEGO prices (lego.com/ko-kr)
+        continue-on-error: true
+        run: npm run fetch-prices -- --refresh
+
+      - name: Refresh gallery image IDs (rebrickable.com)
+        continue-on-error: true
+        run: npm run fetch-images -- --from-prices
+
+      - name: Check for changes
+        id: diff
+        run: |
+          git add src/data/prices.json src/data/legoImages.json
+          if git diff --cached --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No data changes detected."
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Data changes detected."
+            git diff --cached --stat
+          fi
+
+      - name: Commit updated data
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(data): weekly auto-refresh of prices & gallery images [skip ci]"
+          git push origin main
+
+      - name: Build
+        if: steps.diff.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        env:
+          CI: false
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        if: (steps.diff.outputs.changed == 'true' || github.event_name == 'workflow_dispatch') && (github.event.inputs.deploy != 'false')
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          publish_branch: gh-pages
+          user_name: 'github-actions[bot]'
+          user_email: '41898282+github-actions[bot]@users.noreply.github.com'
+          commit_message: 'deploy: auto-update gallery images & prices'
