@@ -10,6 +10,8 @@ import { getSetDetail, getSetParts, getSetMinifigs } from '../utils/api';
 import { isInCollection, addToCollection, removeFromCollection, isInWishlist, addToWishlist, removeFromWishlist } from '../utils/collection';
 import Pagination from '../components/Pagination';
 import { Loading, ErrorMessage } from '../components/Loading';
+import TranslatedName from '../components/TranslatedName';
+import bdpImagesData from '../data/bdpImages.json';
 import '../styles/price.css';
 
 var PH = 'https://rebrickable.com/static/img/nil_mf.jpg';
@@ -68,11 +70,20 @@ function SetDetailPage() {
     })();
   }, [setNum, t]);
 
-  // Load images from Rebrickable only (match Rebrickable set page exactly)
+  // Load images from Rebrickable (match Rebrickable set page exactly)
+  // For BDP sets, use pre-fetched gallery image IDs from bdpImages.json
   useEffect(function() {
     if (!set) return;
     var images = [];
-    if (set.set_img_url) images.push(set.set_img_url);
+    var bdpIds = bdpImagesData.sets && bdpImagesData.sets[set.set_num];
+    if (bdpIds && bdpIds.length > 0) {
+      // Build gallery URLs from Rebrickable CDN using pre-fetched IDs
+      images = bdpIds.map(function(id) {
+        return 'https://cdn.rebrickable.com/media/thumbs/sets/' + set.set_num + '/' + id + '.jpg/1000x800p.jpg';
+      });
+    } else if (set.set_img_url) {
+      images.push(set.set_img_url);
+    }
     setAllImages(images);
     setImgIdx(0);
   }, [set]);
@@ -394,7 +405,11 @@ function SetDetailPage() {
                 parts.results.map(function(item, i) {
                   return React.createElement('div', { key: item.id + '-' + i, className: 'part-card' },
                     React.createElement('img', { src: (item.part && item.part.part_img_url) || PH, alt: item.part && item.part.name, loading: 'lazy', onError: function(e) { e.target.src = PH; } }),
-                    React.createElement('div', { className: 'part-name' }, item.part && item.part.name),
+                    React.createElement('div', { className: 'part-name' },
+                      lang === 'ko'
+                        ? React.createElement(TranslatedName, { name: item.part && item.part.name })
+                        : (item.part && item.part.name)
+                    ),
                     React.createElement('div', { className: 'part-qty' }, 'x' + item.quantity),
                     item.color && item.color.name && React.createElement('div', { style: { fontSize: '0.7rem', color: '#999', marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 } },
                       React.createElement('span', { style: { width: 10, height: 10, borderRadius: '50%', background: '#' + (item.color.rgb || '999'), border: '1px solid #ddd', display: 'inline-block' } }),
@@ -413,7 +428,11 @@ function SetDetailPage() {
               minifigs.results.map(function(mf, i) {
                 return React.createElement('div', { key: mf.set_num + '-' + i, className: 'part-card' },
                   React.createElement('img', { src: mf.set_img_url || PH, alt: mf.set_name, loading: 'lazy', onError: function(e) { e.target.src = PH; } }),
-                  React.createElement('div', { className: 'part-name' }, mf.set_name),
+                  React.createElement('div', { className: 'part-name' },
+                    lang === 'ko'
+                      ? React.createElement(TranslatedName, { name: mf.set_name })
+                      : mf.set_name
+                  ),
                   React.createElement('div', { className: 'part-qty' }, 'x' + mf.quantity)
                 );
               })
