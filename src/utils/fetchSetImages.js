@@ -10,6 +10,7 @@
 
 import legoImagesData from '../data/legoImages.json';
 import bdpImagesData from '../data/bdpImages.json';
+import { proxyHtmlUrl } from '../config/proxyConfig';
 
 var STATIC_SETS = Object.assign({}, (bdpImagesData && bdpImagesData.sets) || {}, (legoImagesData && legoImagesData.sets) || {});
 
@@ -107,6 +108,25 @@ function isValidRebrickableSetHtml(text) {
 
 async function fetchFromProxies(setNum) {
   var url = 'https://rebrickable.com/sets/' + setNum + '/';
+
+  // If a Worker proxy is configured, try it first. The Worker fetches the
+  // rebrickable.com page server-side and returns the HTML directly, avoiding
+  // public CORS proxy unreliability and Cloudflare challenges. This is what
+  // makes detail-page galleries (e.g. Harry Potter sets) finally show up.
+  var workerUrl = proxyHtmlUrl(url);
+  if (workerUrl) {
+    try {
+      var wres = await fetchWithTimeout(workerUrl, FETCH_TIMEOUT_MS);
+      if (wres.ok) {
+        var whtml = await wres.text();
+        if (isValidRebrickableSetHtml(whtml)) {
+          var wfound = extractImageIds(whtml, setNum);
+          if (wfound.length > 0) return wfound;
+        }
+      }
+    } catch (e) { /* fall through to public proxies */ }
+  }
+
   for (var i = 0; i < CORS_PROXIES.length; i++) {
     try {
       var html = await fetchVia(CORS_PROXIES[i], url);

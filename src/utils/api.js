@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { REBRICKABLE_PROXY } from '../config/proxyConfig';
 
 const API_BASE = 'https://rebrickable.com/api/v3/lego';
 const API_KEY = '7ee3e42b99c4d05555120e3fd43e6d11';
@@ -6,6 +7,11 @@ const API_KEY = '7ee3e42b99c4d05555120e3fd43e6d11';
 // Rebrickable enabled Cloudflare challenges, so direct browser access is blocked.
 // We route through public CORS proxies and pass the API key as a query string
 // (avoids CORS preflight that some proxies reject).
+//
+// If REBRICKABLE_PROXY (a deployed Cloudflare Worker) is configured, we prefer
+// it as the FIRST entry in the chain. The Worker injects the API key on the
+// server side, so when going through the Worker we strip the key from the URL
+// to keep it out of browser-side caches and Cloudflare logs.
 const CORS_PROXIES = [
   function (u) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); },
   function (u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
@@ -37,10 +43,30 @@ async function cachedRequest(path, params = {}) {
 
   const apiUrl = buildApiUrl(path, params);
 
-  // Try each proxy until one succeeds.
+  // Build the ordered fetch attempts. If a Worker proxy is configured,
+  // prefer it (key is hidden, no CORS challenges, edge-cached). On failure
+  // we still fall back to the public CORS proxy chain.
+  const attempts = [];
+  if (REBRICKABLE_PROXY) {
+    var workerBase = REBRICKABLE_PROXY.replace(/\/$/, '');
+    var sep = path.indexOf('?') >= 0 ? '&' : '?';
+    var workerQs = [];
+    Object.keys(params || {}).forEach(function (k) {
+      if (params[k] !== undefined && params[k] !== null && params[k] !== '') {
+        workerQs.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+      }
+    });
+    var workerUrl = workerBase + '/api' + path + (workerQs.length ? sep + workerQs.join('&') : '');
+    attempts.push(workerUrl);
+  }
+  for (var pi = 0; pi < CORS_PROXIES.length; pi++) {
+    attempts.push(CORS_PROXIES[pi](apiUrl));
+  }
+
+  // Try each attempt until one succeeds.
   let lastErr = null;
-  for (let i = 0; i < CORS_PROXIES.length; i++) {
-    const proxiedUrl = CORS_PROXIES[i](apiUrl);
+  for (let i = 0; i < attempts.length; i++) {
+    const proxiedUrl = attempts[i];
     try {
       const response = await axios.get(proxiedUrl, { timeout: 15000 });
       // Some proxies return strings; coerce to object.

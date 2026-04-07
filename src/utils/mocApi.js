@@ -7,7 +7,10 @@
 //        - Used instantly for the 4 default views (hottest/newest/mostLiked/mostParts)
 //   2. localStorage cache (30-min fresh, served-stale on fetch failure)
 //   3. Runtime CORS-proxy fetch (last resort, with timeout + validation)
+//      If REBRICKABLE_PROXY is configured, the Worker is tried first as a
+//      reliable HTML fetcher; the public proxies remain as fallbacks.
 import mocsStatic from '../data/mocsStatic.json';
+import { proxyHtmlUrl } from '../config/proxyConfig';
 
 // v2: bumped after fixing the lazy-load image extraction so previously cached
 // search results (which had empty img fields) are invalidated.
@@ -57,6 +60,19 @@ function isValidRebrickableHtml(text) {
 }
 
 async function fetchHtml(url) {
+  // If a Worker proxy is configured, try it first as a more reliable
+  // HTML fetcher. We pass the URL as-is to the Worker which fetches it
+  // server-side without CORS issues.
+  var workerUrl = proxyHtmlUrl(url);
+  if (workerUrl) {
+    try {
+      var wres = await fetchWithTimeout(workerUrl, FETCH_TIMEOUT_MS);
+      if (wres.ok) {
+        var wtext = await wres.text();
+        if (isValidRebrickableHtml(wtext)) return wtext;
+      }
+    } catch (e) { /* fall through to public proxies */ }
+  }
   for (var i = 0; i < CORS_PROXIES.length; i++) {
     try {
       var res = await fetchWithTimeout(CORS_PROXIES[i](url), FETCH_TIMEOUT_MS);

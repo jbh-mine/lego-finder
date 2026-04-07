@@ -1,0 +1,10 @@
+name = "lego-finder-rebrickable-proxy"
+main = "rebrickable-proxy.js"
+compatibility_date = "2025-06-01"
+
+# After deploying, run:
+#   wrangler secret put REBRICKABLE_API_KEY
+# and paste your Rebrickable API key (NEVER commit it to the repo).
+
+# Optional: pin to a specific account/route via the dashboard or:
+# routes = [{ pattern = "lego-proxy.example.workers.dev/*" }]
