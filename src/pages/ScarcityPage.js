@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useRef } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Loading } from '../components/Loading';
-import { getSetDetail } from '../utils/api';
-import { computeScarcityScore, gradeColor } from '../utils/scarcityScore';
+import { searchSets, getSetDetail } from '../utils/api';
+import { translateSearchQuery, getIpSearchTerms } from '../utils/searchDict';
+import { computeScarcityScore } from '../utils/scarcityScore';
 import { classifyTheme, getThemeReturn } from '../data/themeReturns';
 import priceData from '../data/prices.json';
 
@@ -32,16 +33,12 @@ function lookupMsrp(setNum) {
   return null;
 }
 
-// Try to fetch a current secondary-market price via allorigins.win proxy.
-// Looks at brickeconomy.com which exposes "Current Value" in plain HTML.
-// Returns null on any failure (CORS, blocked, no price found, etc.).
 async function fetchMarketPrice(setNum) {
   var url = 'https://www.brickeconomy.com/set/' + ensureVariant(setNum);
   try {
     var res = await fetch(PROXY + encodeURIComponent(url), { method: 'GET' });
     if (!res.ok) return null;
     var html = await res.text();
-    // Look for "Current Value" near a $ amount
     var m = html.match(/Current Value[\s\S]{0,200}?\$([\d,]+(?:\.\d{1,2})?)/i);
     if (!m) {
       m = html.match(/Value[\s\S]{0,80}?\$([\d,]+(?:\.\d{1,2})?)/i);
@@ -60,22 +57,28 @@ async function fetchMarketPrice(setNum) {
 
 function ScarcityPage() {
   var lc = useLanguage(); var t = lc.t;
-  var navigate = useNavigate();
   var sp = useSearchParams(); var searchParams = sp[0];
   var initialSetNum = searchParams.get('setNum') || '';
+  var initialQuery = searchParams.get('q') || '';
 
-  var s1 = useState(initialSetNum); var input = s1[0]; var setInput = s1[1];
+  var s1 = useState(initialSetNum || initialQuery); var input = s1[0]; var setInput = s1[1];
   var s2 = useState(false); var loading = s2[0]; var setLoading = s2[1];
   var s3 = useState(null); var result = s3[0]; var setResult = s3[1];
   var s4 = useState(null); var error = s4[0]; var setError = s4[1];
   var s5 = useState([]); var statusLog = s5[0]; var setStatusLog = s5[1];
+
+  // ---- name search state ----
+  var s6 = useState([]); var searchResults = s6[0]; var setSearchResults = s6[1];
+  var s7 = useState(false); var searching = s7[0]; var setSearching = s7[1];
+  var s8 = useState(false); var searched = s8[0]; var setSearched = s8[1];
+  var lastQueryRef = useRef('');
 
   var pushStatus = function(msg) {
     setStatusLog(function(prev) { return prev.concat([msg]); });
   };
 
   var analyze = async function(setNumRaw) {
-    var raw = (setNumRaw || input || '').trim();
+    var raw = (setNumRaw || '').trim();
     if (!raw) return;
     setError(null); setResult(null); setLoading(true); setStatusLog([]);
     pushStatus(t('scarcityStatusFetching'));
@@ -83,7 +86,6 @@ function ScarcityPage() {
     try {
       var setNum = ensureVariant(raw);
 
-      // 1. Rebrickable detail (theme/year/parts/name/img)
       var detail = null;
       try {
         detail = await getSetDetail(setNum);
@@ -92,11 +94,9 @@ function ScarcityPage() {
         pushStatus(t('scarcityStatusDetailFail'));
       }
 
-      // 2. MSRP lookup with fallback estimate
       var msrp = lookupMsrp(setNum);
       if (!msrp) {
         if (detail && detail.num_parts > 0) {
-          // ~155 KRW/piece rough rule of thumb
           msrp = { value: detail.num_parts * 155, source: t('scarcityMsrpEstimated') };
           pushStatus(t('scarcityStatusMsrpEstimated'));
         } else {
@@ -106,12 +106,10 @@ function ScarcityPage() {
         pushStatus(t('scarcityStatusMsrpOk'));
       }
 
-      // 3. Theme classification
       var themeKey = classifyTheme(detail || { set_num: setNum, name: '' });
       var themeInfo = getThemeReturn(themeKey);
       pushStatus(t('scarcityStatusTheme') + ': ' + themeKey);
 
-      // 4. Try fetch market price via proxy; fall back to simulation
       pushStatus(t('scarcityStatusFetchingMarket'));
       var market = await fetchMarketPrice(setNum);
       if (!market) {
@@ -124,13 +122,11 @@ function ScarcityPage() {
         pushStatus(t('scarcityStatusMarketOk'));
       }
 
-      // 5. Exclusivity heuristic (dummy): true if very large, very old, or BDP
       var isOld = detail && detail.year && (new Date().getFullYear() - detail.year) >= 5;
       var isBig = detail && detail.num_parts >= 2000;
       var isBdp = themeKey === 'BDP';
       var hasExclusiveMinifigs = !!(isOld || isBig || isBdp);
 
-      // 6. Compute scarcity score
       var score = computeScarcityScore({
         msrp: msrp.value,
         market: market.value,
@@ -139,9 +135,6 @@ function ScarcityPage() {
       });
       pushStatus(t('scarcityStatusDone'));
 
-      // 7. Build chart series
-      // Past 36 months: theme average growth applied to MSRP
-      // Projected 12 months: forward-extension of current market at theme rate
       var months = 36;
       var monthlyTheme = themeInfo.avgReturnPct / 100 / 12;
       var pastSeries = [];
@@ -185,19 +178,82 @@ function ScarcityPage() {
     }
   };
 
-  // Auto-run if ?setNum= present on first mount
-  React.useEffect(function() {
-    if (initialSetNum) { analyze(initialSetNum); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // ---- name search ----
+  var runNameSearch = async function(raw) {
+    setError(null);
+    setResult(null);
+    setSearchResults([]);
+    setSearching(true);
+    setSearched(true);
+    lastQueryRef.current = raw;
+    try {
+      var translated = translateSearchQuery(raw);
+      var ipTerms = getIpSearchTerms(raw) || getIpSearchTerms(translated) || [];
+      var queries = [];
+      if (translated && queries.indexOf(translated) < 0) queries.push(translated);
+      if (raw && queries.indexOf(raw) < 0) queries.push(raw);
+      ipTerms.forEach(function(term) {
+        if (queries.indexOf(term) < 0) queries.push(term);
+      });
+
+      var promises = queries.slice(0, 5).map(function(q) {
+        return searchSets(q, 1, 30).catch(function() { return { results: [] }; });
+      });
+      var ress = await Promise.all(promises);
+      var seen = {};
+      var merged = [];
+      ress.forEach(function(r) {
+        (r && r.results ? r.results : []).forEach(function(set) {
+          if (!seen[set.set_num]) {
+            seen[set.set_num] = true;
+            merged.push(set);
+          }
+        });
+      });
+      // Sort by year desc as a sensible default
+      merged.sort(function(a, b) { return (b.year || 0) - (a.year || 0); });
+      setSearchResults(merged);
+    } catch (e) {
+      setError(e.message || String(e));
+    } finally {
+      setSearching(false);
+    }
+  };
 
   var onSubmit = function(e) {
     if (e) e.preventDefault();
-    analyze();
+    var raw = (input || '').trim();
+    if (!raw) return;
+    // If looks like a set number (digits, optional -N suffix), analyze directly
+    if (/^\d+(-\d+)?$/.test(raw)) {
+      setSearchResults([]);
+      setSearched(false);
+      analyze(raw);
+      return;
+    }
+    runNameSearch(raw);
   };
 
-  // ---------- Render ----------
+  var onSelectSet = function(setNum) {
+    analyze(setNum);
+    if (typeof window !== 'undefined') {
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+    }
+  };
 
+  var onBackToResults = function() {
+    setResult(null);
+    setError(null);
+  };
+
+  // Auto-run if ?setNum= present on first mount
+  React.useEffect(function() {
+    if (initialSetNum) { analyze(initialSetNum); return; }
+    if (initialQuery) { runNameSearch(initialQuery); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ---------- styles ----------
   var pageStyle = { maxWidth: 980, margin: '0 auto', padding: '20px 16px' };
   var titleStyle = { fontSize: '1.6rem', margin: '0 0 4px', color: '#222' };
   var subStyle = { color: '#666', fontSize: '0.9rem', marginBottom: 18 };
@@ -216,6 +272,7 @@ function ScarcityPage() {
     React.createElement('div', { style: subStyle }, t('scarcityPageDesc'))
   );
 
+  var busy = loading || searching;
   var formEl = React.createElement('form', { style: formStyle, onSubmit: onSubmit },
     React.createElement('input', {
       type: 'text',
@@ -227,13 +284,59 @@ function ScarcityPage() {
     }),
     React.createElement('button', {
       type: 'submit',
-      style: loading || !input.trim() ? btnDisabledStyle : btnStyle,
-      disabled: loading || !input.trim()
-    }, t('scarcityAnalyzeBtn'))
+      style: busy || !input.trim() ? btnDisabledStyle : btnStyle,
+      disabled: busy || !input.trim()
+    }, t('scarcitySearchBtn'))
   );
 
-  var loadingEl = loading ? React.createElement('div', { style: cardStyle },
-    React.createElement(Loading, { message: t('scarcityLoading') }),
+  // ---- search results list ----
+  var searchListEl = null;
+  if (!result && searched && !searching) {
+    if (searchResults.length === 0) {
+      searchListEl = React.createElement('div', { style: cardStyle },
+        React.createElement('div', { style: { color: '#666', fontSize: '0.9rem' } }, t('scarcityNoSearchResults'))
+      );
+    } else {
+      var hint = React.createElement('div', { style: { fontSize: '0.85rem', color: '#666', marginBottom: 10 } },
+        t('scarcitySearchResultsHint') + ' (' + searchResults.length + ')'
+      );
+      var rowItemStyle = {
+        display: 'flex', gap: 12, alignItems: 'center', padding: '10px 8px',
+        borderBottom: '1px solid #eee', cursor: 'pointer', borderRadius: 4
+      };
+      var listItems = searchResults.slice(0, 60).map(function(set) {
+        return React.createElement('div', {
+          key: set.set_num,
+          style: rowItemStyle,
+          onClick: function() { onSelectSet(set.set_num); },
+          onMouseOver: function(e) { e.currentTarget.style.background = '#f5f7fa'; },
+          onMouseOut: function(e) { e.currentTarget.style.background = 'transparent'; }
+        },
+          set.set_img_url ? React.createElement('img', {
+            src: set.set_img_url, alt: set.name,
+            style: { width: 64, height: 48, objectFit: 'contain', background: '#f5f7fa', borderRadius: 4 }
+          }) : React.createElement('div', { style: { width: 64, height: 48, background: '#f5f7fa', borderRadius: 4 } }),
+          React.createElement('div', { style: { flex: 1, minWidth: 0 } },
+            React.createElement('div', { style: { fontSize: '0.7rem', color: '#888' } }, set.set_num),
+            React.createElement('div', {
+              style: { fontSize: '0.95rem', fontWeight: 600, color: '#222', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+            }, set.name),
+            React.createElement('div', { style: { fontSize: '0.75rem', color: '#666' } },
+              (set.year ? set.year + t('yearSuffix') + ' \u00B7 ' : '') +
+              (set.num_parts ? set.num_parts.toLocaleString() + t('partsCount') : '')
+            )
+          ),
+          React.createElement('div', {
+            style: { fontSize: '0.8rem', color: '#0066cc', whiteSpace: 'nowrap', fontWeight: 600 }
+          }, t('scarcityClickToAnalyze') + ' \u2192')
+        );
+      });
+      searchListEl = React.createElement('div', { style: cardStyle }, hint, listItems);
+    }
+  }
+
+  var loadingEl = busy ? React.createElement('div', { style: cardStyle },
+    React.createElement(Loading, { message: searching ? t('scarcitySearching') : t('scarcityLoading') }),
     statusLog.length > 0 ? React.createElement('div', { style: statusStyle }, statusLog.join('\n')) : null
   ) : null;
 
@@ -246,7 +349,16 @@ function ScarcityPage() {
   if (result && !loading) {
     var s = result.score;
 
-    // Header card with set thumb + key facts
+    var backBtn = (searchResults.length > 0) ? React.createElement('button', {
+      type: 'button',
+      onClick: onBackToResults,
+      style: {
+        marginBottom: 12, padding: '8px 14px', background: '#fff',
+        border: '1px solid #0066cc', color: '#0066cc', borderRadius: 4,
+        cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600
+      }
+    }, t('scarcityBackToResults')) : null;
+
     var setHeaderEl = React.createElement('div', { style: Object.assign({}, cardStyle, { display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }) },
       result.imgUrl ? React.createElement('img', {
         src: result.imgUrl,
@@ -268,7 +380,6 @@ function ScarcityPage() {
       )
     );
 
-    // Price + return stats card
     var statsEl = React.createElement('div', { style: cardStyle },
       React.createElement('div', { style: rowStyle },
         React.createElement('div', { style: { flex: '1 1 140px' } },
@@ -297,7 +408,6 @@ function ScarcityPage() {
       )
     );
 
-    // Gauge bar
     var gaugePct = s.finalScore;
     var gaugeWrap = { position: 'relative', height: 28, background: 'linear-gradient(to right, #e74c3c 0%, #f39c12 35%, #f1c40f 50%, #2ecc71 65%, #d4af37 90%)', borderRadius: 14, overflow: 'hidden' };
     var markerStyle = { position: 'absolute', left: gaugePct + '%', top: -4, transform: 'translateX(-50%)', width: 4, height: 36, background: '#222', borderRadius: 2 };
@@ -324,7 +434,6 @@ function ScarcityPage() {
       )
     );
 
-    // Past trend chart (theme avg curve + current market dot)
     var pastChartEl = React.createElement('div', { style: cardStyle },
       React.createElement('div', { style: { fontSize: '0.95rem', fontWeight: 600, color: '#333', marginBottom: 8 } }, t('scarcityChartPastTitle')),
       React.createElement('div', { style: { width: '100%', height: 240 } },
@@ -344,7 +453,6 @@ function ScarcityPage() {
         t('scarcityChartPastNote') + ' (n=' + result.themeInfo.sample + ', ' + result.themeInfo.years + 'y)')
     );
 
-    // Projected curve chart
     var projChartEl = React.createElement('div', { style: cardStyle },
       React.createElement('div', { style: { fontSize: '0.95rem', fontWeight: 600, color: '#333', marginBottom: 8 } }, t('scarcityChartProjTitle')),
       React.createElement('div', { style: { width: '100%', height: 220 } },
@@ -365,6 +473,7 @@ function ScarcityPage() {
     var disclaimerEl = React.createElement('div', { style: { fontSize: '0.7rem', color: '#aaa', textAlign: 'center', padding: '8px 0' } }, t('scarcityDisclaimer'));
 
     resultEl = React.createElement('div', null,
+      backBtn,
       setHeaderEl,
       gaugeEl,
       statsEl,
@@ -379,6 +488,7 @@ function ScarcityPage() {
     formEl,
     loadingEl,
     errorEl,
+    searchListEl,
     resultEl
   );
 }
