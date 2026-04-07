@@ -11,6 +11,7 @@ import { isInCollection, addToCollection, removeFromCollection, isInWishlist, ad
 import Pagination from '../components/Pagination';
 import { Loading, ErrorMessage } from '../components/Loading';
 import TranslatedName from '../components/TranslatedName';
+import PriceHistoryChart from '../components/PriceHistoryChart';
 import { getCachedSetImages, fetchSetImages } from '../utils/fetchSetImages';
 import '../styles/price.css';
 
@@ -443,6 +444,7 @@ function SetDetailPage() {
             React.createElement('button', { className: 'btn-collection' + (inC ? ' active' : ''), onClick: togC }, inC ? t('removeCollection') : t('addCollection')),
             React.createElement('button', { className: 'btn-wishlist' + (inW ? ' active' : ''), onClick: togW }, inW ? t('removeWishlist') : t('addWishlist'))
           ),
+          React.createElement(PriceHistoryChart, { setNum: setNum }),
           insSection && React.createElement('div', { className: 'ins-title' }, t('buildInstructions')),
           insSection
         )
