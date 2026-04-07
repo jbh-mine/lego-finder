@@ -18,6 +18,7 @@ import PppPage from './pages/PppPage';
 import './styles/App.css';
 import './styles/theme-dark.css';
 import './styles/lego-brick.css';
+import './styles/filters.css';
 
 function App() {
   return (
