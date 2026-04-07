@@ -13,6 +13,7 @@ import { Loading, ErrorMessage } from '../components/Loading';
 import TranslatedName from '../components/TranslatedName';
 import bdpImagesData from '../data/bdpImages.json';
 import legoImagesData from '../data/legoImages.json';
+import { getCachedSetImages, fetchSetImages } from '../utils/fetchSetImages';
 import '../styles/price.css';
 
 var PH = 'https://rebrickable.com/static/img/nil_mf.jpg';
@@ -72,36 +73,68 @@ function SetDetailPage() {
   }, [setNum, t]);
 
   // Load images from Rebrickable (match Rebrickable set page exactly)
-  // For BDP sets, use pre-fetched gallery image IDs from bdpImages.json
-  // For regular sets, fallback to legoImages.json (also pre-fetched via scripts/fetch-images.js)
+  // 1) BDP sets: pre-fetched gallery IDs from bdpImages.json
+  // 2) Regular sets: pre-fetched gallery IDs from legoImages.json
+  // 3) Fallback: runtime scrape via fetchSetImages (cached in localStorage)
   useEffect(function() {
     if (!set) return;
-    var images = [];
-    var bdpIds = bdpImagesData.sets && bdpImagesData.sets[set.set_num];
-    var legoIds = legoImagesData.sets && legoImagesData.sets[set.set_num];
-    if (bdpIds && bdpIds.length > 0) {
-      // Build gallery URLs from Rebrickable CDN using pre-fetched IDs (BDP sets)
-      images = bdpIds.map(function(id) {
-        return 'https://cdn.rebrickable.com/media/thumbs/sets/' + set.set_num + '/' + id + '.jpg/1000x800p.jpg';
+    var setNum = set.set_num;
+
+    var buildUrls = function(ids) {
+      return ids.map(function(id) {
+        return 'https://cdn.rebrickable.com/media/thumbs/sets/' + setNum + '/' + id + '.jpg/1000x800p.jpg';
       });
-    } else if (legoIds && legoIds.length > 0) {
-      // Regular (non-BDP) sets: use pre-fetched Rebrickable gallery IDs
-      images = legoIds.map(function(id) {
-        return 'https://cdn.rebrickable.com/media/thumbs/sets/' + set.set_num + '/' + id + '.jpg/1000x800p.jpg';
-      });
-      // If the primary set_img_url isn't represented, prepend it as the first image
+    };
+
+    var prependPrimary = function(images) {
       if (set.set_img_url && images.indexOf(set.set_img_url) === -1) {
         var primaryIdMatch = set.set_img_url.match(/\/sets\/[^/]+\/(\d+)\.jpg\//);
         var primaryId = primaryIdMatch ? primaryIdMatch[1] : null;
-        if (!primaryId || legoIds.indexOf(primaryId) === -1) {
-          images.unshift(set.set_img_url);
+        var alreadyHasPrimary = false;
+        if (primaryId) {
+          for (var i = 0; i < images.length; i++) {
+            if (images[i].indexOf('/' + primaryId + '.jpg/') !== -1) { alreadyHasPrimary = true; break; }
+          }
         }
+        if (!alreadyHasPrimary) images.unshift(set.set_img_url);
       }
+      return images;
+    };
+
+    var bdpIds = bdpImagesData.sets && bdpImagesData.sets[setNum];
+    var legoIds = legoImagesData.sets && legoImagesData.sets[setNum];
+    var cachedRuntimeIds = getCachedSetImages(setNum);
+
+    var images = [];
+    if (bdpIds && bdpIds.length > 0) {
+      images = buildUrls(bdpIds);
+    } else if (legoIds && legoIds.length > 0) {
+      images = prependPrimary(buildUrls(legoIds));
+    } else if (cachedRuntimeIds && cachedRuntimeIds.length > 0) {
+      images = prependPrimary(buildUrls(cachedRuntimeIds));
     } else if (set.set_img_url) {
       images.push(set.set_img_url);
     }
     setAllImages(images);
     setImgIdx(0);
+
+    // If we don't yet have multi-image data, scrape Rebrickable at runtime.
+    var alreadyHaveMulti = (bdpIds && bdpIds.length > 1) ||
+      (legoIds && legoIds.length > 1) ||
+      (cachedRuntimeIds && cachedRuntimeIds.length > 1);
+    if (alreadyHaveMulti) return;
+
+    var cancelled = false;
+    fetchSetImages(setNum).then(function(ids) {
+      if (cancelled || !ids || ids.length === 0) return;
+      var fresh = prependPrimary(buildUrls(ids));
+      // Only replace if we actually got more than the current single image
+      if (fresh.length > 1) {
+        setAllImages(fresh);
+        setImgIdx(0);
+      }
+    });
+    return function() { cancelled = true; };
   }, [set]);
 
   var loadPP = async function(pg) {
@@ -187,7 +220,7 @@ function SetDetailPage() {
       key: 'left',
       className: 'gallery-arrow gallery-arrow-left',
       onClick: function(e) { e.stopPropagation(); goPrev(); },
-      'aria-label': 'Previous image',
+      'aria-label': t('previousImage'),
     }, '\u2039'));
   }
 
@@ -197,7 +230,7 @@ function SetDetailPage() {
       key: 'right',
       className: 'gallery-arrow gallery-arrow-right',
       onClick: function(e) { e.stopPropagation(); goNext(); },
-      'aria-label': 'Next image',
+      'aria-label': t('nextImage'),
     }, '\u203A'));
   }
 
@@ -228,7 +261,7 @@ function SetDetailPage() {
         key: i,
         className: 'gallery-thumb' + (i === imgIdx ? ' active' : ''),
         onClick: function(e) { e.stopPropagation(); setImgIdx(i); },
-        'aria-label': 'Image ' + (i + 1),
+        'aria-label': t('imageLabel') + ' ' + (i + 1),
       },
         React.createElement('img', {
           src: thumbUrl,
@@ -398,16 +431,16 @@ function SetDetailPage() {
           translated && React.createElement('div', { className: 'set-name-original' }, set.name),
           React.createElement('div', { className: 'detail-meta' },
             React.createElement('div', { className: 'detail-meta-item detail-price-row' },
-              React.createElement('span', { className: 'label' }, t('legoKorea') + ' ' + (lang === 'ko' ? '\uAC00\uACA9' : 'Price')),
+              React.createElement('span', { className: 'label' }, t('legoKorea') + ' ' + t('price')),
               priceData.formatted ? React.createElement('span', { className: 'detail-price' }, priceData.formatted)
-                : priceData.isDiscontinued ? React.createElement('span', { className: 'detail-price discontinued' }, lang === 'ko' ? '\uB2E8\uC885 \uC81C\uD488' : 'Retired')
-                : React.createElement('a', { href: getLegoKrProductUrl(setNum), target: '_blank', rel: 'noopener noreferrer', className: 'detail-price-link' }, lang === 'ko' ? '\uAC00\uACA9 \uD655\uC778' : 'Check Price')
+                : priceData.isDiscontinued ? React.createElement('span', { className: 'detail-price discontinued' }, t('retiredProduct'))
+                : React.createElement('a', { href: getLegoKrProductUrl(setNum), target: '_blank', rel: 'noopener noreferrer', className: 'detail-price-link' }, t('checkPrice'))
             ),
             React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, t('releaseYear')), React.createElement('span', null, set.year + t('yearSuffix'))),
             React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, t('numParts')), React.createElement('span', null, (set.num_parts || 0).toLocaleString() + t('partsCount'))),
             set.theme_id && React.createElement('div', { className: 'detail-meta-item' }, React.createElement('span', { className: 'label' }, t('themeId')), React.createElement('span', null, set.theme_id)),
             set.set_url && React.createElement('div', { className: 'detail-meta-item' },
-              React.createElement('span', { className: 'label' }, 'Rebrickable'),
+              React.createElement('span', { className: 'label' }, t('rebrickable')),
               React.createElement('a', { href: set.set_url, target: '_blank', rel: 'noopener noreferrer' },
                 t('detailPage') + ' (' + rebrickableNum + ')'
               )
@@ -447,7 +480,9 @@ function SetDetailPage() {
                     React.createElement('div', { className: 'part-qty' }, 'x' + item.quantity),
                     item.color && item.color.name && React.createElement('div', { style: { fontSize: '0.7rem', color: '#999', marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 } },
                       React.createElement('span', { style: { width: 10, height: 10, borderRadius: '50%', background: '#' + (item.color.rgb || '999'), border: '1px solid #ddd', display: 'inline-block' } }),
-                      item.color.name
+                      lang === 'ko'
+                        ? React.createElement(TranslatedName, { name: item.color.name })
+                        : item.color.name
                     )
                   );
                 })
