@@ -14,8 +14,10 @@ import FundingPage from './pages/FundingPage';
 import MocsPage from './pages/MocsPage';
 import MocDetailPage from './pages/MocDetailPage';
 import ScarcityPage from './pages/ScarcityPage';
+import PppPage from './pages/PppPage';
 import './styles/App.css';
 import './styles/theme-dark.css';
+import './styles/lego-brick.css';
 
 function App() {
   return (
@@ -36,6 +38,7 @@ function App() {
               <Route path="/mocs" element={<MocsPage />} />
               <Route path="/moc/:mocNum" element={<MocDetailPage />} />
               <Route path="/scarcity" element={<ScarcityPage />} />
+              <Route path="/ppp" element={<PppPage />} />
             </Routes>
           </main>
         </Router>
