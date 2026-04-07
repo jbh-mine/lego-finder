@@ -105,7 +105,7 @@ function FundingPage() {
 
   var getThemeName = function(themeId) {
     if (lang === 'ko' && themeNames[themeId]) return themeNames[themeId];
-    return themeMap[themeId] || ('Theme ' + themeId);
+    return themeMap[themeId] || (t('themePrefix') + ' ' + themeId);
   };
 
   // Fetch BDP sets
@@ -209,7 +209,7 @@ function FundingPage() {
       filteredResults.forEach(function(set) {
         var year = set.year || 0;
         if (!yearGroups[year]) {
-          yearGroups[year] = { id: year, name: year + (lang === 'ko' ? '년' : ''), sets: [] };
+          yearGroups[year] = { id: year, name: year + t('yearSuffix'), sets: [] };
         }
         yearGroups[year].sets.push(set);
       });
@@ -239,7 +239,7 @@ function FundingPage() {
       React.createElement('p', { className: 'new-products-desc' }, t('fundingDesc'))
     ),
     React.createElement('div', { className: 'funding-info-notice' },
-      React.createElement('span', { className: 'funding-info-icon' }, 'ℹ️'),
+      React.createElement('span', { className: 'funding-info-icon' }, '\u2139\uFE0F'),
       React.createElement('span', null, t('fundingNotice'))
     ),
     bdpSeries.length > 0 ? React.createElement('div', { className: 'funding-series-tabs' },
@@ -263,9 +263,9 @@ function FundingPage() {
           value: selYear,
           onChange: handleYearChange,
         },
-          React.createElement('option', { value: 'all' }, t('all') + ' ' + (lang === 'ko' ? '연도' : 'Years')),
+          React.createElement('option', { value: 'all' }, t('allYears')),
           availableYears.map(function(yr) {
-            return React.createElement('option', { key: yr, value: String(yr) }, yr + (lang === 'ko' ? '년' : ''));
+            return React.createElement('option', { key: yr, value: String(yr) }, yr + t('yearSuffix'));
           })
         )
       ),
@@ -276,14 +276,14 @@ function FundingPage() {
             className: 'funding-search-input',
             value: searchName,
             onChange: handleSearchChange,
-            placeholder: lang === 'ko' ? '제품명 또는 번호 검색' : 'Search by name or number',
+            placeholder: t('searchByName'),
           }),
           searchName ? React.createElement('button', {
             type: 'button',
             className: 'search-clear-btn',
             onClick: handleClearSearch,
-            'aria-label': 'Clear search',
-          }, '×') : null
+            'aria-label': t('clearSearch'),
+          }, '\u00D7') : null
         )
       )
     ) : null
@@ -295,7 +295,7 @@ function FundingPage() {
     var displayCount = filteredResults.length;
     var summaryText = t('total') + ' ' + displayCount + t('count') + ' ' + t('fundingProductsFound');
     if ((selYear !== 'all' || searchName.trim()) && displayCount !== totalCount) {
-      summaryText += ' (' + (lang === 'ko' ? '전체 ' : 'of ') + totalCount + (lang === 'ko' ? '개' : '') + ')';
+      summaryText += ' (' + t('ofTotal') + ' ' + totalCount + t('count') + ')';
     }
     var summary = React.createElement('div', { className: 'search-results-summary' }, summaryText);
 
@@ -319,7 +319,7 @@ function FundingPage() {
   var noFilterResults = !loading && !error && loaded && filteredResults.length === 0 && allResults.length > 0 ?
     React.createElement(EmptyState, {
       title: t('noResults'),
-      message: lang === 'ko' ? '해당 조건에 맞는 펀딩 제품이 없습니다.' : 'No funding products match the selected filters.'
+      message: t('noFundingMatch')
     }) : null;
 
   var loadingMore = loading && allResults.length > 0 ? React.createElement(Loading, null) : null;

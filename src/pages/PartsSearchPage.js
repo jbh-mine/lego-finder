@@ -5,6 +5,7 @@ import { translateSearchQuery } from '../utils/searchDict';
 import { getCachedTranslation, translateName } from '../utils/translate';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
+import TranslatedName from '../components/TranslatedName';
 
 var PH = 'https://rebrickable.com/static/img/nil_mf.jpg';
 var PAGE_SIZE = 100;
@@ -127,7 +128,7 @@ function PartsSearchPage() {
         if (catObj) {
           catName = getCatName(catObj);
         } else {
-          catName = 'Category ' + catId;
+          catName = t('categoryPrefix') + ' ' + catId;
         }
         groups[catId] = { catId: catId, catName: catName, parts: [] };
       }
@@ -143,7 +144,7 @@ function PartsSearchPage() {
     type: 'button',
     className: 'search-clear-btn',
     onClick: handleClearQuery,
-    'aria-label': 'Clear search',
+    'aria-label': t('clearSearch'),
   }, '\u00D7') : null;
 
   // Render
@@ -206,7 +207,9 @@ function PartsSearchPage() {
             }),
             React.createElement('div', { className: 'part-result-body' },
               React.createElement('div', { className: 'part-result-num' }, part.part_num),
-              React.createElement('div', { className: 'part-result-name' }, part.name)
+              React.createElement('div', { className: 'part-result-name' },
+                lang === 'ko' ? React.createElement(TranslatedName, { name: part.name }) : part.name
+              )
             )
           );
         })

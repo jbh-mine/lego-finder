@@ -81,7 +81,7 @@ function NewProductsPage() {
 
   var getThemeName = function(themeId) {
     if (lang === 'ko' && themeNames[themeId]) return themeNames[themeId];
-    return themeMap[themeId] || ('Theme ' + themeId);
+    return themeMap[themeId] || (t('themePrefix') + ' ' + themeId);
   };
 
   // Extract numeric part from set_num (e.g. "76463-1" -> 76463)
