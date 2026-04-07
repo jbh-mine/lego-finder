@@ -17,6 +17,8 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [갤러리 이미지 수집](#갤러리-이미지-수집)
 - [자동 업데이트 (GitHub Actions)](#자동-업데이트-github-actions)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.5.4 — 2026-04-07](#v054--2026-04-07)
+  - [v0.5.3 — 2026-04-07](#v053--2026-04-07)
   - [v0.5.2 — 2026-04-07](#v052--2026-04-07)
   - [v0.5.1 — 2026-04-07](#v051--2026-04-07)
   - [v0.5.0 — 2026-04-07](#v050--2026-04-07)
@@ -37,6 +39,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **제품번호/이름 검색** — Rebrickable API를 통한 실시간 레고 세트 검색
 - **한국어 자연어 검색** — "모듈러", "스타워즈", "경찰서", "용마성", "블랙펄", "탐정사무소" 등 한국어 키워드/별명으로 검색 가능 (500+ 키워드 매핑)
 - **IP 프랜차이즈 우산 키워드 검색** — "마블", "어벤져스", "디씨", "스타워즈", "해리포터", "디즈니", "쥬라기월드" 등을 입력하면 Spider-Man / Iron Man / Hulk / Avengers 등 실제 세트명 키워드로 자동 분기 검색하여 결과 병합
+- **세트 검색 다축 필터 + URL 공유** — 부품 수 / 출시 연도 / 가격(KRW) 범위, 단종 여부, 보유·위시리스트 상태로 검색 결과를 다중 필터링하고 URL 쿼리스트링과 동기화하여 공유 가능
 - **희소 가치 점수 (Scarcity Score)** — 헤더 메뉴 → "희소가치"에서 제품 번호 입력 시 MSRP·현재 시세·테마 3년 평균 수익률·독점 구성 여부를 종합해 0~100점/S~D 등급을 계산하고 Recharts로 과거/예상 가격 곡선 시각화
 - **일별 가격 스냅샷 + 변동 차트** — 매일 수집된 KRW 가격을 `priceHistoryIndex.json` 에 누적하고 제품 상세 페이지에서 SVG 라인 차트로 표시
 - **한국어 별명 → 제품번호 직접 매핑** — "용마성"→6082, "블랙펄"→10365, "박쥐성"→6097, "탐정사무소"→10246 등 즉시 검색
@@ -62,7 +65,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 
 ## 기술 스택
 
-- **React 19** + React Router (HashRouter)
+- **React 19** + React Router (HashRouter, useSearchParams)
 - **Recharts** — 희소 가치 점수 페이지의 과거/예상 가격 곡선 시각화
 - **Axios** + API 캐싱
 - **Rebrickable API v3** — 세트 검색, 부품 검색, 미니피규어 데이터
@@ -97,7 +100,7 @@ src/
 │   ├── bdpImages.json      # BDP 갤러리 이미지 ID 사전 수집
 │   └── legoImages.json     # 일반(비 BDP) 세트 갤러리 이미지 ID (자동 갱신)
 ├── pages/
-│   ├── SearchPage.js       # 세트 검색 (테마별 그룹화 + 무한스크롤 + 한국어 자연어 + SET_NUM_MAP + IP 우산 키워드 분기)
+│   ├── SearchPage.js       # 세트 검색 (테마별 그룹화 + 무한스크롤 + 한국어 자연어 + SET_NUM_MAP + IP 우산 키워드 분기 + 다축 필터 + URL 동기화)
 │   ├── ScarcityPage.js     # 희소 가치 점수 분석 (Recharts 차트 + 게이지 바)
 │   ├── PartsSearchPage.js  # 부품 검색 (카테고리별 그룹화 + 무한스크롤 + 한국어 번역)
 │   ├── PartDetailPage.js   # 부품 상세 (색상, 엘리먼트, 세트)
@@ -131,7 +134,7 @@ scripts/
 ## 설치 및 실행
 
 ```bash
-git clone https://github.com/jbh-mine/lego-finder.git
+git clone https://github.com/jbh-mine/scrap_blog/lego-finder.git
 cd lego-finder
 npm install
 npm start
@@ -224,6 +227,43 @@ git push origin main
 ## 변경 이력 (Changelog)
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
+
+### v0.5.4 — 2026-04-07
+
+#### `FIX` ci: GitHub Actions npm cache lock file 누락 에러 수정 준비
+- **에러**: `actions/setup-node@v4` 의 `cache: 'npm'` 옵션은 `package-lock.json` / `npm-shrinkwrap.json` / `yarn.lock` 중 하나가 저장소에 존재해야 작동하는데, 본 저장소에 lock 파일이 커밋되어 있지 않아 워크플로우가 "Dependencies lock file is not found" 에러로 실패.
+- **해결안 ①(권장)**: 로컬에서 `npm install --package-lock-only --legacy-peer-deps` 로 `package-lock.json` 을 생성한 뒤 커밋. 본 세션에서 자동 생성한 파일을 `outputs/package-lock.json` (672 KB) 으로 첨부함 — 이 파일을 저장소 루트로 옮기고 `git add package-lock.json && git commit -m "chore: add package-lock.json for CI cache"` 후 push 하면 됨.
+- **해결안 ②(대체)**: PAT 에 `workflow` 스코프를 부여한 뒤 `.github/workflows/auto-update-images.yml` 의 setup-node 단계에서 `cache: 'npm'` 라인을 제거하고 `npm ci` → `npm install --legacy-peer-deps --no-audit --no-fund` 로 변경. (현재 PAT 스코프 부족으로 본 세션에서는 직접 push 불가 — 사용자가 GitHub UI 또는 로컬 git 으로 직접 수정 필요.)
+- **변경 가이드 (워크플로우 파일 직접 수정 시)**:
+  ```yaml
+  - name: Setup Node.js
+    uses: actions/setup-node@v4
+    with:
+      node-version: '20'
+      # cache: 'npm'   <-- 이 줄 제거 또는 주석 처리
+
+  - name: Install dependencies
+    run: npm install --legacy-peer-deps --no-audit --no-fund
+  ```
+
+> ⚠️ **사용자 작업 필요**: 위 두 해결안 중 하나를 선택해 직접 commit/push 해야 워크플로우가 정상화됩니다.
+
+### v0.5.3 — 2026-04-07
+
+#### `NEW` feat: 세트 검색 다축 필터 + URL 쿼리스트링 동기화
+- **요구사항**: 기존 세트 검색은 정렬만 가능했음. MOC 검색 수준의 풍부한 다축 필터링과 결과 공유 기능 필요.
+- **추가된 필터 (모두 클라이언트 사이드, `useMemo` 로 `filteredResults` 파생)**:
+  - `partsMin` / `partsMax` — 부품 수 범위 (예: 1000~5000)
+  - `yearMin` / `yearMax` — 출시 연도 범위 (예: 2018~2024)
+  - `priceMin` / `priceMax` — KRW 가격 범위 (`prices.json` 데이터 사용)
+  - `retiredMode` — `all` / `only`(단종만) / `exclude`(현역만)
+  - `ownedMode` — `all` / `owned`(보유) / `not_owned`(미보유) / `wished`(위시리스트)
+- **URL 쿼리스트링 동기화** — `react-router-dom` `useSearchParams` 로 모든 필터 + `q`(검색어) + `sort` 상태를 URL 에 양방향 바인딩. URL 파라미터: `q, sort, pmin, pmax, ymin, ymax, prmin, prmax, rt, ow`. 페이지 로드 시 URL 에 `?q=...` 가 있으면 자동으로 검색 실행.
+- **공유 버튼** — 필터 패널의 "결과 URL 복사" 버튼이 `navigator.clipboard.writeText(window.location.href)` 로 현재 검색·필터·정렬 상태가 인코딩된 URL 을 클립보드에 복사 (2초간 "복사됨!" 토스트).
+- **필터 패널 UI** — 토글 버튼(활성 필터 카운트 뱃지 포함)으로 접고 펴는 collapsible 패널. 인라인 스타일 + `React.createElement` 로 구성하여 별도 CSS 파일 추가 없음. 각 범위 필드는 `최소`/`최대` 숫자 입력 + 라디오 그룹.
+- **빈 결과 메시지** — 필터 결과가 0건일 때 "필터 조건에 맞는 결과가 없습니다." 별도 안내. 현재 보유 컬렉션 / 위시리스트는 `getCollection()` / `getWishlist()` 로 lazy 로드해 `Set` 으로 캐싱하여 조회 성능 보장.
+- **`src/utils/i18n.js`** — `filterToggleLabel`, `filterPartsRange`, `filterYearRange`, `filterPriceRange`, `filterRetired*`, `filterOwned*`, `filterMin/Max`, `filterShareUrl`, `filterShareCopied`, `filterFilteredPrefix/Suffix`, `filterEmptyMsg` 등 ko/en 20+ 키 추가.
+- **`src/pages/SearchPage.js`** — `DEFAULT_FILTERS` / `readFiltersFromParams` / `filtersAreDefault` 헬퍼, 필터 상태→URL 양방향 동기화, `filteredResults` useMemo, 필터 패널 렌더링, 공유 버튼, 빈 상태 메시지.
 
 ### v0.5.2 — 2026-04-07
 
