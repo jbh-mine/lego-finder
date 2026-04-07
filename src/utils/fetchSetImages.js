@@ -1,11 +1,12 @@
-// Runtime fetcher for Rebrickable set gallery image IDs.
+// Real-time fetcher for Rebrickable set gallery image IDs.
 //
-// Strategy: pre-built data files (bdpImages.json, legoImages.json) cover the
-// most popular sets. For any set that isn't pre-fetched, this utility scrapes
-// rebrickable.com via a public CORS proxy at runtime and caches the result in
-// localStorage so the lookup is instant on subsequent visits.
+// All set detail pages call fetchSetImages() to retrieve gallery image IDs
+// live from rebrickable.com via a CORS proxy chain. Successful results are
+// cached in localStorage for instant subsequent loads. Empty results are
+// NOT cached (so transient proxy failures don't poison the cache).
 
-var CACHE_KEY = 'lego_set_images_cache';
+var CACHE_KEY = 'lego_set_images_cache_v2';
+var LEGACY_CACHE_KEY = 'lego_set_images_cache';
 var CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 var CORS_PROXIES = [
   function(u) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); },
@@ -17,6 +18,13 @@ var CORS_PROXIES = [
 var FETCH_TIMEOUT_MS = 8000;
 
 var pending = {};
+
+// One-shot cleanup of legacy cache (which may have empty arrays poisoning lookups)
+try {
+  if (typeof localStorage !== 'undefined' && localStorage.getItem(LEGACY_CACHE_KEY)) {
+    localStorage.removeItem(LEGACY_CACHE_KEY);
+  }
+} catch (e) {}
 
 function loadCache() {
   try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}'); }
@@ -34,7 +42,9 @@ export function getCachedSetImages(setNum) {
   if (!entry) return null;
   // Honor TTL
   if (entry.t && (Date.now() - entry.t) > CACHE_TTL_MS) return null;
-  return entry.ids || null;
+  // Never return empty arrays as a "cache hit" — force a re-fetch instead
+  if (!entry.ids || entry.ids.length === 0) return null;
+  return entry.ids;
 }
 
 function escapeRegExp(s) {
@@ -42,6 +52,7 @@ function escapeRegExp(s) {
 }
 
 function extractImageIds(html, setNum) {
+  // Match both /media/thumbs/sets/{setNum}/{id}.jpg/ and absolute CDN URLs
   var re = new RegExp('/media/thumbs/sets/' + escapeRegExp(setNum) + '/(\\d+)\\.jpg/', 'g');
   var seen = {};
   var ids = [];
@@ -69,32 +80,35 @@ async function fetchVia(proxyBuilder, url) {
 
 export async function fetchSetImages(setNum) {
   if (!setNum) return [];
-  // Hit cache first
+  // Cache hit short-circuit (only non-empty results are cached)
   var cached = getCachedSetImages(setNum);
-  if (cached) return cached;
+  if (cached && cached.length > 0) return cached;
   // De-dupe in-flight requests
   if (pending[setNum]) return pending[setNum];
 
   pending[setNum] = (async function() {
     var url = 'https://rebrickable.com/sets/' + setNum + '/';
-    var html = null;
+    var ids = [];
     for (var i = 0; i < CORS_PROXIES.length; i++) {
       try {
-        html = await fetchVia(CORS_PROXIES[i], url);
-        if (html && html.length > 0) break;
+        var html = await fetchVia(CORS_PROXIES[i], url);
+        if (html && html.length > 0) {
+          var found = extractImageIds(html, setNum);
+          if (found.length > 0) {
+            ids = found;
+            break;
+          }
+        }
       } catch (e) {
         // try next proxy
       }
     }
-    if (!html) {
-      delete pending[setNum];
-      return [];
+    // Only cache non-empty results so transient failures don't poison the cache
+    if (ids.length > 0) {
+      var cache = loadCache();
+      cache[setNum] = { ids: ids, t: Date.now() };
+      saveCache(cache);
     }
-    var ids = extractImageIds(html, setNum);
-    // Cache (even empty results, for a shorter window)
-    var cache = loadCache();
-    cache[setNum] = { ids: ids, t: Date.now() };
-    saveCache(cache);
     delete pending[setNum];
     return ids;
   })();
