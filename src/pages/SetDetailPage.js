@@ -11,8 +11,6 @@ import { isInCollection, addToCollection, removeFromCollection, isInWishlist, ad
 import Pagination from '../components/Pagination';
 import { Loading, ErrorMessage } from '../components/Loading';
 import TranslatedName from '../components/TranslatedName';
-import bdpImagesData from '../data/bdpImages.json';
-import legoImagesData from '../data/legoImages.json';
 import { getCachedSetImages, fetchSetImages } from '../utils/fetchSetImages';
 import '../styles/price.css';
 
@@ -72,10 +70,11 @@ function SetDetailPage() {
     })();
   }, [setNum, t]);
 
-  // Load images from Rebrickable (match Rebrickable set page exactly)
-  // 1) BDP sets: pre-fetched gallery IDs from bdpImages.json
-  // 2) Regular sets: pre-fetched gallery IDs from legoImages.json
-  // 3) Fallback: runtime scrape via fetchSetImages (cached in localStorage)
+  // Load images from Rebrickable in real-time (API-like).
+  // Strategy: ALL products fetch live from rebrickable.com via fetchSetImages.
+  // - Show set_img_url instantly as placeholder
+  // - Show cached IDs (if any) immediately for fast paint
+  // - Always trigger a fresh fetch in the background to keep gallery up to date
   useEffect(function() {
     if (!set) return;
     var setNum = set.set_num;
@@ -87,7 +86,7 @@ function SetDetailPage() {
     };
 
     var prependPrimary = function(images) {
-      if (set.set_img_url && images.indexOf(set.set_img_url) === -1) {
+      if (set.set_img_url) {
         var primaryIdMatch = set.set_img_url.match(/\/sets\/[^/]+\/(\d+)\.jpg\//);
         var primaryId = primaryIdMatch ? primaryIdMatch[1] : null;
         var alreadyHasPrimary = false;
@@ -96,43 +95,31 @@ function SetDetailPage() {
             if (images[i].indexOf('/' + primaryId + '.jpg/') !== -1) { alreadyHasPrimary = true; break; }
           }
         }
-        if (!alreadyHasPrimary) images.unshift(set.set_img_url);
+        if (!alreadyHasPrimary && images.indexOf(set.set_img_url) === -1) {
+          images.unshift(set.set_img_url);
+        }
       }
       return images;
     };
 
-    var bdpIds = bdpImagesData.sets && bdpImagesData.sets[setNum];
-    var legoIds = legoImagesData.sets && legoImagesData.sets[setNum];
-    var cachedRuntimeIds = getCachedSetImages(setNum);
-
-    var images = [];
-    if (bdpIds && bdpIds.length > 0) {
-      images = buildUrls(bdpIds);
-    } else if (legoIds && legoIds.length > 0) {
-      images = prependPrimary(buildUrls(legoIds));
-    } else if (cachedRuntimeIds && cachedRuntimeIds.length > 0) {
-      images = prependPrimary(buildUrls(cachedRuntimeIds));
+    // Step 1: Instant paint from cache (or set_img_url placeholder)
+    var cachedIds = getCachedSetImages(setNum);
+    if (cachedIds && cachedIds.length > 0) {
+      setAllImages(prependPrimary(buildUrls(cachedIds)));
     } else if (set.set_img_url) {
-      images.push(set.set_img_url);
+      setAllImages([set.set_img_url]);
+    } else {
+      setAllImages([]);
     }
-    setAllImages(images);
     setImgIdx(0);
 
-    // If we don't yet have multi-image data, scrape Rebrickable at runtime.
-    var alreadyHaveMulti = (bdpIds && bdpIds.length > 1) ||
-      (legoIds && legoIds.length > 1) ||
-      (cachedRuntimeIds && cachedRuntimeIds.length > 1);
-    if (alreadyHaveMulti) return;
-
+    // Step 2: Always fetch fresh in real-time from rebrickable.com
     var cancelled = false;
     fetchSetImages(setNum).then(function(ids) {
       if (cancelled || !ids || ids.length === 0) return;
       var fresh = prependPrimary(buildUrls(ids));
-      // Only replace if we actually got more than the current single image
-      if (fresh.length > 1) {
-        setAllImages(fresh);
-        setImgIdx(0);
-      }
+      setAllImages(fresh);
+      setImgIdx(0);
     });
     return function() { cancelled = true; };
   }, [set]);
