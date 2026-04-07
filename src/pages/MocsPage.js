@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { searchMocs } from '../utils/mocApi';
+import { translateSearchQuery } from '../utils/searchDict';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
 
@@ -60,10 +61,11 @@ function MocsPage() {
 
   var applySearch = function(e) {
     if (e) e.preventDefault();
-    setQuery(qInput);
+    var translated = translateSearchQuery(qInput.trim());
+    setQuery(translated);
     setPage(1);
-    stateRef.current = { query: qInput, theme: theme, sort: sort, page: 1 };
-    doFetch({ q: qInput, theme: theme, sort: sort, page: 1 }, false);
+    stateRef.current = { query: translated, theme: theme, sort: sort, page: 1 };
+    doFetch({ q: translated, theme: theme, sort: sort, page: 1 }, false);
   };
 
   var changeTheme = function(v) {
