@@ -1,0 +1,345 @@
+/* ============================================================
+ * Multi-axis filter panel + image lightbox polish
+ *
+ * Themed to match the LEGO baseplate / brick aesthetic in
+ * lego-brick.css. Uses CSS variables from App.css/theme-dark.css
+ * so it auto-adapts to dark mode.
+ * ============================================================ */
+
+/* ----- Toolbar above results ----- */
+.filter-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 14px 0;
+}
+
+.filter-toolbar-spacer { flex: 1 1 auto; }
+
+.filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border, #d0d0d0);
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #222);
+  border-radius: var(--brick-radius-sm, 4px);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+}
+
+.filter-btn:hover {
+  border-color: var(--brick-accent, #DA291C);
+  color: var(--brick-accent, #DA291C);
+  transform: translateY(-1px);
+}
+
+.filter-btn.primary {
+  background: var(--brick-accent, #DA291C);
+  border-color: var(--brick-accent, #DA291C);
+  color: #fff;
+}
+.filter-btn.primary:hover {
+  filter: brightness(1.06);
+  color: #fff;
+}
+
+.filter-btn .filter-btn-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--brick-accent, #DA291C);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.filter-btn .filter-btn-caret { font-size: 9px; opacity: 0.8; }
+
+.filter-share-msg {
+  font-size: 12px;
+  color: #0a7d0a;
+  font-weight: 600;
+  padding: 4px 8px;
+  background: rgba(10, 125, 10, 0.1);
+  border-radius: var(--brick-radius-sm, 4px);
+}
+[data-theme="dark"] .filter-share-msg { color: #6ee36e; background: rgba(110, 227, 110, 0.12); }
+
+/* Active filter chips row */
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  background: var(--brick-accent-soft, rgba(218, 41, 28, 0.85));
+  color: #fff;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.18);
+}
+
+.filter-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+  border: 0;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+}
+.filter-chip-x:hover { background: rgba(255,255,255,0.45); }
+
+/* ----- Filter panel ----- */
+.filter-panel {
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: var(--brick-radius, 6px);
+  background: var(--color-surface, #fff);
+  padding: 16px 18px 14px 18px;
+  margin-bottom: 14px;
+  box-shadow: var(--brick-shadow, 0 2px 0 rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.06));
+  position: relative;
+  overflow: hidden;
+  animation: filterPanelIn 0.18s ease-out;
+}
+
+.filter-panel::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(180deg, var(--brick-accent-soft, rgba(218,41,28,0.85)) 0%, var(--brick-accent-soft, rgba(218,41,28,0.85)) 60%, rgba(0,0,0,0.14) 100%);
+  pointer-events: none;
+}
+
+@keyframes filterPanelIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 18px;
+  margin-top: 6px;
+}
+
+@media (max-width: 720px) {
+  .filter-grid { grid-template-columns: 1fr; }
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-field-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-soft, #555);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.filter-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-range input {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: var(--brick-radius-sm, 4px);
+  background: var(--color-surface-soft, #fafafa);
+  color: var(--color-text, #222);
+  font-size: 13px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.filter-range input:focus {
+  outline: none;
+  border-color: var(--brick-accent, #DA291C);
+  box-shadow: 0 0 0 3px rgba(218, 41, 28, 0.12);
+}
+
+.filter-range-sep { color: #999; font-weight: 600; }
+
+/* Segmented radio control (replaces ugly bare radios) */
+.filter-segment {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: var(--brick-radius-sm, 4px);
+  overflow: hidden;
+  background: var(--color-surface-soft, #fafafa);
+}
+
+.filter-segment label {
+  position: relative;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-soft, #555);
+  cursor: pointer;
+  border-right: 1px solid var(--color-border, #ddd);
+  transition: background 0.12s ease, color 0.12s ease;
+  user-select: none;
+}
+.filter-segment label:last-child { border-right: 0; }
+
+.filter-segment input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.filter-segment label:hover {
+  background: rgba(218, 41, 28, 0.06);
+  color: var(--brick-accent, #DA291C);
+}
+
+.filter-segment label.active,
+.filter-segment input:checked + span,
+.filter-segment label:has(input:checked) {
+  background: var(--brick-accent, #DA291C);
+  color: #fff;
+}
+
+.filter-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--color-border, #e5e5e5);
+}
+
+/* ============================================================
+ * Image lightbox polish
+ * Adds zoom badge, thumbnail strip in popup, smoother fade-in.
+ * ============================================================ */
+
+/* Soft hint that the main gallery image is clickable */
+.gallery-main-img {
+  cursor: zoom-in;
+  transition: filter 0.15s ease;
+}
+.image-gallery:hover .gallery-main-img { filter: brightness(1.03); }
+
+/* Zoom hint badge in the corner of the gallery */
+.gallery-zoom-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  pointer-events: none;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.image-gallery:hover .gallery-zoom-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Thumbnail strip inside the popup */
+.popup-gallery-thumbs {
+  position: absolute;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgba(0,0,0,0.5);
+  border-radius: var(--brick-radius, 6px);
+  max-width: 90vw;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  z-index: 4;
+}
+
+.popup-gallery-thumb {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 40px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--brick-radius-sm, 4px);
+  background: #222;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.popup-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.popup-gallery-thumb:hover { transform: translateY(-1px); }
+.popup-gallery-thumb.active {
+  border-color: var(--brick-accent, #DA291C);
+  box-shadow: 0 0 0 1px var(--brick-accent, #DA291C);
+}
+
+/* Lightbox fade in */
+.image-popup-overlay {
+  animation: lightboxFade 0.18s ease-out;
+}
+@keyframes lightboxFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.image-popup-img {
+  animation: lightboxImgIn 0.22s ease-out;
+}
+@keyframes lightboxImgIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 640px) {
+  .popup-gallery-thumbs { bottom: 80px; padding: 4px 6px; gap: 4px; }
+  .popup-gallery-thumb  { width: 44px; height: 34px; }
+}
