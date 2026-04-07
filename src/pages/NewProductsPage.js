@@ -176,7 +176,20 @@ function NewProductsPage() {
   var headerSection = React.createElement('div', { className: 'search-section' },
     React.createElement('div', { className: 'new-products-header' },
       React.createElement('h2', null, t('newProducts')),
-      React.createElement('p', { className: 'new-products-desc' }, t('newProductsDesc'))
+      React.createElement('p', { className: 'new-products-desc' }, t('newProductsDesc')),
+      React.createElement('div', { className: 'new-products-source-notice' },
+        React.createElement('span', { className: 'new-products-source-icon' }, '\u2139\uFE0F'),
+        React.createElement('span', { className: 'new-products-source-text' },
+          t('newProductsSourceNotice'),
+          React.createElement('a', {
+            href: 'https://rebrickable.com/',
+            target: '_blank',
+            rel: 'noopener noreferrer',
+            className: 'new-products-source-link'
+          }, 'rebrickable.com'),
+          t('newProductsSourceNoticeSuffix')
+        )
+      )
     ),
     React.createElement('div', { className: 'new-products-filters' },
       React.createElement('div', { className: 'new-products-year-tabs' },
