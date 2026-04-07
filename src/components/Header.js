@@ -41,7 +41,7 @@ function Header() {
           <button
             className="mobile-menu-btn"
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Menu"
+            aria-label={t('menuLabel')}
           >
             <span className={'hamburger' + (menuOpen ? ' open' : '')}></span>
           </button>

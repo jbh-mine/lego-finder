@@ -5,7 +5,9 @@ import { getCachedTranslation, translateName } from '../utils/translate';
 export default function useTranslatedName(name) {
   var langCtx = useLanguage();
   var lang = langCtx.lang;
-  var s = useState(null);
+  // Compute initial state synchronously to avoid English flash
+  var initial = (lang === 'ko' && name) ? getCachedTranslation(name) : null;
+  var s = useState(initial);
   var translated = s[0];
   var setTranslated = s[1];
 
