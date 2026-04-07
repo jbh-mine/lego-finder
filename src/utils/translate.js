@@ -2,6 +2,68 @@ var CACHE_KEY = 'lego_name_translations';
 var API_URL = 'https://api.mymemory.translated.net/get';
 var pendingRequests = {};
 
+// Hardcoded set-name translations for popular / newer sets where
+// the MyMemory API tends to produce awkward or partial Korean output.
+// Keys are matched both as exact set names AND as substrings, so a
+// rebrickable name like "Hogwarts Castle: Hospital Wing" or
+// "Hogwarts Castle - Hospital Wing" will both resolve.
+var SET_NAME_MAP = {
+  // Harry Potter 2026 wave
+  'Hogwarts Castle: Hospital Wing': '\uD638\uADF8\uC640\uD2B8 \uC131: \uBCD1\uC6D0\uB3D9',
+  'Hogwarts Castle: Sorting Hat Ceremony': '\uD638\uADF8\uC640\uD2B8 \uC131: \uAE30\uC219\uC0AC \uC758\uC2DD',
+  'Hagrid & Harry\'s Privet Drive Escape': '\uD574\uADF8\uB9AC\uB4DC\uC640 \uD574\uB9AC\uC758 \uD504\uB9AC\uBCB3 \uB4DC\uB77C\uC774\uBE0C \uD0C8\uCD9C',
+  'Cornish Pixie': '\uCF54\uB2C8\uC2DC \uD53D\uC2DC',
+  'Cauldron: Secret Potions Classroom': '\uAC00\uB9C8\uC194: \uBE44\uBC00\uC758 \uBA38\uADF8\uC57D \uAD50\uC2E4',
+  'Philosopher\'s Stone Collectors\' Edition': '\uB9C8\uBC95\uC0AC\uC758 \uB3CC \uCEEC\uB809\uD130\uC988 \uC5D0\uB514\uC158',
+  'Sorcerer\'s Stone Collectors\' Edition': '\uB9C8\uBC95\uC0AC\uC758 \uB3CC \uCEEC\uB809\uD130\uC988 \uC5D0\uB514\uC158',
+  'Luna Lovegood\'s House': '\uB8E8\uB098 \uB7EC\uBE0C\uAD7F\uC758 \uC9D1',
+  'Hogwarts House Symbol': '\uD638\uADF8\uC640\uD2B8 \uAE30\uC219\uC0AC \uC0C1\uC9D5',
+  'Hogwarts Crest': '\uD638\uADF8\uC640\uD2B8 \uBB38\uC7A5',
+  'Hogwarts Castle: East Wing': '\uD638\uADF8\uC640\uD2B8 \uC131: \uB3D9\uCABD \uB0A0\uAC1C',
+  // Harry Potter older popular
+  'Hogwarts Castle': '\uD638\uADF8\uC640\uD2B8 \uC131',
+  'Hogwarts Hospital Wing': '\uD638\uADF8\uC640\uD2B8 \uBCD1\uC6D0\uB3D9',
+  'Hogwarts Express': '\uD638\uADF8\uC640\uD2B8 \uADF8\uAE09 \uC5F4\uCC28',
+  'Diagon Alley': '\uB2E4\uC774\uC560\uACE8\uB9AC',
+  'The Battle of Hogwarts': '\uD638\uADF8\uC640\uD2B8 \uC804\uD22C',
+  'Hogwarts Astronomy Tower': '\uD638\uADF8\uC640\uD2B8 \uCC9C\uBB38\uD0D1',
+  'Hogwarts Whomping Willow': '\uD638\uADF8\uC640\uD2B8 \uD138\uB098\uBB34',
+  'Hogwarts: Dumbledore Office': '\uD638\uADF8\uC640\uD2B8: \uB364\uBE14\uB3C4\uC5B4 \uAD50\uC7A5\uC2E4',
+  'Hogwarts: Polyjuice Potion Mistake': '\uD638\uADF8\uC640\uD2B8: \uD3F4\uB9AC\uC8FC\uC2A4 \uB9C8\uBC95\uC57D \uC2E4\uC218',
+  'Hogwarts: Room of Requirement': '\uD638\uADF8\uC640\uD2B8: \uD544\uC694\uC758 \uBC29',
+  'Hogwarts: Grand Staircase': '\uD638\uADF8\uC640\uD2B8: \uB300\uACC4\uB2E8',
+  'Hogwarts Moment: Charms Class': '\uD638\uADF8\uC640\uD2B8 \uC21C\uAC04: \uB9C8\uBC95 \uC218\uC5C5',
+  'Hogwarts Moment: Defence Against the Dark Arts Class': '\uD638\uADF8\uC640\uD2B8 \uC21C\uAC04: \uC5B4\uB460\uC758 \uB9C8\uC220 \uBC29\uC5B4\uBC95 \uC218\uC5C5',
+  'Hogwarts Moment: Herbology Class': '\uD638\uADF8\uC640\uD2B8 \uC21C\uAC04: \uC57D\uCD08\uD559 \uC218\uC5C5',
+  'Hogwarts Moment: Potions Class': '\uD638\uADF8\uC640\uD2B8 \uC21C\uAC04: \uB9C8\uBC95\uC57D \uC218\uC5C5',
+  'Hogwarts Moment: Transfiguration Class': '\uD638\uADF8\uC640\uD2B8 \uC21C\uAC04: \uBCC0\uC2E0\uC220 \uC218\uC5C5',
+  'Hogwarts Moment: Divination Class': '\uD638\uADF8\uC640\uD2B8 \uC21C\uAC04: \uC810\uD0D0\uD559 \uC218\uC5C5',
+  // Star Wars classics
+  'Millennium Falcon': '\uBC00\uB808\uB2C8\uC5C4 \uD314\uCF58',
+  'AT-AT': '\uC81C\uAD6D \uACF5\uACA9\uAE30\uAC11 \uC6CC\uCEE4 AT-AT',
+  'Mos Eisley Cantina': '\uBAA8\uC2A4 \uC544\uC774\uC2A4\uB9AC \uCE74\uD2F0\uB098',
+  'Imperial Star Destroyer': '\uC81C\uAD6D \uC2A4\uD0C0 \uB514\uC2A4\uD2B8\uB85C\uC774\uC5B4',
+  'Death Star': '\uB370\uC2A4 \uC2A4\uD0C0',
+  'Republic Gunship': '\uACF5\uD654\uAD6D \uAC74\uC26D',
+  // Marvel
+  'Sanctum Sanctorum': '\uC0CC\uD06C\uD140 \uC0CC\uD06C\uD1A0\uB7FC',
+  'Avengers Tower': '\uC5B4\uBCB4\uC838\uC2A4 \uD0C0\uC6CC',
+  'Daily Bugle': '\uB370\uC77C\uB9AC \uBDF0\uAE00',
+  // Modular / Icons
+  'Boutique Hotel': '\uBD80\uD2F0\uD06C \uD638\uD154',
+  'Jazz Club': '\uC7AC\uC988 \uD074\uB7FD',
+  'Natural History Museum': '\uC790\uC5F0\uC0AC\uBC15\uBB3C\uAD00',
+  'Notre-Dame de Paris': '\uD30C\uB9AC \uB178\uD2B8\uB974\uB2F4 \uB300\uC131\uB2F9',
+  'Tower Bridge': '\uD0C0\uC6CC \uBE0C\uB9AC\uC9C0',
+  'Eiffel Tower': '\uC5D0\uD3E0\uD0D1',
+  'Titanic': '\uD0C0\uC774\uD0C0\uB2C9',
+  'Colosseum': '\uCF5C\uB85C\uC138\uC6C0',
+  // Misc popular
+  'Bugatti Bolide': '\uBD80\uAC00\uD2F0 \uBCFC\uB77C\uC774\uB4DC',
+  'Lion Knights Castle': '\uC0AC\uC790 \uAE30\uC0AC \uC131',
+  'Disney Castle': '\uB514\uC988\uB2C8 \uC131',
+};
+
 // Hardcoded theme name translations to avoid API encoding issues
 var THEME_NAME_MAP = {
   'The Lord of the Rings': '\uBC18\uC9C0\uC758 \uC81C\uC655',
@@ -75,7 +137,7 @@ var THEME_NAME_MAP = {
   'The LEGO Movie 2': '\uB808\uACE0 \uBB34\uBE44 2',
   'The LEGO Batman Movie': '\uB808\uACE0 \uBC30\uD2B8\uB9E8 \uBB34\uBE44',
   'The LEGO Ninjago Movie': '\uB808\uACE0 \uB2CC\uC790\uACE0 \uBB34\uBE44',
-  "Gabby's Dollhouse": '\uAC1C\uBE44\uC758 \uB9E4\uC9C1\uD558\uC6B0\uC2A4',
+  'Gabby\'s Dollhouse': '\uAC1C\uBE44\uC758 \uB9E4\uC9C1\uD558\uC6B0\uC2A4',
   'Art': '\uC544\uD2B8',
   'Vidiyo': '\uBE44\uB514\uC694',
   'Dots': '\uB3C4\uCE20',
@@ -98,7 +160,6 @@ var THEME_NAME_MAP = {
   'Gear': '\uAD7F\uC988',
   'Collectible Minifigures': '\uC218\uC9D1\uD615 \uBBF8\uB2C8\uD53C\uADDC\uC5B4',
   'Minifigures': '\uBBF8\uB2C8\uD53C\uADDC\uC5B4',
-  // Common LEGO colors
   'Red': '\uBE68\uAC15',
   'Blue': '\uD30C\uB791',
   'Yellow': '\uB178\uB791',
@@ -107,167 +168,17 @@ var THEME_NAME_MAP = {
   'White': '\uD558\uC591',
   'Orange': '\uC8FC\uD669',
   'Brown': '\uAC08\uC0C9',
-  'Tan': '\uD0E8',
-  'Dark Tan': '\uC9C4\uD55C \uD0E8',
-  'Pink': '\uBD84\uD64D',
-  'Bright Pink': '\uBC1D\uC740 \uBD84\uD64D',
-  'Light Pink': '\uC5F0\uD55C \uBD84\uD64D',
-  'Magenta': '\uB9C8\uC820\uD0C0',
-  'Purple': '\uBCF4\uB77C',
-  'Dark Purple': '\uC9C4\uD55C \uBCF4\uB77C',
-  'Lavender': '\uB77C\uBCA4\uB354',
-  'Medium Lavender': '\uC911\uAC04 \uB77C\uBCA4\uB354',
-  'Lime': '\uB77C\uC784',
-  'Yellowish Green': '\uC5F0\uB450',
-  'Bright Green': '\uBC1D\uC740 \uCD08\uB85D',
-  'Dark Green': '\uC9C4\uD55C \uCD08\uB85D',
-  'Olive Green': '\uC62C\uB9AC\uBE0C \uADF8\uB9B0',
-  'Sand Green': '\uC0CC\uB4DC \uADF8\uB9B0',
-  'Dark Blue': '\uC9C4\uD55C \uD30C\uB791',
-  'Medium Blue': '\uC911\uAC04 \uD30C\uB791',
-  'Sand Blue': '\uC0CC\uB4DC \uBE14\uB8E8',
-  'Light Bluish Gray': '\uC5F0\uD55C \uD68C\uCCAD\uC0C9',
-  'Dark Bluish Gray': '\uC9C4\uD55C \uD68C\uCCAD\uC0C9',
-  'Light Gray': '\uC5F0\uD55C \uD68C\uC0C9',
-  'Dark Gray': '\uC9C4\uD55C \uD68C\uC0C9',
-  'Medium Azure': '\uBBF8\uB514\uC5C4 \uC544\uC8FC\uB974',
-  'Dark Azure': '\uB2E4\uD06C \uC544\uC8FC\uB974',
-  'Bright Light Blue': '\uBC1D\uC740 \uB77C\uC774\uD2B8 \uBE14\uB8E8',
-  'Bright Light Yellow': '\uBC1D\uC740 \uB77C\uC774\uD2B8 \uC625\uB85C\uC6B0',
-  'Bright Light Orange': '\uBC1D\uC740 \uB77C\uC774\uD2B8 \uC624\uB80C\uC9C0',
-  'Dark Orange': '\uC9C4\uD55C \uC8FC\uD669',
-  'Reddish Brown': '\uC801\uAC08\uC0C9',
-  'Dark Red': '\uC9C4\uD55C \uBE68\uAC15',
-  'Dark Brown': '\uC9C4\uD55C \uAC08\uC0C9',
-  'Medium Nougat': '\uBBF8\uB514\uC5C4 \uB204\uAC00',
-  'Nougat': '\uB204\uAC00',
-  'Light Nougat': '\uC5F0\uD55C \uB204\uAC00',
-  'Flesh': '\uC0B4\uC0C9',
-  'Light Flesh': '\uC5F0\uD55C \uC0B4\uC0C9',
-  'Medium Dark Flesh': '\uC911\uAC04 \uC5B4\uB450\uC6B4 \uC0B4\uC0C9',
-  'Coral': '\uCF54\uB784',
-  'Sand Red': '\uC0CC\uB4DC \uB808\uB4DC',
-  'Sand Yellow': '\uC0CC\uB4DC \uC625\uB85C\uC6B0',
-  'Trans-Clear': '\uD22C\uBA85',
-  'Trans-Black': '\uD22C\uBA85 \uAC80\uC815',
-  'Trans-Red': '\uD22C\uBA85 \uBE68\uAC15',
-  'Trans-Dark Blue': '\uD22C\uBA85 \uC9C4\uD55C \uD30C\uB791',
-  'Trans-Light Blue': '\uD22C\uBA85 \uC5F0\uD55C \uD30C\uB791',
-  'Trans-Medium Blue': '\uD22C\uBA85 \uC911\uAC04 \uD30C\uB791',
-  'Trans-Green': '\uD22C\uBA85 \uCD08\uB85D',
-  'Trans-Bright Green': '\uD22C\uBA85 \uBC1D\uC740 \uCD08\uB85D',
-  'Trans-Yellow': '\uD22C\uBA85 \uB178\uB791',
-  'Trans-Orange': '\uD22C\uBA85 \uC8FC\uD669',
-  'Trans-Neon Orange': '\uD22C\uBA85 \uB124\uC628 \uC8FC\uD669',
-  'Trans-Neon Green': '\uD22C\uBA85 \uB124\uC628 \uCD08\uB85D',
-  'Trans-Neon Yellow': '\uD22C\uBA85 \uB124\uC628 \uB178\uB791',
-  'Trans-Purple': '\uD22C\uBA85 \uBCF4\uB77C',
-  'Trans-Pink': '\uD22C\uBA85 \uBD84\uD64D',
-  'Trans-Dark Pink': '\uD22C\uBA85 \uC9C4\uD55C \uBD84\uD64D',
-  'Trans-Light Green': '\uD22C\uBA85 \uC5F0\uD55C \uCD08\uB85D',
-  'Trans-Brown': '\uD22C\uBA85 \uAC08\uC0C9',
-  'Glow In Dark Opaque': '\uC57C\uAD11 \uBD88\uD22C\uBA85',
-  'Glow In Dark Trans': '\uC57C\uAD11 \uD22C\uBA85',
-  'Glow In Dark White': '\uC57C\uAD11 \uD558\uC591',
-  'Metallic Silver': '\uBA54\uD0C8\uB9AD \uC2E4\uBC84',
-  'Metallic Gold': '\uBA54\uD0C8\uB9AD \uACE8\uB4DC',
-  'Pearl Gold': '\uD3C4 \uACE8\uB4DC',
-  'Pearl Silver': '\uD3C4 \uC2E4\uBC84',
-  'Pearl Light Gray': '\uD3C4 \uC5F0\uD55C \uD68C\uC0C9',
-  'Pearl Dark Gray': '\uD3C4 \uC9C4\uD55C \uD68C\uC0C9',
-  'Chrome Silver': '\uD06C\uB86C \uC2E4\uBC84',
-  'Chrome Gold': '\uD06C\uB86C \uACE8\uB4DC',
-  'Chrome Black': '\uD06C\uB86C \uAC80\uC815',
-  'Copper': '\uAD6C\uB9AC',
-  'Pearl White': '\uD3C4 \uD654\uC774\uD2B8',
-  'Light Aqua': '\uC5F0\uD55C \uC544\uCFE0\uC544',
-  'Aqua': '\uC544\uCFE0\uC544',
-  'Dark Turquoise': '\uB2E4\uD06C \uD130\uCFFC\uC774\uC988',
-  'Light Turquoise': '\uC5F0\uD55C \uD130\uCFFC\uC774\uC988',
-  'Salmon': '\uC5F0\uC5B4\uC0C9',
-  'Dark Pink': '\uC9C4\uD55C \uBD84\uD64D',
-  'Maersk Blue': '\uBA38\uC2A4\uD06C \uBE14\uB8E8',
-  'Earth Blue': '\uC5B4\uC2A4 \uBE14\uB8E8',
-  'Earth Green': '\uC5B4\uC2A4 \uADF8\uB9B0',
-  'Light Yellow': '\uC5F0\uD55C \uB178\uB791',
-  'Speckle Black-Silver': '\uC2A4\uD399\uD074 \uBE14\uB799-\uC2E4\uBC84',
-  '[No Color/Any Color]': '[\uC0C9\uC0C1 \uC5C6\uC74C/\uBAA8\uB4E0 \uC0C9\uC0C1]',
-  // Common LEGO part categories
-  'Baseplates': '\uBCA0\uC774\uC2A4\uD50C\uB808\uC774\uD2B8',
   'Bricks': '\uBE0C\uB9AD',
-  'Bricks Curved': '\uACE1\uC120 \uBE0C\uB9AD',
-  'Bricks Sloped': '\uACBD\uC0AC \uBE0C\uB9AD',
-  'Bricks Special': '\uD2B9\uC218 \uBE0C\uB9AD',
-  'Bricks Wedged': '\uC50D\uAE30 \uBE0C\uB9AD',
   'Plates': '\uD50C\uB808\uC774\uD2B8',
-  'Plates Special': '\uD2B9\uC218 \uD50C\uB808\uC774\uD2B8',
-  'Plates Round Curved and Dishes': '\uC6D0\uD615/\uACE1\uC120/\uC811\uC2DC \uD50C\uB808\uC774\uD2B8',
   'Tiles': '\uD0C0\uC77C',
-  'Tiles Special': '\uD2B9\uC218 \uD0C0\uC77C',
-  'Tiles Printed': '\uC778\uC1C4 \uD0C0\uC77C',
   'Slopes': '\uC2AC\uB85C\uD504',
-  'Slopes Curved': '\uACE1\uC120 \uC2AC\uB85C\uD504',
-  'Wedges': '\uC6E8\uC9C0',
-  'Wheels and Tyres': '\uBC14\uD034\uC640 \uD0C0\uC774\uC5B4',
-  'Tyres and Rims': '\uD0C0\uC774\uC5B4\uC640 \uB9BC',
-  'Minifig Accessories': '\uBBF8\uB2C8\uD53C\uADDC\uC5B4 \uC561\uC138\uC11C\uB9AC',
-  'Minifig Heads': '\uBBF8\uB2C8\uD53C\uADDC\uC5B4 \uBA38\uB9AC',
-  'Minifig Headwear': '\uBBF8\uB2C8\uD53C\uADDC\uC5B4 \uBAA8\uC790',
-  'Minifig Hipwear': '\uBBF8\uB2C8\uD53C\uADDC\uC5B4 \uD5C8\uB9AC\uC7A5\uC2DD',
-  'Minifig Neckwear': '\uBBF8\uB2C8\uD53C\uADDC\uC5B4 \uBAA9\uC7A5\uC2DD',
-  'Minifig Body Parts': '\uBBF8\uB2C8\uD53C\uADDC\uC5B4 \uC2E0\uCCB4',
-  'Minifig Lower Body': '\uBBF8\uB2C8\uD53C\uADDC\uC5B4 \uB2E4\uB9AC',
-  'Minifig Upper Body': '\uBBF8\uB2C8\uD53C\uADDC\uC5B4 \uC0C1\uCCB4',
   'Animals': '\uB3D9\uBB3C',
-  'Plants and Animals': '\uC2DD\uBB3C\uACFC \uB3D9\uBB3C',
   'Plants': '\uC2DD\uBB3C',
-  'Flags Signs Plastics and Cloth': '\uAE43\uBC1C/\uD45C\uC9C0\uD310/\uCC9C',
-  'Stickers': '\uC2A4\uD2F0\uCEE4',
-  'Building Containers': '\uC6A9\uAE30',
-  'Containers': '\uC6A9\uAE30',
   'Other': '\uAE30\uD0C0',
-  'Hinges Arms and Turntables': '\uACBD\uCCA9/\uD314/\uD68C\uC804\uD310',
-  'Mechanical': '\uAE30\uACC4 \uBD80\uD488',
-  'Electric': '\uC804\uAE30 \uBD80\uD488',
-  'Lighting': '\uC870\uBA85',
-  'Sound and Light': '\uC0AC\uC6B4\uB4DC\uC640 \uC870\uBA85',
-  'Duplo, Quatro and Primo': '\uB4C0\uD50C\uB85C/\uCF5C\uD2B8\uB85C/\uD504\uB9AC\uBAA8',
-  'Belville, Scala and Fabuland': '\uBCA8\uBE4C/\uC2A4\uCE7C\uB77C/\uD30C\uBD80\uB79C\uB4DC',
-  'Modulex': '\uBAA8\uB4C8\uB809\uC2A4',
   'Train': '\uAE30\uCC28',
   'Boats': '\uBCF4\uD2B8',
   'Vehicles': '\uCC28\uB7C9',
-  'Aircraft and Vehicles': '\uD56D\uACF5\uAE30\uC640 \uCC28\uB7C9',
-  'Windows and Doors': '\uCC3D\uBB38\uACFC \uBB38',
-  'Bars Ladders and Fences': '\uBD09/\uC0AC\uB2E4\uB9AC/\uC6B8\uD0C0\uB9AC',
-  'Constraction': '\uCEE8\uC2A4\uD2B8\uB799\uC158',
-  'Constraction Accessories': '\uCEE8\uC2A4\uD2B8\uB799\uC158 \uC561\uC138\uC11C\uB9AC',
-  'Technic Bricks': '\uD14C\uD06C\uB2C9 \uBE0C\uB9AD',
-  'Technic Beams': '\uD14C\uD06C\uB2C9 \uBE54',
-  'Technic Beams Special': '\uD2B9\uC218 \uD14C\uD06C\uB2C9 \uBE54',
-  'Technic Pins': '\uD14C\uD06C\uB2C9 \uD540',
-  'Technic Connectors': '\uD14C\uD06C\uB2C9 \uCEE4\uB12D\uD130',
-  'Technic Axles': '\uD14C\uD06C\uB2C9 \uCD95',
-  'Technic Bushes': '\uD14C\uD06C\uB2C9 \uBD80\uC2F1',
-  'Technic Gears': '\uD14C\uD06C\uB2C9 \uAE30\uC5B4',
-  'Technic Steering Suspension and Engine': '\uD14C\uD06C\uB2C9 \uC870\uD5A5/\uD604\uAC00/\uC5D4\uC9C4',
-  'Technic Panels': '\uD14C\uD06C\uB2C9 \uD328\uB110',
-  'Technic Pneumatics': '\uD14C\uD06C\uB2C9 \uACF5\uC555',
-  'Technic Liftarms': '\uD14C\uD06C\uB2C9 \uB9AC\uD504\uD2B8\uC554',
-  'Mursten': '\uBB34\uC5B4\uC2A4\uD150',
-  'Znap': '\uC988\uB0E5',
-  'Non-LEGO': '\uBE44\uB808\uACE0',
-  'Stickers and Paper': '\uC2A4\uD2F0\uCEE4\uC640 \uC885\uC774',
-  'Supplemental': '\uBD80\uC18D \uC790\uB8CC',
-  'String Bands and Reinforcement': '\uB04C/\uBC34\uB4DC/\uBCF4\uAC15',
-  'Mini Doll Heads': '\uBBF8\uB2C8\uB3CC \uBA38\uB9AC',
-  'Mini Doll Body Parts': '\uBBF8\uB2C8\uB3CC \uC2E0\uCCB4',
-  'Mini Doll Headwear': '\uBBF8\uB2C8\uB3CC \uBAA8\uC790',
-  'Mini Doll Upper Body': '\uBBF8\uB2C8\uB3CC \uC0C1\uCCB4',
-  'Mini Doll Lower Body': '\uBBF8\uB2C8\uB3CC \uB2E4\uB9AC',
-  'Projectiles': '\uBC1C\uC0AC\uCCB4',
   'Sports': '\uC2A4\uD3EC\uCE20',
-  'Food and Drink': '\uC74C\uC2DD\uACFC \uC74C\uB8CC',
   'Clothing': '\uC758\uC0C1',
   'Tools': '\uB3C4\uAD6C',
   'Weapons': '\uBB34\uAE30',
@@ -281,18 +192,33 @@ function saveCache(cache) {
   try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch(e) {}
 }
 
+function lookupSetName(name) {
+  if (!name) return null;
+  if (SET_NAME_MAP[name]) return SET_NAME_MAP[name];
+  // Substring match: covers "Hogwarts Castle: Hospital Wing" appearing
+  // inside longer rebrickable titles, or with different separators.
+  var keys = Object.keys(SET_NAME_MAP);
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    if (k.length >= 6 && name.indexOf(k) !== -1) return SET_NAME_MAP[k];
+  }
+  return null;
+}
+
 export function getCachedTranslation(name) {
   if (!name) return null;
-  // Check hardcoded map first
   if (THEME_NAME_MAP[name]) return THEME_NAME_MAP[name];
+  var setHit = lookupSetName(name);
+  if (setHit) return setHit;
   var cache = getCache();
   return cache[name] || null;
 }
 
 export async function translateName(name) {
   if (!name) return name;
-  // Check hardcoded map first
   if (THEME_NAME_MAP[name]) return THEME_NAME_MAP[name];
+  var setHit = lookupSetName(name);
+  if (setHit) return setHit;
   var cached = getCachedTranslation(name);
   if (cached) return cached;
   if (pendingRequests[name]) return pendingRequests[name];
