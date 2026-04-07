@@ -8,9 +8,13 @@
 var CACHE_KEY = 'lego_set_images_cache';
 var CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 var CORS_PROXIES = [
+  function(u) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); },
   function(u) { return 'https://corsproxy.io/?' + encodeURIComponent(u); },
   function(u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
+  function(u) { return 'https://thingproxy.freeboard.io/fetch/' + u; },
+  function(u) { return 'https://cors.eu.org/' + u; },
 ];
+var FETCH_TIMEOUT_MS = 8000;
 
 var pending = {};
 
@@ -48,9 +52,17 @@ function extractImageIds(html, setNum) {
   return ids;
 }
 
+function fetchWithTimeout(input, ms) {
+  if (typeof AbortController === 'undefined') return fetch(input);
+  var ctrl = new AbortController();
+  var timer = setTimeout(function() { ctrl.abort(); }, ms);
+  return fetch(input, { method: 'GET', signal: ctrl.signal })
+    .finally(function() { clearTimeout(timer); });
+}
+
 async function fetchVia(proxyBuilder, url) {
   var proxied = proxyBuilder(url);
-  var res = await fetch(proxied, { method: 'GET' });
+  var res = await fetchWithTimeout(proxied, FETCH_TIMEOUT_MS);
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return res.text();
 }
