@@ -88,17 +88,32 @@ function recomputeForPeriod(raw, period) {
     exclusivity: raw.hasExclusiveMinifigs
   });
 
-  var months = 36;
+  var months = period * 12;
+  var stepMonths = Math.max(1, Math.round(months / 36));
   var monthlyTheme = themeInfo.avgReturnPct / 100 / 12;
   var pastSeries = [];
-  for (var i = 0; i <= months; i++) {
+  for (var i = 0; i <= months; i += stepMonths) {
     var monthsAgo = months - i;
-    var label = '-' + monthsAgo + 'm';
-    if (i === months) label = 'now';
+    var label;
+    if (i === months) {
+      label = 'now';
+    } else if (stepMonths >= 12) {
+      label = '-' + Math.round(monthsAgo / 12) + 'y';
+    } else {
+      label = '-' + monthsAgo + 'm';
+    }
     pastSeries.push({
       label: label,
       theme: Math.round(raw.msrp.value * Math.pow(1 + monthlyTheme, i)),
       market: i === months ? Math.round(raw.market.value) : null
+    });
+  }
+  // Ensure the final 'now' point exists even if step doesn't align with months
+  if (pastSeries.length === 0 || pastSeries[pastSeries.length - 1].label !== 'now') {
+    pastSeries.push({
+      label: 'now',
+      theme: Math.round(raw.msrp.value * Math.pow(1 + monthlyTheme, months)),
+      market: Math.round(raw.market.value)
     });
   }
   var projSeries = [];
@@ -117,6 +132,8 @@ function recomputeForPeriod(raw, period) {
     imgUrl: raw.imgUrl,
     theme: raw.themeKey,
     themeInfo: themeInfo,
+    period: period,
+    periodMonths: months,
     msrp: raw.msrp,
     market: raw.market,
     score: score,
@@ -591,7 +608,10 @@ function ScarcityPage() {
         )
       ),
       React.createElement('div', { style: { fontSize: '0.7rem', color: 'var(--color-text-muted, #999)', marginTop: 6 } },
-        t('scarcityChartPastNote') + ' (n=' + result.themeInfo.sample + ', ' + result.themeInfo.years + 'y)')
+        t('scarcityChartPastNote')
+          .replace('{years}', result.period)
+          .replace('{months}', result.periodMonths) +
+        ' (n=' + result.themeInfo.sample + ', ' + result.themeInfo.years + 'y)')
     );
 
     var projChartEl = React.createElement('div', { style: cardStyle },
