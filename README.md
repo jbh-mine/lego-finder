@@ -17,6 +17,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [갤러리 이미지 수집](#갤러리-이미지-수집)
 - [자동 업데이트 (GitHub Actions)](#자동-업데이트-github-actions)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.5.6 — 2026-04-07](#v056--2026-04-07)
   - [v0.5.5 — 2026-04-07](#v055--2026-04-07)
   - [v0.5.4 — 2026-04-07](#v054--2026-04-07)
   - [v0.5.3 — 2026-04-07](#v053--2026-04-07)
@@ -41,7 +42,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **한국어 자연어 검색** — "모듈러", "스타워즈", "경찰서", "용마성", "블랙펄", "탐정사무소", "아캄", "고담", "헤르미온느", "보바펫" 등 한국어 키워드/별명/캐릭터명으로 검색 가능 (600+ 키워드 매핑)
 - **IP 프랜차이즈 우산 키워드 검색** — "마블", "어벤져스", "디씨", "스타워즈", "해리포터", "디즈니", "쥬라기월드" 등을 입력하면 Spider-Man / Iron Man / Hulk / Avengers / Arkham 등 실제 세트명 키워드로 자동 분기 검색하여 결과 병합
 - **세트 검색 다축 필터 + URL 공유** — 부품 수 / 출시 연도 / 가격(KRW) 범위, 단종 여부, 보유·위시리스트 상태로 검색 결과를 다중 필터링하고 URL 쿼리스트링과 동기화하여 공유 가능
-- **희소 가치 점수 (Scarcity Score)** — 헤더 메뉴 → "희소가치"에서 제품 번호 입력 시 MSRP·현재 시세·테마 3년 평균 수익률·독점 구성 여부를 종합해 0~100점/S~D 등급을 계산하고 Recharts로 과거/예상 가격 곡선 시각화
+- **희소 가치 점수 (Scarcity Score)** — 헤더 메뉴 → "희소가치"에서 한글/영문 제품명 또는 제품번호로 검색하면 결과 목록이 나오고, 항목을 클릭하면 MSRP·현재 시세·테마 3년 평균 수익률·독점 구성 여부를 종합해 0~100점/S~D 등급을 계산하고 Recharts로 과거/예상 가격 곡선 시각화
 - **일별 가격 스냅샷 + 변동 차트** — 매일 수집된 KRW 가격을 `priceHistoryIndex.json` 에 누적하고 제품 상세 페이지에서 SVG 라인 차트로 표시
 - **한국어 별명 → 제품번호 직접 매핑** — "용마성"→6082, "블랙펄"→10365, "박쥐성"→6097, "탐정사무소"→10246 등 즉시 검색
 - **모듈러 빌딩 전체 키워드** — 카페코너, 그린그로서, 소방대, 펫샵, 타운홀, 팰리스시네마, 탐정사무소, 브릭뱅크, 다운타운다이너, 서점, 재즈클럽, 자연사박물관 등
@@ -102,7 +103,7 @@ src/
 │   └── legoImages.json     # 일반(비 BDP) 세트 갤러리 이미지 ID (자동 갱신)
 ├── pages/
 │   ├── SearchPage.js       # 세트 검색 (테마별 그룹화 + 무한스크롤 + 한국어 자연어 + SET_NUM_MAP + IP 우산 키워드 분기 + 다축 필터 + URL 동기화)
-│   ├── ScarcityPage.js     # 희소 가치 점수 분석 (Recharts 차트 + 게이지 바)
+│   ├── ScarcityPage.js     # 희소 가치 점수 분석 (이름/번호 검색 → 결과 목록 → 클릭 분석 + Recharts 차트 + 게이지 바)
 │   ├── PartsSearchPage.js  # 부품 검색 (카테고리별 그룹화 + 무한스크롤 + 한국어 번역)
 │   ├── PartDetailPage.js   # 부품 상세 (색상, 엘리먼트, 세트)
 │   ├── BrowsePage.js       # 테마/연도 브라우징 (무한스크롤)
@@ -228,6 +229,29 @@ git push origin main
 ## 변경 이력 (Changelog)
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
+
+### v0.5.6 — 2026-04-07
+
+#### `NEW` feat: 희소가치 페이지 한글/영문 제품명 검색 → 결과 목록 → 클릭 분석 워크플로우
+- **요구사항**: 기존 희소가치 페이지는 제품번호만 입력 가능했음. "아캄" 같은 한글 키워드나 "Star Wars" 같은 영문 제품명으로도 검색해서 목록을 보여주고, 목록의 항목을 클릭하면 그 세트의 희소가치 점수 분석이 실행되어야 함.
+- **`src/pages/ScarcityPage.js`**:
+  - 입력값이 순수 숫자(`10278` / `75192-1`)면 기존처럼 즉시 분석. 한글/영문이면 `runNameSearch()` 호출.
+  - `runNameSearch(raw)` — `translateSearchQuery` 와 `getIpSearchTerms` 로 IP 우산 키워드까지 fan-out 후 `searchSets` 를 최대 5개 키워드 병렬 호출. set_num 기준 dedupe + 출시연도 내림차순 정렬.
+  - 검색 결과 목록은 카드 형태로 썸네일·세트명·번호·연도·부품 수를 표시하며 항목 클릭 시 `analyze(set_num)` 가 자동 실행.
+  - `← 검색 결과로 돌아가기` 버튼으로 결과 화면과 분석 화면 간 이동 가능.
+  - `?q=<keyword>` 쿼리 파라미터 지원 — 다른 페이지에서 키워드로 직접 딥링크 가능.
+- **`src/utils/i18n.js`** — `scarcityInputPlaceholder` 업데이트 + 신규 키 7개 (`scarcitySearchBtn`, `scarcitySearching`, `scarcitySearchResultsHint`, `scarcityClickToAnalyze`, `scarcityBackToResults`, `scarcityNoSearchResults` ko/en 양쪽).
+
+#### `FIX` fix: 희소가치 점수 분석의 MSRP 정확도 개선 (Arkham Asylum 등 추정값 → 정가)
+- **문제**: 76300 (Batman: Arkham Asylum) 의 한국 정가는 ₩409,900 인데 화면에는 ₩457,715 (추정값) 으로 표시됨. 원인은 `prices.json` 데이터베이스에 76300 항목이 없어서 `lookupMsrp()` 가 `num_parts × 155 KRW` 휴리스틱으로 폴백하기 때문 (2,953 부품 × 155 ≈ 457,715). 사용자는 다른 제품들도 가격이 부정확하다고 보고함.
+- **해결**:
+  - **`src/data/prices.json`** — 76300 = ₩409,900 ("Batman: Arkham Asylum") 항목 추가. `meta.lastUpdated` 갱신.
+  - **`src/pages/ScarcityPage.js`**:
+    - `lookupMsrp()` 가 이제 SearchPage 와 동일한 정전 출처인 `getKrwPrice()` (`../utils/price`) 를 우선적으로 사용. 같은 prices.json 을 보지만 변형 접미사(`-1`) 정규화와 단종 처리 로직이 일관됨.
+    - MSRP 객체에 `official: boolean` 과 `estimated: boolean` 플래그 추가. UI 에서 정가/환산값/추정값을 명확히 구분.
+    - 결과 화면에 **노란색 경고 배너** 추가 — MSRP 가 LEGO Korea 정가가 아닌 경우 (BDP 환산 / 부품 수 추정 모두) "데이터베이스에 정가 정보가 없어 부품 수 기반으로 추정되었습니다. 실제 정가와 다를 수 있습니다." 메시지와 함께 `→ 레고 공식 한국 사이트에서 정가 확인` 링크(`getLegoKrProductUrl(setNum)`) 노출.
+    - MSRP 통계 카드의 출처 라벨이 정가일 때는 `✓ LEGO Korea 정가 (prices.json)` 초록색, 그 외에는 `⚠` 주황색으로 시각적으로 구분.
+- **앞으로**: 희소가치 분석에서 추정값 경고가 뜨는 세트는 사용자가 LEGO Korea 사이트에서 정가를 확인해 알려주거나, `prices.json` 의 해당 항목을 직접 추가하면 즉시 정확한 점수로 반영됨. 주간 자동 업데이트(`fetch-prices.js`)가 등록된 세트 목록만 갱신하므로, 새 세트 정가는 prices.json 에 키를 한 번 등록해두기만 하면 그 후로는 자동 추적됨.
 
 ### v0.5.5 — 2026-04-07
 
