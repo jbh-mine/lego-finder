@@ -17,6 +17,9 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [갤러리 이미지 수집](#갤러리-이미지-수집)
 - [자동 업데이트 (GitHub Actions)](#자동-업데이트-github-actions)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.5.2 — 2026-04-07](#v052--2026-04-07)
+  - [v0.5.1 — 2026-04-07](#v051--2026-04-07)
+  - [v0.5.0 — 2026-04-07](#v050--2026-04-07)
   - [v0.4.2 — 2026-04-07](#v042--2026-04-07)
   - [v0.4.1 — 2026-04-07](#v041--2026-04-07)
   - [v0.4.0 — 2026-04-07](#v040--2026-04-07)
@@ -33,6 +36,9 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 
 - **제품번호/이름 검색** — Rebrickable API를 통한 실시간 레고 세트 검색
 - **한국어 자연어 검색** — "모듈러", "스타워즈", "경찰서", "용마성", "블랙펄", "탐정사무소" 등 한국어 키워드/별명으로 검색 가능 (500+ 키워드 매핑)
+- **IP 프랜차이즈 우산 키워드 검색** — "마블", "어벤져스", "디씨", "스타워즈", "해리포터", "디즈니", "쥬라기월드" 등을 입력하면 Spider-Man / Iron Man / Hulk / Avengers 등 실제 세트명 키워드로 자동 분기 검색하여 결과 병합
+- **희소 가치 점수 (Scarcity Score)** — 헤더 메뉴 → "희소가치"에서 제품 번호 입력 시 MSRP·현재 시세·테마 3년 평균 수익률·독점 구성 여부를 종합해 0~100점/S~D 등급을 계산하고 Recharts로 과거/예상 가격 곡선 시각화
+- **일별 가격 스냅샷 + 변동 차트** — 매일 수집된 KRW 가격을 `priceHistoryIndex.json` 에 누적하고 제품 상세 페이지에서 SVG 라인 차트로 표시
 - **한국어 별명 → 제품번호 직접 매핑** — "용마성"→6082, "블랙펄"→10365, "박쥐성"→6097, "탐정사무소"→10246 등 즉시 검색
 - **모듈러 빌딩 전체 키워드** — 카페코너, 그린그로서, 소방대, 펫샵, 타운홀, 팰리스시네마, 탐정사무소, 브릭뱅크, 다운타운다이너, 서점, 재즈클럽, 자연사박물관 등
 - **검색 결과 테마별 그룹화** — 검색 결과를 테마별로 분리하여 표시 (테마명 한국어 번역 지원)
@@ -57,10 +63,12 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 ## 기술 스택
 
 - **React 19** + React Router (HashRouter)
+- **Recharts** — 희소 가치 점수 페이지의 과거/예상 가격 곡선 시각화
 - **Axios** + API 캐싱
 - **Rebrickable API v3** — 세트 검색, 부품 검색, 미니피규어 데이터
 - **BrickLink CDN** — 제품 대체 이미지 (SN/ON)
 - **MyMemory Translation API** — 제품명/테마명/카테고리명 한국어 번역 (localStorage 캐싱)
+- **allorigins.win CORS Proxy** — 희소 가치 점수 페이지의 시세 조회 (BrickEconomy)
 - **GitHub Pages** (gh-pages) 배포
 - **GitHub Actions** — 주간 데이터 자동 수집 + 자동 배포 파이프라인
 
@@ -70,11 +78,12 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 
 ```
 src/
-├── App.js                  # 라우팅 설정
+├── App.js                  # 라우팅 설정 (/scarcity 포함)
 ├── index.js                # 엔트리 포인트
 ├── components/
-│   ├── Header.js           # 네비게이션 + 한/영 전환 + 검색 초기화
+│   ├── Header.js           # 네비게이션 + 한/영 전환 + 검색 초기화 (희소가치 메뉴 포함)
 │   ├── SetCard.js          # 세트 카드
+│   ├── PriceHistoryChart.js # 일별 가격 추이 SVG 라인 차트
 │   ├── Pagination.js       # 페이지네이션
 │   ├── TranslatedName.js   # map 루프 내 번역 훅 래퍼 컴포넌트
 │   └── Loading.js          # 로딩/에러/빈 상태 컴포넌트
@@ -82,14 +91,18 @@ src/
 │   └── LanguageContext.js  # 언어 상태 관리 (Context API)
 ├── data/
 │   ├── prices.json         # 한국 레고 가격 데이터베이스 (자동 갱신)
+│   ├── priceHistoryIndex.json # 일별 가격 스냅샷 시계열 인덱스
+│   ├── prices-history/     # 일별 가격 스냅샷 원본 (YYYY-MM-DD.json)
+│   ├── themeReturns.js     # 테마별 3년 평균 수익률 상수 + 분류 헬퍼
 │   ├── bdpImages.json      # BDP 갤러리 이미지 ID 사전 수집
 │   └── legoImages.json     # 일반(비 BDP) 세트 갤러리 이미지 ID (자동 갱신)
 ├── pages/
-│   ├── SearchPage.js       # 세트 검색 (테마별 그룹화 + 무한스크롤 + 한국어 자연어 + SET_NUM_MAP)
+│   ├── SearchPage.js       # 세트 검색 (테마별 그룹화 + 무한스크롤 + 한국어 자연어 + SET_NUM_MAP + IP 우산 키워드 분기)
+│   ├── ScarcityPage.js     # 희소 가치 점수 분석 (Recharts 차트 + 게이지 바)
 │   ├── PartsSearchPage.js  # 부품 검색 (카테고리별 그룹화 + 무한스크롤 + 한국어 번역)
 │   ├── PartDetailPage.js   # 부품 상세 (색상, 엘리먼트, 세트)
 │   ├── BrowsePage.js       # 테마/연도 브라우징 (무한스크롤)
-│   ├── SetDetailPage.js    # 세트 상세 (이미지 갤러리 + 썸네일 스트립 + 부품 + 미니피규어 + 한국어 번역)
+│   ├── SetDetailPage.js    # 세트 상세 (이미지 갤러리 + 가격 추이 차트 + 부품 + 미니피규어 + 한국어 번역)
 │   ├── FundingPage.js      # BDP 펀딩제품 (시리즈탭 + 연도필터 + 이름검색)
 │   └── CollectionPage.js   # 내 컬렉션/위시리스트
 ├── styles/
@@ -97,14 +110,16 @@ src/
 │   └── price.css           # 가격 표시 스타일
 └── utils/
     ├── api.js              # Rebrickable API 래퍼 (세트 + 부품)
-    ├── searchDict.js       # 한국어→영어 검색 키워드 사전 + SET_NUM_MAP (별명→제품번호)
+    ├── searchDict.js       # 한국어→영어 검색 키워드 사전 + SET_NUM_MAP + IP_SEARCH_MAP
+    ├── scarcityScore.js    # 희소 가치 점수 계산 알고리즘 (수익률+테마델타+독점보너스 → sigmoid)
+    ├── priceHistory.js     # priceHistoryIndex.json 조회/통계 헬퍼
     ├── translate.js        # 테마명 하드코딩 번역 + MyMemory API 폴백
     ├── price.js            # 가격 유틸리티 (KRW 포맷팅, 환율, 검색)
     ├── i18n.js             # 한/영 UI 번역 리소스
     └── collection.js       # localStorage 컬렉션 관리
 
 scripts/
-├── fetch-prices.js         # 빌드 타임 lego.com/ko-kr JSON-LD 가격 수집
+├── fetch-prices.js         # 빌드 타임 lego.com/ko-kr JSON-LD 가격 수집 + 일별 스냅샷 누적
 └── fetch-images.js         # 빌드 타임 rebrickable.com 세트 페이지 갤러리 이미지 ID 수집
 
 .github/workflows/
@@ -142,7 +157,7 @@ npm run fetch-prices 10294 42151 75192
 npm run fetch-prices --refresh
 ```
 
-생성된 `src/data/prices.json`은 빌드 타임에 자동으로 번들에 포함됩니다.
+생성된 `src/data/prices.json`은 빌드 타임에 자동으로 번들에 포함됩니다. 동시에 그 날짜의 스냅샷이 `src/data/prices-history/YYYY-MM-DD.json` 으로 저장되고 `src/data/priceHistoryIndex.json` 에 시계열로 누적됩니다 (연속 중복 가격은 압축).
 
 ---
 
@@ -208,7 +223,58 @@ git push origin main
 
 ## 변경 이력 (Changelog)
 
-> 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다.
+> 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
+
+### v0.5.2 — 2026-04-07
+
+#### `FIX` fix: IP 프랜차이즈 우산 키워드 검색 결과 0건 문제 해결
+- **문제**: "마블", "아이언맨", "헐크", "어벤져스", "디씨", "스타워즈" 등 우산 키워드 입력 시 검색 결과가 비어있던 문제. 원인은 Rebrickable `/sets/?search=Marvel` API 가 세트 이름만 검색하고 테마 이름은 검색하지 않기 때문이며, 실제 세트 이름에 "Marvel" 이라는 단어가 거의 없음.
+- **해결**: `src/utils/searchDict.js` 에 `IP_SEARCH_MAP` 추가. 우산 키워드를 실제 세트 이름에 등장하는 캐릭터/서브 제품 키워드 배열로 매핑 (예: 마블 → ["Spider-Man","Iron Man","Avengers","Hulk","Captain America","Thor","Black Panther","Doctor Strange","Spidey","Guardians","Ant-Man"]).
+- `getIpSearchTerms(query)` 헬퍼 export — 한국어 raw 쿼리와 영어 번역 쿼리 모두 매칭.
+- `src/pages/SearchPage.js` `doSearch` 에 IP 분기 추가: 우산 키워드 매칭 시 모든 fan-out 키워드로 `searchSets` 를 병렬 호출하고 set_num 기준 dedupe 후 병합. 매칭되는 테마가 있으면 `filterSets({themeId})` 도 함께 호출하여 우선순위로 추가.
+- 커버 키워드: Marvel, Avengers, Iron Man, Hulk, Spider-Man, Captain America, Thor, Black Widow, Black Panther, Doctor Strange, Guardians, Ant-Man, DC, Superman, Wonder Woman, Aquaman, Flash, Joker, Batman, Star Wars, Mandalorian, Harry Potter, Disney, Frozen, Jurassic World, Indiana Jones, Super Mario, Minions, Lord of the Rings, Speed Champions 등 30+ 우산 키워드.
+
+#### `DOCS` docs: README 변경 이력 자동 누적 정책 명시
+- 앞으로 모든 변경사항은 push 시점에 README Changelog 섹션에 자동 기재됨을 명시.
+
+### v0.5.1 — 2026-04-07
+
+#### `NEW` feat: 희소 가치 점수 (Scarcity Score) 분석 페이지
+- **새 라우트** `/scarcity` 추가 — 헤더 네비게이션에 "희소가치" 메뉴 신설.
+- `src/data/themeReturns.js` — 13개 주요 테마(Star Wars 12.5%, Modular 18.3%, Castle 15.0%, Creator Expert 14.2%, Icons 11.8%, Harry Potter 9.5%, Technic 6.2%, Architecture 8.7%, Ideas 16.4%, Marvel 7.1%, Disney 10.3%, BDP 13.5%, Other 5.0%)의 3년 평균 수익률 상수와 세트 번호/이름 기반 휴리스틱 분류기(`classifyTheme`).
+- `src/utils/scarcityScore.js` — 점수 알고리즘:
+  - `returnPct = (market - msrp) / msrp * 100`
+  - `themeDelta = returnPct - themeAvgPct`
+  - `exclusivityBonus = 20` (오래된 세트 / 2000 부품 이상 / BDP 일 때)
+  - `raw = 0.55*returnPct + 0.25*themeDelta + bonus`
+  - 최종 점수 = `100 / (1 + exp(-0.06 * (raw - 25)))` (소프트 시그모이드 정규화) → 0~100점 → S(≥80)/A(≥65)/B(≥50)/C(≥35)/D 등급.
+- `src/pages/ScarcityPage.js` — 제품 번호 입력 + "분석하기" 버튼 UI:
+  - allorigins.win CORS 프록시로 BrickEconomy 시세 조회 시도, 실패 시 테마 평균 기반 시뮬레이션.
+  - MSRP 폴백 체인: `prices.json` KRW → USD\*1400 → 부품 수 × ~155 KRW 추정.
+  - 진행 상태 라이브 로그 표시 (스피너 + 단계별 메시지).
+  - **Recharts** `LineChart` 두 개로 시각화: ① 과거 36개월 테마 평균 기반 가격 추이 (현재 시세 dot), ② 향후 12개월 예상 가격 곡선 (`ReferenceLine` 으로 현재가 강조).
+  - 결과 카드: 게이지 바(빨강→주황→노랑→초록→골드 그라데이션)에 점수 마커, 등급 색상 강조, MSRP/현재 시세/수익률/테마 평균/독점 여부 통계.
+  - 쿼리 파라미터 `?setNum=75192` 로 딥링크 자동 분석 지원.
+- `src/utils/i18n.js` — ko/en 번역 35+ 키 추가 (scarcityNavLabel, scarcityScoreTitle 등).
+- `src/App.js` — `/scarcity` 라우트 등록.
+- `src/components/Header.js` — 헤더 네비게이션에 희소가치 링크 추가.
+- `package.json` — `recharts ^2.12.7` 의존성 추가.
+
+> ⚠️ **사용자 작업 필요**: 로컬에서 `npm install` 실행 후 `package-lock.json` 커밋 필요.
+
+### v0.5.0 — 2026-04-07
+
+#### `NEW` feat: 일별 가격 스냅샷 + 제품별 가격 변동 차트
+- `src/data/priceHistoryIndex.json` — 모든 세트의 가격 시계열 인덱스 (`{generated, snapshotCount, series: {setNum: [{d, p}, ...]}}`). 연속 중복 가격은 앵커만 유지하도록 압축.
+- `src/data/prices-history/2026-04-07.json` — 첫 번째 일별 스냅샷 (`{date, source, prices: {setNum: krwPrice}}`).
+- `src/utils/priceHistory.js` — `getPriceHistory(setNum)` (변형 접미사 `-1` 자동 처리), `getPriceStats(history)` (min/max/first/latest/change/changePct), `getSnapshotCount()` 헬퍼.
+- `src/components/PriceHistoryChart.js` — Pure SVG 라인 차트 (520x170 viewBox, area fill rgba(0,102,204,0.08), line stroke #0066cc). 데이터 2점 미만이면 `null` 반환.
+- `src/pages/SetDetailPage.js` — `detail-actions` 와 `insSection` 사이에 `<PriceHistoryChart setNum={setNum}/>` 삽입.
+- `src/data/prices.json` — 해리포터 12개 세트 추가 (76446, 76423, 76419, 71043, 76405, 76391, 76402, 76420, 76421, 76428, 76430, 76431).
+- `scripts/fetch-prices.js` — `writeSnapshotAndIndex(data)` 함수 추가 (try/catch 비치명적), `--snapshot-only` 모드 추가, 시계열 압축 로직.
+- 의도적으로 외부 라이브러리(recharts/chart.js)를 사용하지 않고 Pure SVG 로 구현하여 번들 크기 영향 0.
+
+> ⚠️ **사용자 작업 필요**: `.github/workflows/auto-update-images.yml` 의 "Check for changes" 단계 `git add` 라인에 `src/data/priceHistoryIndex.json` 와 `src/data/prices-history/` 경로를 추가해야 매일 스냅샷이 누적됨 (PAT `workflow` 스코프 부족으로 자동 push 불가).
 
 ### v0.4.2 — 2026-04-07
 
