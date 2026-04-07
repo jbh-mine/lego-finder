@@ -6,12 +6,14 @@ import {
   getWishlist, removeFromWishlist,
 } from '../utils/collection';
 import { EmptyState } from '../components/Loading';
+import TranslatedName from '../components/TranslatedName';
 
 var PLACEHOLDER_IMG = 'https://rebrickable.com/static/img/nil_mf.jpg';
 
 function CollectionPage() {
-  var lang = useLanguage();
-  var t = lang.t;
+  var lc = useLanguage();
+  var t = lc.t;
+  var lang = lc.lang;
   var tabState = useState('collection');
   var activeTab = tabState[0];
   var setActiveTab = tabState[1];
@@ -99,7 +101,9 @@ function CollectionPage() {
               }),
               React.createElement('div', { className: 'set-card-body' },
                 React.createElement('div', { className: 'set-card-num' }, item.set_num),
-                React.createElement('div', { className: 'set-card-name' }, item.name),
+                React.createElement('div', { className: 'set-card-name' },
+                  lang === 'ko' ? React.createElement(TranslatedName, { name: item.name }) : item.name
+                ),
                 React.createElement('div', { className: 'set-card-meta' },
                   React.createElement('span', null, yearLabel),
                   React.createElement('span', null, partsLabel)

@@ -3,13 +3,14 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getPartDetail, getPartColors, getPartCategories } from '../utils/api';
 import { Loading, ErrorMessage } from '../components/Loading';
+import TranslatedName from '../components/TranslatedName';
 
 var PH = 'https://rebrickable.com/static/img/nil_mf.jpg';
 
 function PartDetailPage() {
   var p = useParams(); var partNum = decodeURIComponent(p.partNum);
   var nav = useNavigate();
-  var lc = useLanguage(); var t = lc.t;
+  var lc = useLanguage(); var t = lc.t; var lang = lc.lang;
   var s1 = useState(null); var part = s1[0]; var setPart = s1[1];
   var s2 = useState(null); var colors = s2[0]; var setColors = s2[1];
   var s3 = useState(true); var loading = s3[0]; var setLoading = s3[1];
@@ -74,20 +75,26 @@ function PartDetailPage() {
         }),
         React.createElement('div', { className: 'set-detail-info' },
           React.createElement('div', { className: 'set-num' }, part.part_num),
-          React.createElement('h1', null, part.name),
+          React.createElement('h1', null,
+            lang === 'ko' ? React.createElement(TranslatedName, { name: part.name }) : part.name
+          ),
           React.createElement('div', { className: 'detail-meta' },
             catName && React.createElement('div', { className: 'detail-meta-item' },
               React.createElement('span', { className: 'label' }, t('partCategory')),
-              React.createElement('span', null, catName)
+              React.createElement('span', null,
+                lang === 'ko' ? React.createElement(TranslatedName, { name: catName }) : catName
+              )
             ),
             part.part_url && React.createElement('div', { className: 'detail-meta-item' },
-              React.createElement('span', { className: 'label' }, 'Rebrickable'),
+              React.createElement('span', { className: 'label' }, t('rebrickable')),
               React.createElement('a', { href: part.part_url, target: '_blank', rel: 'noopener noreferrer' }, t('detailPage'))
             )
           ),
           selColor && React.createElement('div', { className: 'part-selected-color' },
             React.createElement('span', { className: 'part-color-swatch', style: { background: '#' + (selColor.color_rgb || '999') } }),
-            React.createElement('span', null, selColor.color_name || ''),
+            React.createElement('span', null,
+              lang === 'ko' ? React.createElement(TranslatedName, { name: selColor.color_name || '' }) : (selColor.color_name || '')
+            ),
             React.createElement('span', { className: 'part-color-sets-count' },
               ' (' + (selColor.num_sets || 0) + ' ' + t('setsUnit') + ')'
             )
@@ -112,7 +119,11 @@ function PartDetailPage() {
                     className: 'part-color-swatch',
                     style: { background: '#' + (c.color_rgb || '999') },
                   }),
-                  React.createElement('span', { className: 'part-color-name' }, c.color_name || 'Color ' + c.color_id),
+                  React.createElement('span', { className: 'part-color-name' },
+                    lang === 'ko'
+                      ? React.createElement(TranslatedName, { name: c.color_name || (t('colorPrefix') + ' ' + c.color_id) })
+                      : (c.color_name || 'Color ' + c.color_id)
+                  ),
                   React.createElement('span', { className: 'part-color-count' }, c.num_sets || 0)
                 );
               })

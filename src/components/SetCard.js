@@ -80,8 +80,8 @@ function SetCard(props) {
         React.createElement('span', null, set.year + t('yearSuffix')),
         React.createElement('span', null, (set.num_parts || 0).toLocaleString() + t('partsUnit'))
       ),
-      priceData.formatted ? React.createElement('div', { className: 'set-card-price' }, priceData.formatted) 
-        : priceData.isDiscontinued ? React.createElement('div', { className: 'set-card-price discontinued' }, lang === 'ko' ? '\uB2E8\uC885' : 'Retired')
+      priceData.formatted ? React.createElement('div', { className: 'set-card-price' }, priceData.formatted)
+        : priceData.isDiscontinued ? React.createElement('div', { className: 'set-card-price discontinued' }, t('retired'))
         : null
     ),
     React.createElement('div', { className: 'set-card-actions' },
