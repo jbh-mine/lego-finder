@@ -6,6 +6,25 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 
 ---
 
+## 목차
+
+- [주요 기능](#주요-기능)
+- [기술 스택](#기술-스택)
+- [프로젝트 구조](#프로젝트-구조)
+- [설치 및 실행](#설치-및-실행)
+- [배포](#배포)
+- [가격 데이터 업데이트](#가격-데이터-업데이트)
+- [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.4.0 — 2026-04-07](#v040--2026-04-07)
+  - [v0.3.1 — 2026-04-06](#v031--2026-04-06)
+  - [v0.3.0 — 2026-04-06](#v030--2026-04-06)
+  - [v0.2.0 — 2026-04-06](#v020--2026-04-06)
+  - [v0.1.1 — 2026-04-06](#v011--2026-04-06)
+  - [v0.1.0 — 2026-04-06](#v010--2026-04-06)
+- [라이선스](#라이선스)
+
+---
+
 ## 주요 기능
 
 - **제품번호/이름 검색** — Rebrickable API를 통한 실시간 레고 세트 검색
@@ -51,15 +70,19 @@ src/
 │   ├── Header.js           # 네비게이션 + 한/영 전환 + 검색 초기화
 │   ├── SetCard.js          # 세트 카드
 │   ├── Pagination.js       # 페이지네이션
+│   ├── TranslatedName.js   # map 루프 내 번역 훅 래퍼 컴포넌트
 │   └── Loading.js          # 로딩/에러/빈 상태 컴포넌트
 ├── contexts/
 │   └── LanguageContext.js  # 언어 상태 관리 (Context API)
+├── data/
+│   ├── prices.json         # 한국 레고 가격 데이터베이스
+│   └── bdpImages.json      # BDP 갤러리 이미지 ID 사전 수집
 ├── pages/
 │   ├── SearchPage.js       # 세트 검색 (테마별 그룹화 + 무한스크롤 + 한국어 자연어 + SET_NUM_MAP)
 │   ├── PartsSearchPage.js  # 부품 검색 (카테고리별 그룹화 + 무한스크롤 + 한국어 번역)
 │   ├── PartDetailPage.js   # 부품 상세 (색상, 엘리먼트, 세트)
 │   ├── BrowsePage.js       # 테마/연도 브라우징 (무한스크롤)
-│   ├── SetDetailPage.js    # 세트 상세 (이미지 갤러리 + 스와이프 + 부품 + 미니피규어)
+│   ├── SetDetailPage.js    # 세트 상세 (이미지 갤러리 + 썸네일 스트립 + 부품 + 미니피규어 + 한국어 번역)
 │   ├── FundingPage.js      # BDP 펀딩제품 (시리즈탭 + 연도필터 + 이름검색)
 │   └── CollectionPage.js   # 내 컬렉션/위시리스트
 ├── styles/
@@ -121,13 +144,13 @@ npm run fetch-prices --refresh
 - 썸네일은 Rebrickable CDN `230x180p` 변형 사용으로 로딩 최적화
 - 활성 썸네일 파란색 테두리 강조 + hover 효과
 - 모바일 반응형: 썸네일 64x52 축소, wrapper full-width
-- 모든 제품 상세 페이지에 일괄 적용
+- 모든 제품 상세 페이지(검색/신제품/펀딩/컬렉션/둘러보기)에 일괄 적용 (공유 `SetDetailPage` 컴포넌트)
 
 #### `NEW` feat: BDP 펀딩제품 갤러리 6장 이미지 + 한국어 부품/미니피규어 번역
 - BDP 제품 상세에 Rebrickable 갤러리 이미지 전체 표시 (이전에는 1~2장만)
 - `src/data/bdpImages.json` — BDP 63개 세트의 모든 갤러리 이미지 ID 사전 수집
 - `src/components/TranslatedName.js` — map 루프 내에서 useTranslatedName 훅 사용을 위한 래퍼 컴포넌트
-- 한국어 모드에서 부품 이름과 미니피규어 이름 자동 번역
+- 한국어 모드에서 제품명, 부품 이름, 미니피규어 이름 자동 번역 (모든 탭 공통)
 
 #### `FIX` fix: Rebrickable 이미지 갤러리 정확도 개선
 - BrickLink CDN 폴백 이미지 제거하여 Rebrickable과 정확히 일치시킴
@@ -135,6 +158,9 @@ npm run fetch-prices --refresh
 
 #### `NEW` feat: BDP 펀딩제품 가격 데이터 추가
 - BDP 제품 USD 가격 데이터 추가 (KRW 환산 표시)
+
+#### `DOCS` docs: README 목차 추가
+- GitHub에서 섹션/변경 이력으로 바로 이동 가능한 목차 링크 추가
 
 ### v0.3.1 — 2026-04-06
 
@@ -210,12 +236,6 @@ npm run fetch-prices --refresh
 
 #### `NEW` feat: 한국어 자연어 검색 + 100+ 키워드 매핑
 - 한국어→영어 검색 키워드 사전 추가 (searchDict.js)
-
-#### `NEW` feat: 테마명 번역 + 제품명 한국어 번역
-- MyMemory Translation API 연동
-
-#### `NEW` feat: LEGO Finder React 앱 초기 구현
-- 제품번호/이름 검색, 테마/연도별 필터, 세트 상세, 컬렉션 & 위시리스트, GitHub Pages 배포
 
 #### `NEW` feat: 테마명 번역 + 제품명 한국어 번역
 - MyMemory Translation API 연동
