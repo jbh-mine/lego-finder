@@ -13,7 +13,6 @@ import pricesJson from '../data/prices.json';
 import { getSetDetail } from '../utils/api';
 import { getKrwPrice } from '../utils/price';
 import { useLanguage } from '../contexts/LanguageContext';
-import { translateThemeName } from '../utils/translate';
 import { Loading } from '../components/Loading';
 
 var META_CACHE_KEY = 'lego_ppp_meta_cache_v1';
@@ -43,7 +42,6 @@ function normalizeSetNum(s) {
 function PppPage() {
   var lc = useLanguage();
   var t = lc.t;
-  var lang = lc.lang;
 
   var s1 = useState([]);    var rows = s1[0];     var setRows = s1[1];
   var s2 = useState(true);  var loading = s2[0];  var setLoading = s2[1];
@@ -139,16 +137,19 @@ function PppPage() {
 
   useEffect(function() { fetchAll(); }, [fetchAll]);
 
-  // Build the unique theme list from results
+  // Build the unique theme list from results.
+  // Rebrickable returns numeric theme_id only; we don't ship a full
+  // id->name table client-side, so we render "Theme {id}" as the option
+  // label. The actual filtering still works precisely on themeId.
   var themeOptions = useMemo(function() {
     var seen = {};
     rows.forEach(function(r) {
       if (r.themeId != null) seen[r.themeId] = true;
     });
     return Object.keys(seen).map(function(id) {
-      return { id: id, name: translateThemeName(String(id), lang) || ('Theme ' + id) };
+      return { id: id, name: 'Theme ' + id };
     });
-  }, [rows, lang]);
+  }, [rows]);
 
   // Filter + top-N
   var visible = useMemo(function() {
@@ -175,7 +176,7 @@ function PppPage() {
       React.createElement('div', { style: { fontSize: '0.85rem', color: 'var(--color-text-muted, #888)', marginBottom: 6 } },
         t('pppBestLabel')),
       React.createElement('div', { style: { fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-text, #222)' } },
-        fmtKrw(rows[0].ppp) + ' / ' + t('numParts')),
+        fmtKrw(rows[0].ppp) + ' / ' + t('pppCellParts')),
       React.createElement('div', { style: { fontSize: '0.85rem', color: 'var(--color-text-secondary, #666)', marginTop: 4 } },
         rows[0].setNum + ' \u00B7 ' + (rows[0].name || ''))
     )
@@ -186,7 +187,7 @@ function PppPage() {
       React.createElement('div', { style: { fontSize: '0.85rem', color: 'var(--color-text-muted, #888)', marginBottom: 6 } },
         t('pppAvgLabel')),
       React.createElement('div', { style: { fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-text, #222)' } },
-        fmtKrw(rows.reduce(function(a, r) { return a + r.ppp; }, 0) / rows.length) + ' / ' + t('numParts')),
+        fmtKrw(rows.reduce(function(a, r) { return a + r.ppp; }, 0) / rows.length) + ' / ' + t('pppCellParts')),
       React.createElement('div', { style: { fontSize: '0.8rem', color: 'var(--color-text-muted, #888)', marginTop: 4 } },
         t('pppAvgHint'))
     )
