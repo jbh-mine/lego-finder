@@ -1,9 +1,24 @@
-// Real-time fetcher for Rebrickable set gallery image IDs.
+// Hybrid fetcher for Rebrickable set gallery image IDs.
 //
-// All set detail pages call fetchSetImages() to retrieve gallery image IDs
-// live from rebrickable.com via a CORS proxy chain. Successful results are
-// cached in localStorage for instant subsequent loads. Empty results are
-// NOT cached (so transient proxy failures don't poison the cache).
+// Strategy:
+//   1. Build-time static JSON (legoImages.json + bdpImages.json) — always reliable.
+//      Updated by `npm run fetch-images` and the GitHub Action `auto-update-images.yml`.
+//   2. localStorage cache (lego_set_images_cache_v2) — for sets fetched at runtime.
+//   3. Runtime fetch via public CORS proxy chain — best-effort live update for sets
+//      not yet in the static JSON. (Most public proxies are unreliable from
+//      GitHub Pages, so the static JSON is the primary trustworthy source.)
+
+import legoImagesData from '../data/legoImages.json';
+import bdpImagesData from '../data/bdpImages.json';
+
+var STATIC_SETS = Object.assign({}, (bdpImagesData && bdpImagesData.sets) || {}, (legoImagesData && legoImagesData.sets) || {});
+
+export function getStaticImageIds(setNum) {
+  if (!setNum) return null;
+  var ids = STATIC_SETS[setNum];
+  if (ids && ids.length > 0) return ids.slice();
+  return null;
+}
 
 var CACHE_KEY = 'lego_set_images_cache_v2';
 var LEGACY_CACHE_KEY = 'lego_set_images_cache';
@@ -39,12 +54,11 @@ export function getCachedSetImages(setNum) {
   if (!setNum) return null;
   var cache = loadCache();
   var entry = cache[setNum];
-  if (!entry) return null;
-  // Honor TTL
-  if (entry.t && (Date.now() - entry.t) > CACHE_TTL_MS) return null;
-  // Never return empty arrays as a "cache hit" — force a re-fetch instead
-  if (!entry.ids || entry.ids.length === 0) return null;
-  return entry.ids;
+  if (entry && entry.ids && entry.ids.length > 0 && (!entry.t || (Date.now() - entry.t) <= CACHE_TTL_MS)) {
+    return entry.ids;
+  }
+  // Fallback to static build-time JSON (always available, no proxy needed)
+  return getStaticImageIds(setNum);
 }
 
 function escapeRegExp(s) {
@@ -78,36 +92,60 @@ async function fetchVia(proxyBuilder, url) {
   return res.text();
 }
 
-export async function fetchSetImages(setNum) {
-  if (!setNum) return [];
-  // Cache hit short-circuit (only non-empty results are cached)
-  var cached = getCachedSetImages(setNum);
-  if (cached && cached.length > 0) return cached;
-  // De-dupe in-flight requests
-  if (pending[setNum]) return pending[setNum];
-
-  pending[setNum] = (async function() {
-    var url = 'https://rebrickable.com/sets/' + setNum + '/';
-    var ids = [];
-    for (var i = 0; i < CORS_PROXIES.length; i++) {
-      try {
-        var html = await fetchVia(CORS_PROXIES[i], url);
-        if (html && html.length > 0) {
-          var found = extractImageIds(html, setNum);
-          if (found.length > 0) {
-            ids = found;
-            break;
-          }
-        }
-      } catch (e) {
-        // try next proxy
+async function fetchFromProxies(setNum) {
+  var url = 'https://rebrickable.com/sets/' + setNum + '/';
+  for (var i = 0; i < CORS_PROXIES.length; i++) {
+    try {
+      var html = await fetchVia(CORS_PROXIES[i], url);
+      if (html && html.length > 0) {
+        var found = extractImageIds(html, setNum);
+        if (found.length > 0) return found;
       }
-    }
-    // Only cache non-empty results so transient failures don't poison the cache
+    } catch (e) { /* try next */ }
+  }
+  return [];
+}
+
+function backgroundRefresh(setNum) {
+  if (pending[setNum]) return;
+  pending[setNum] = (async function() {
+    var ids = await fetchFromProxies(setNum);
     if (ids.length > 0) {
       var cache = loadCache();
       cache[setNum] = { ids: ids, t: Date.now() };
       saveCache(cache);
+    }
+    delete pending[setNum];
+    return ids;
+  })();
+}
+
+export async function fetchSetImages(setNum) {
+  if (!setNum) return [];
+  // Cache hit short-circuit (cache layer also covers the static JSON fallback)
+  var cached = getCachedSetImages(setNum);
+  if (cached && cached.length > 0) {
+    // Still try a runtime refresh in the background if no localStorage entry yet
+    var lc = loadCache();
+    if (!lc[setNum]) {
+      // best-effort, fire and forget — don't await
+      setTimeout(function() { backgroundRefresh(setNum); }, 0);
+    }
+    return cached;
+  }
+  // De-dupe in-flight requests
+  if (pending[setNum]) return pending[setNum];
+
+  pending[setNum] = (async function() {
+    var ids = await fetchFromProxies(setNum);
+    if (ids.length > 0) {
+      var cache = loadCache();
+      cache[setNum] = { ids: ids, t: Date.now() };
+      saveCache(cache);
+    } else {
+      // Final fallback: static JSON if proxies all failed
+      var staticIds = getStaticImageIds(setNum);
+      if (staticIds && staticIds.length > 0) ids = staticIds;
     }
     delete pending[setNum];
     return ids;
