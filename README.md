@@ -17,6 +17,10 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [갤러리 이미지 수집](#갤러리-이미지-수집)
 - [자동 업데이트 (GitHub Actions)](#자동-업데이트-github-actions)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.5.11 — 2026-04-07](#v0511--2026-04-07)
+  - [v0.5.10 — 2026-04-07](#v0510--2026-04-07)
+  - [v0.5.9 — 2026-04-07](#v059--2026-04-07)
+  - [v0.5.8 — 2026-04-07](#v058--2026-04-07)
   - [v0.5.7 — 2026-04-07](#v057--2026-04-07)
   - [v0.5.6 — 2026-04-07](#v056--2026-04-07)
   - [v0.5.5 — 2026-04-07](#v055--2026-04-07)
@@ -43,7 +47,8 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **한국어 자연어 검색** — "모듈러", "스타워즈", "경찰서", "용마성", "블랙펄", "탐정사무소", "아캄", "고담", "헤르미온느", "보바펫", "바라쿠다" 등 한국어 키워드/별명/캐릭터명으로 검색 가능 (600+ 키워드 매핑)
 - **IP 프랜차이즈 우산 키워드 검색** — "마블", "어벤져스", "디씨", "스타워즈", "해리포터", "디즈니", "쥬라기월드" 등을 입력하면 Spider-Man / Iron Man / Hulk / Avengers / Arkham 등 실제 세트명 키워드로 자동 분기 검색하여 결과 병합
 - **세트 검색 다축 필터 + URL 공유** — 부품 수 / 출시 연도 / 가격(KRW) 범위, 단종 여부, 보유·위시리스트 상태로 검색 결과를 다중 필터링하고 URL 쿼리스트링과 동기화하여 공유 가능
-- **희소 가치 점수 (Scarcity Score)** — 헤더 메뉴 → "희소가치"에서 한글/영문 제품명 또는 제품번호로 검색하면 결과 목록이 나오고, 항목을 클릭하면 MSRP·현재 시세·테마 3년 평균 수익률·독점 구성 여부를 종합해 0~100점/S~D 등급을 계산하고 Recharts로 과거/예상 가격 곡선 시각화
+- **희소 가치 점수 (Scarcity Score)** — 헤더 메뉴 → "희소가치"에서 한글/영문 제품명 또는 제품번호로 검색하면 결과 목록이 나오고, 항목을 클릭하면 MSRP·현재 시세·테마 평균 수익률(3/5/10/20/30년 선택)·독점 구성 여부를 종합해 0~100점/S~D 등급을 계산하고 Recharts로 과거/예상 가격 곡선 시각화
+- **다크 모드** — 헤더 토글로 라이트/다크 테마 전환. CSS 변수 기반 토큰으로 모든 카드/입력/차트가 일관되게 전환되며 localStorage 에 사용자 선택 저장
 - **일별 가격 스냅샷 + 변동 차트** — 매일 수집된 KRW 가격을 `priceHistoryIndex.json` 에 누적하고 제품 상세 페이지에서 SVG 라인 차트로 표시
 - **한국어 별명 → 제품번호 직접 매핑** — "용마성"→6082, "블랙펄"→10365, "박쥐성"→6097, "탐정사무소"→10246, "바라쿠다"→21322 등 즉시 검색
 - **모듈러 빌딩 전체 키워드** — 카페코너, 그린그로서, 소방대, 펫샵, 타운홀, 팰리스시네마, 탐정사무소, 브릭뱅크, 다운타운다이너, 서점, 재즈클럽, 자연사박물관 등
@@ -87,24 +92,25 @@ src/
 ├── App.js                  # 라우팅 설정 (/scarcity 포함)
 ├── index.js                # 엔트리 포인트
 ├── components/
-│   ├── Header.js           # 네비게이션 + 한/영 전환 + 검색 초기화 (희소가치 메뉴 포함)
+│   ├── Header.js           # 네비게이션 + 한/영 전환 + 다크모드 토글 + 검색 초기화 (희소가치 메뉴 포함)
 │   ├── SetCard.js          # 세트 카드
 │   ├── PriceHistoryChart.js # 일별 가격 추이 SVG 라인 차트
 │   ├── Pagination.js       # 페이지네이션
 │   ├── TranslatedName.js   # map 루프 내 번역 훅 래퍼 컴포넌트
 │   └── Loading.js          # 로딩/에러/빈 상태 컴포넌트
 ├── contexts/
-│   └── LanguageContext.js  # 언어 상태 관리 (Context API)
+│   ├── LanguageContext.js  # 언어 상태 관리 (Context API)
+│   └── ThemeContext.js     # 다크/라이트 테마 상태 관리 + localStorage 영속화
 ├── data/
 │   ├── prices.json         # 한국 레고 가격 데이터베이스 (자동 갱신)
 │   ├── priceHistoryIndex.json # 일별 가격 스냅샷 시계열 인덱스
 │   ├── prices-history/     # 일별 가격 스냅샷 원본 (YYYY-MM-DD.json)
-│   ├── themeReturns.js     # 테마별 3년 평균 수익률 상수 + 분류 헬퍼
+│   ├── themeReturns.js     # 테마별 다중 기간(3/5/10/20/30년) 평균 수익률 + 분류 헬퍼
 │   ├── bdpImages.json      # BDP 갤러리 이미지 ID 사전 수집
 │   └── legoImages.json     # 일반(비 BDP) 세트 갤러리 이미지 ID (자동 갱신)
 ├── pages/
 │   ├── SearchPage.js       # 세트 검색 (테마별 그룹화 + 무한스크롤 + 한국어 자연어 + SET_NUM_MAP + IP 우산 키워드 분기 + 다축 필터 + URL 동기화)
-│   ├── ScarcityPage.js     # 희소 가치 점수 분석 (이름/번호 검색 → 결과 목록 → 클릭 분석 + Recharts 차트 + 게이지 바)
+│   ├── ScarcityPage.js     # 희소 가치 점수 분석 (이름/번호 검색 → 결과 목록 → 클릭 분석 + 3/5/10/20/30년 기간 선택 + Recharts 차트 + 게이지 바)
 │   ├── PartsSearchPage.js  # 부품 검색 (카테고리별 그룹화 + 무한스크롤 + 한국어 번역)
 │   ├── PartDetailPage.js   # 부품 상세 (색상, 엘리먼트, 세트)
 │   ├── BrowsePage.js       # 테마/연도 브라우징 (무한스크롤)
@@ -113,6 +119,7 @@ src/
 │   └── CollectionPage.js   # 내 컬렉션/위시리스트
 ├── styles/
 │   ├── App.css             # 전체 스타일 (반응형 포함)
+│   ├── theme-dark.css      # 다크 모드 CSS 변수 토큰 + [data-theme="dark"] 오버라이드
 │   └── price.css           # 가격 표시 스타일
 └── utils/
     ├── api.js              # Rebrickable API 래퍼 (세트 + 부품)
@@ -230,6 +237,77 @@ git push origin main
 ## 변경 이력 (Changelog)
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
+
+### v0.5.11 — 2026-04-07
+
+#### `FIX` fix(scarcity): 다크 모드에서 희소가치 탭 텍스트/차트 가독성 개선
+- **문제**: 다크 모드에서 희소가치 탭의 차트 영역 문구(축 눈금, 툴팁, 범례, 참조선 라벨)와 일부 배너의 텍스트 색이 어두워서 잘 안 보이는 문제. v0.5.10 에서 인라인 스타일을 CSS 변수로 전환했지만 Recharts SVG 요소는 CSS 변수를 읽지 않아 하드코딩된 옅은 회색 (`#888`) 과 흰색 기본 툴팁이 다크 배경 위에서 거의 보이지 않음.
+- **`src/pages/ScarcityPage.js` 수정**:
+  - **차트 토큰 헬퍼 변수 추가** — 컴포넌트 상단에 `chartGridStroke = 'rgba(128,128,128,0.3)'`, `chartAxisFill = '#9aa3b2'`, `chartTooltipContentStyle` (어두운 반투명 배경 + 옅은 보더 + 밝은 텍스트), `chartTooltipLabelStyle`, `chartTooltipItemStyle` 정의 → 두 차트 모두 동일한 토큰 사용으로 일관성 보장.
+  - **CartesianGrid** — `stroke="#eee"` (라이트에서만 보임) → `stroke={chartGridStroke}` (rgba 중간값으로 라이트/다크 모두에서 자연스럽게 보임). 두 차트 모두.
+  - **XAxis / YAxis** — `tick.fill="#888"` → `tick.fill={chartAxisFill}` (`#9aa3b2`), 추가로 `stroke={chartAxisFill}` 명시해 축선 자체의 가시성도 확보. 두 차트 모두.
+  - **Tooltip** — `contentStyle / labelStyle / itemStyle / cursor` 명시. `contentStyle` 은 `rgba(20,22,28,0.92)` 어두운 반투명 배경 + `#f0f2f6` 텍스트로 라이트/다크 모두에서 가독성 보장. 두 차트 모두.
+  - **Legend** — `wrapperStyle.color={chartAxisFill}` 로 범례 텍스트도 밝은 회색.
+  - **ReferenceLine** (예상 차트) — `stroke="#888"` 와 `label.fill="#888"` → 모두 `chartAxisFill` 로 통일.
+  - **테마 평균 라인 색상** — `#0066cc` (어두운 파랑) → `#4a9eff` (밝은 파랑) — 다크 배경에서 더 잘 보임. 예상 라인 `#0a8a4e` → `#3ec47a`.
+  - **MSRP 통계 카드** — `result.msrp.official` 시 `#0a8a4e` → `#3ec47a`, 비공식 `#c97a00` → `#ffb84d`. 수익률 색상도 `#0a8a4e/#d33` → `#3ec47a/#ff6b6b` 로 다크에서 잘 읽히는 톤으로 조정.
+  - **경고 배너 (`msrpWarnEl`, `extrapolatedEl`)** — 하드코딩 `background:'#fff8e1'`, `border:'#ffd88a'`, `color:'#7a5200'` → 모두 `var(--color-info-bg)`, `var(--color-info-border)`, `var(--color-info-text)` 로 전환. `theme-dark.css` 에 이미 정의된 `--color-info-*` (다크 배경: `#2a2418`, 텍스트: `#e0c895`) 토큰이 자동 적용되어 다크 모드에서도 자연스러운 골드 톤으로 표시.
+  - **링크/버튼 색상** — `#0066cc` (검색 결과 화살표, 정가 확인 링크, 뒤로가기 버튼 보더, 상세 페이지 링크) → `#4a9eff` 로 통일. 다크 배경에서 충분한 명도 확보.
+  - **에러 배너** — `background:'#fff6f6'`, `color:'#b00020'` → `rgba(220,80,80,0.12)` + `#ff8a8a` 로 전환해 라이트/다크 모두에서 가독성 확보.
+- **검증**: 헤더에서 다크 모드 토글 → `/scarcity` 로 이동 → 임의 세트 분석 → 과거/예상 차트의 축 눈금, 격자선, 툴팁, 범례, 참조선 라벨이 모두 명확히 읽히고, MSRP/수익률 카드의 작은 보조 텍스트와 노란 경고 배너도 어둡지 않은 적절한 톤으로 표시됨을 확인.
+
+### v0.5.10 — 2026-04-07
+
+#### `NEW` feat(scarcity): 수익률 기간 선택기 (3/5/10/20/30년) + localStorage 영속화 + 로컬 재계산
+- **요구사항**: 희소가치 기능에서 수익률 데이터를 3년/5년/10년/20년/30년 단위로 사용자가 선택하여 볼 수 있도록 기능 제공.
+- **`src/data/themeReturns.js`** (이전 푸시):
+  - 기존 단일 `themeAvgReturnPct` 상수 → `periods: { 3, 5, 10, 20, 30 }` 다중 기간 스키마로 확장. 각 기간은 `{ avgReturnPct, sample, since, extrapolated }` 구조.
+  - `SUPPORTED_PERIODS = [3, 5, 10, 20, 30]` export.
+  - `getThemeReturn(themeKey, years)` — 요청 기간이 해당 테마의 최대 사용 가능 기간보다 길면 가장 가까운 가능 기간으로 폴백하고 `extrapolated: true` 플래그 반환 (예: BDP 는 2023년부터 시작이라 30년 요청 시 자동으로 3년 데이터 + extrapolated=true).
+- **`src/utils/i18n.js`**:
+  - 신규 키 (ko/en 양쪽): `scarcityPeriodLabel` ("기간"/"Period"), `scarcityPeriod3y` ~ `scarcityPeriod30y` ("3년"/"3y" 등), `scarcityExtrapolatedNote` (extrapolated 경고 메시지).
+  - 기존 `scarcityThemeAvg` 를 "테마 3년 평균" → "테마 평균" 으로 일반화. `scarcityPageDesc` 에서 "3-year" 표현 제거.
+- **`src/pages/ScarcityPage.js`**:
+  - **`PERIOD_STORAGE_KEY = 'lego_scarcity_period'`** — localStorage 키 정의.
+  - **`getInitialPeriod()`** — 마운트 시 localStorage 에서 마지막 선택을 읽고, `SUPPORTED_PERIODS` 에 포함되어 있으면 사용, 아니면 3년 기본값.
+  - **`recomputeForPeriod(raw, period)` 순수 함수** — 캐시된 raw 입력(setNum, name, year, numParts, imgUrl, themeKey, msrp, market, hasExclusiveMinifigs)으로부터 `themeInfo`, `score`, `pastSeries` (36개월), `projSeries` (12개월) 을 새로 계산. 네트워크 재호출 없이 로컬에서 즉시 갱신.
+  - **`selectedPeriod` state (s9 hook)** — 컴포넌트 상태로 현재 선택 기간 보유.
+  - **`analyze(setNumRaw, periodArg)` 시그니처 확장** — periodArg 우선, 없으면 selectedPeriod 사용. 분석 후 `result.raw` 에 raw 입력을 캐시.
+  - **`onChangePeriod(newPeriod)` 핸들러** — SUPPORTED_PERIODS 검증 → state 업데이트 → localStorage 저장 → result 가 있으면 `recomputeForPeriod(result.raw, newPeriod)` 로 즉시 재계산. **네트워크 호출 0회**.
+  - **기간 선택기 UI (pill 그룹)** — 검색 폼 아래에 5개 알약 버튼(3년/5년/10년/20년/30년) 가로 배치. 활성 기간은 파란색 배경 + 흰색 텍스트, 비활성은 흰색 배경 + 어두운 텍스트. `aria-pressed` 속성으로 접근성 보장.
+  - **`extrapolatedEl` 배너** — `result.themeInfo.extrapolated === true` 인 경우 (BDP 30년 요청 등) 노란색 경고 배너 표시 — "선택한 기간이 테마의 실제 기간보다 길어 가장 가까운 사용 가능한 기간 데이터로 표시됩니다" 메시지.
+  - **stats 라벨 갱신** — 테마 평균 표시에 `(Xy)` 접미사 추가하여 현재 선택된 기간을 명시 (예: "테마 평균 (5y): 12.5%").
+  - **인라인 스타일 → CSS 변수 마이그레이션** — 다크 모드 v0.5.9 와 호환되도록 `color: 'var(--color-text, #222)'`, `background: 'var(--color-surface, #fff)'`, `border: '1px solid var(--color-border, #ccc)'` 등으로 전면 교체. 라이트 모드 폴백 색상은 fallback 으로 그대로 유지.
+- **사용자 동작**: 분석 후 다른 기간 알약을 누르면 즉시 점수/수익률/차트가 변경되고 페이지 새로고침해도 마지막 선택이 유지됨.
+
+### v0.5.9 — 2026-04-07
+
+#### `NEW` feat: 다크 모드 (CSS 변수 기반 테마 토큰)
+- **요구사항**: LEGO 사이트 특성상 컬러풀한 카드가 많아서 다크 모드와 잘 어울림. CSS 변수 기반으로 테마 토큰을 빼두면 큰 리팩토링 없이 추가 가능.
+- **`src/styles/theme-dark.css` 신규 추가**:
+  - **`:root` (라이트 기본값)** — `--color-bg`, `--color-surface`, `--color-surface-soft`, `--color-surface-elevated`, `--color-text`, `--color-text-secondary`, `--color-text-muted`, `--color-border`, `--color-overlay`, `--color-shadow`, `--color-accent-soft`, `--color-info-bg`, `--color-info-border`, `--color-info-text` 등 14개 의미 토큰 정의.
+  - **`[data-theme="dark"]` 오버라이드** — 모든 토큰을 다크 팔레트로 재정의 (`#0f1115` 배경, `#1a1d23` 카드, `#e6e6e6` 본문, `#b0b6c0` 보조 텍스트, `#353a45` 보더 등). LEGO 디자인 토큰(`--lego-gray`, `--lego-border`, `--lego-dark`)도 다크 톤으로 오버라이드.
+  - **컴포넌트별 셀렉터 오버라이드** — `[data-theme="dark"]` 접두사로 `.search-section`, `.set-card`, `.part-result-card`, `.set-detail`, `.collection-stats`, `.error-message`, 입력/셀렉트/필터, 페이지네이션, 탭, 이미지 surface, 인스트럭션 카드, 부품 색상 선택기, BDP 펀딩 알림, 신제품 출처 알림, 모바일 헤더 네비, 헤더 내 다크모드 토글 버튼 등 40+ 컴포넌트의 배경/텍스트/보더를 다크 톤으로 일괄 전환. 라이트 모드는 원본 `App.css` 그대로 유지되어 회귀 0.
+- **`src/contexts/ThemeContext.js` 신규**:
+  - React Context API + `useState` 로 `theme` 상태 관리 (`'light'` | `'dark'`).
+  - 마운트 시 localStorage 에서 `lego_theme_preference` 읽어 초기값 설정. 키가 없으면 `prefers-color-scheme: dark` 미디어 쿼리로 OS 기본값 추론.
+  - `useEffect` 로 `theme` 변경 시 `document.documentElement.setAttribute('data-theme', theme)` 와 localStorage 저장.
+  - `useTheme()` 훅 export.
+- **`src/components/Header.js`** — 헤더 네비 우측에 ☀/🌙 토글 버튼 추가. `useTheme()` 호출로 현재 테마와 setter 획득. 토글 클릭 시 `'light' ↔ 'dark'` 즉시 전환.
+- **`src/utils/i18n.js`** — `themeToLight` ("라이트 모드로 전환"/"Switch to light mode"), `themeToDark` ("다크 모드로 전환"/"Switch to dark mode") 키 추가.
+- **`src/index.js`** — `<ThemeProvider>` 로 `<App/>` 래핑. CSS import 순서: `App.css` → `theme-dark.css` 로 다크 오버라이드가 우선 적용되도록 보장.
+- **결과**: 모든 페이지(검색/희소가치/부품/둘러보기/펀딩/컬렉션)가 즉시 다크 모드 지원. 카드 surface, 텍스트, 보더, 입력 폼, 페이지네이션, 탭이 일관되게 어두운 톤으로 전환되고 LEGO 의 상징인 빨강/노랑/파랑 액센트는 그대로 유지됨.
+
+### v0.5.8 — 2026-04-07
+
+#### `FIX` fix: 76419 (Hogwarts Castle and Grounds) 한국 정가 보정
+- **문제**: 사용자가 희소가치 점수 분석에서 76419 (Hogwarts Castle and Grounds) 의 한국 정가가 ₩229,900 인데 화면에는 ₩412,300 (추정값) 으로 표시되어 잘못된 점수가 계산되는 문제 보고. 다른 제품들도 가격이 부정확할 가능성 지적.
+- **원인**: `prices.json` 에 76419 항목이 누락되어 있어 `lookupMsrp()` 가 부품 수(2,660) × 155 KRW 휴리스틱 폴백으로 약 ₩412,300 을 추정.
+- **`src/data/prices.json` 수정**:
+  - 76419 항목 신규 추가: `{ "price": 229900, "name": "Hogwarts Castle and Grounds", "currency": "KRW", "source": "lego.com/ko-kr" }`. LEGO 공식 한국 사이트 정가 기준.
+  - `meta.lastUpdated` 갱신.
+- **검증**: 희소가치 페이지에서 76419 분석 시 MSRP 카드가 `✓ LEGO Korea 정가 (prices.json)` 초록색 라벨과 함께 ₩229,900 으로 표시되며, 노란 추정값 경고 배너는 사라짐. 점수/등급도 실제 정가 기준으로 재계산.
+- **참고**: 같은 방식으로 추정값 경고가 뜨는 다른 세트는 `prices.json` 에 한 줄 추가만으로 즉시 수정 가능. 사용자가 다른 세트의 정가도 알려주면 일괄 추가 예정.
 
 ### v0.5.7 — 2026-04-07
 
