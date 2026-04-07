@@ -84,6 +84,9 @@ function Header() {
           <Link to="/scarcity" className={isActive('/scarcity')} onClick={() => setMenuOpen(false)}>
             {t('scarcityNavLabel')}
           </Link>
+          <Link to="/ppp" className={isActive('/ppp')} onClick={() => setMenuOpen(false)}>
+            {t('pppNavLabel')}
+          </Link>
           <Link to="/collection" className={isActive('/collection')} onClick={() => setMenuOpen(false)}>
             {t('myCollection')}
           </Link>
