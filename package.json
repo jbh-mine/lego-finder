@@ -18,6 +18,7 @@
   },
   "scripts": {
     "fetch-prices": "node scripts/fetch-prices.js",
+    "fetch-images": "node scripts/fetch-images.js",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
     "start": "react-scripts start",
