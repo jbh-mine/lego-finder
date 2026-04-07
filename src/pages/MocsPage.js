@@ -5,9 +5,17 @@ import { translateSearchQuery } from '../utils/searchDict';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
 
+// Note: The empty-string sort ('') maps to rebrickable's /mocs/ landing page
+// which only returns ~4 featured cards (not a real paginated listing). To
+// guarantee a full grid on first entry we default the sort to '-published'
+// (newest), which is a real listing endpoint that returns 30+ results per
+// page. The "hottest" pill is still selectable but will not be used as the
+// initial state.
+var DEFAULT_SORT = '-published';
+
 var SORT_OPTIONS = [
-  { key: 'hottest', value: '' },
   { key: 'newest', value: '-published' },
+  { key: 'hottest', value: '' },
   { key: 'mostLiked', value: '-likes' },
   { key: 'mostParts', value: '-num_parts' },
 ];
@@ -19,7 +27,7 @@ function MocsPage() {
   var s1 = useState(''); var query = s1[0]; var setQuery = s1[1];
   var s2 = useState(''); var qInput = s2[0]; var setQInput = s2[1];
   var s3 = useState(''); var theme = s3[0]; var setTheme = s3[1];
-  var s4 = useState(''); var sort = s4[0]; var setSort = s4[1];
+  var s4 = useState(DEFAULT_SORT); var sort = s4[0]; var setSort = s4[1];
   var s5 = useState([]); var results = s5[0]; var setResults = s5[1];
   var s6 = useState([]); var themes = s6[0]; var setThemes = s6[1];
   var s7 = useState(0); var total = s7[0]; var setTotal = s7[1];
@@ -30,7 +38,7 @@ function MocsPage() {
   var s12 = useState(false); var hasMore = s12[0]; var setHasMore = s12[1];
 
   var sentinelRef = useRef(null);
-  var stateRef = useRef({ query: '', theme: '', sort: '', page: 1 });
+  var stateRef = useRef({ query: '', theme: '', sort: DEFAULT_SORT, page: 1 });
 
   var doFetch = useCallback(async function(opts, append) {
     setLoading(true);
@@ -44,7 +52,10 @@ function MocsPage() {
       }
       setTotal(data.total);
       if (data.themes && data.themes.length > 0) setThemes(data.themes);
-      setHasMore(data.results.length >= 30);
+      // hasMore: rebrickable serves ~30 cards per listing page; if we got
+      // fewer than 25 we treat that as the last page (the featured/landing
+      // view returns ~4 which would otherwise wrongly trigger infinite scroll)
+      setHasMore(data.results.length >= 25);
       setLoaded(true);
     } catch (e) {
       setError(t('apiError'));
@@ -53,10 +64,11 @@ function MocsPage() {
     }
   }, [t]);
 
-  // Initial load
+  // Initial load — always use the newest-sort listing endpoint so the
+  // first paint shows a full grid instead of the 4-card featured page.
   useEffect(function() {
-    stateRef.current = { query: '', theme: '', sort: '', page: 1 };
-    doFetch({ page: 1 }, false);
+    stateRef.current = { query: '', theme: '', sort: DEFAULT_SORT, page: 1 };
+    doFetch({ sort: DEFAULT_SORT, page: 1 }, false);
   }, []); // eslint-disable-line
 
   var applySearch = function(e) {
