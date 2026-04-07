@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { searchSets, getThemes, filterSets } from '../utils/api';
-import { translateSearchQuery, SET_NUM_MAP } from '../utils/searchDict';
+import { translateSearchQuery, SET_NUM_MAP, getIpSearchTerms } from '../utils/searchDict';
 import { getCachedTranslation, translateName } from '../utils/translate';
 import { useLanguage } from '../contexts/LanguageContext';
 import SetCard from '../components/SetCard';
@@ -217,10 +217,11 @@ function SearchPage() {
     setLoading(true);
     setError(null);
     try {
-      var translatedQuery = translateSearchQuery(searchQuery.trim());
-      
+      var rawQuery = searchQuery.trim();
+      var translatedQuery = translateSearchQuery(rawQuery);
+
       // If translated query is a set number (from SET_NUM_MAP), search by set number
-      if (/^\d[\d\-]*$/.test(translatedQuery) && translatedQuery !== searchQuery.trim()) {
+      if (/^\d[\d\-]*$/.test(translatedQuery) && translatedQuery !== rawQuery) {
         // This was a Korean nickname mapped to a set number
         var data = await searchSets(translatedQuery, 1, PAGE_SIZE);
         if (data.results.length > 0) {
@@ -237,7 +238,64 @@ function SearchPage() {
         }
         // If no results by number, fall through to normal search
       }
-      
+
+      // ====================================================================
+      // IP / Franchise umbrella expansion
+      // --------------------------------------------------------------------
+      // For umbrella keywords like "마블"/"Marvel" or "스타워즈"/"Star Wars"
+      // Rebrickable's set name search returns nothing because no set name
+      // contains the literal word "Marvel". Fan out into parallel searches
+      // against well-known character/sub-product names that DO appear in
+      // set names, then merge & dedupe.
+      // ====================================================================
+      var ipTerms = getIpSearchTerms(rawQuery) || getIpSearchTerms(translatedQuery);
+      if (ipTerms && ipTerms.length > 0 && searchPage === 1) {
+        var ipMatchedThemeIds = findMatchingThemeIds(translatedQuery);
+        var ipPromises = [];
+        // Theme query first (so its sets get priority in dedupe order)
+        if (ipMatchedThemeIds.length > 0) {
+          ipPromises.push(
+            filterSets({ themeId: ipMatchedThemeIds[0], page: 1, pageSize: PAGE_SIZE })
+              .catch(function() { return { results: [], count: 0 }; })
+          );
+        }
+        // Parallel name searches for each fan-out term
+        ipTerms.forEach(function(term) {
+          ipPromises.push(
+            searchSets(term, 1, PAGE_SIZE)
+              .catch(function() { return { results: [], count: 0 }; })
+          );
+        });
+
+        var ipResults = await Promise.all(ipPromises);
+        var seenIp = {};
+        var mergedIp = [];
+        ipResults.forEach(function(r) {
+          (r && r.results ? r.results : []).forEach(function(s) {
+            if (!seenIp[s.set_num]) {
+              seenIp[s.set_num] = true;
+              mergedIp.push(s);
+            }
+          });
+        });
+
+        if (mergedIp.length > 0) {
+          var primaryIpTheme = ipMatchedThemeIds.length > 0 ? ipMatchedThemeIds[0] : null;
+          matchedThemeRef.current = primaryIpTheme;
+          setMatchedThemeId(primaryIpTheme);
+          setNameExtras([]);
+          setAllResults(mergedIp);
+          setTotalCount(mergedIp.length);
+          setPage(1);
+          setHasMore(false); // fan-out results are not paginatable
+          setSearched(true);
+          setLoading(false);
+          return;
+        }
+        // If fan-out yielded nothing (network failures etc.), fall through
+        // to the normal search flow below.
+      }
+
       var matchedThemeIds = findMatchingThemeIds(translatedQuery);
 
       if (matchedThemeIds.length > 0) {
