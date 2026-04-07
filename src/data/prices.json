@@ -1,149 +1,90 @@
 {
   "meta": {
-    "lastUpdated": "2026-04-06",
-    "currency": "KRW",
+    "lastUpdated": "2026-04-07",
+    "currency": "KRW (with USD for BDP)",
     "source": "lego.com/ko-kr"
   },
   "prices": {
-    "10294": {
-      "price": 890000,
-      "name": "LEGO Titanic"
-    },
-    "42151": {
-      "price": 72900,
-      "name": "Bugatti Bolide"
-    },
-    "10307": {
-      "price": 649000,
-      "name": "Eiffel Tower"
-    },
-    "10276": {
-      "price": 299900,
-      "name": "Colosseum"
-    },
-    "75192": {
-      "price": 1099000,
-      "name": "Millennium Falcon"
-    },
-    "71040": {
-      "price": 499900,
-      "name": "Disney Castle"
-    },
-    "10305": {
-      "price": 549000,
-      "name": "Lion Knights Castle"
-    },
-    "10182": {
-      "price": 0,
-      "name": "Cafe Corner",
-      "discontinued": true
-    },
-    "10197": {
-      "price": 0,
-      "name": "Fire Brigade",
-      "discontinued": true
-    },
-    "10211": {
-      "price": 0,
-      "name": "Grand Emporium",
-      "discontinued": true
-    },
-    "10218": {
-      "price": 0,
-      "name": "Pet Shop",
-      "discontinued": true
-    },
-    "10224": {
-      "price": 0,
-      "name": "Town Hall",
-      "discontinued": true
-    },
-    "10232": {
-      "price": 0,
-      "name": "Palace Cinema",
-      "discontinued": true
-    },
-    "10243": {
-      "price": 0,
-      "name": "Parisian Restaurant",
-      "discontinued": true
-    },
-    "10246": {
-      "price": 0,
-      "name": "Detectives Office",
-      "discontinued": true
-    },
-    "10251": {
-      "price": 0,
-      "name": "Brick Bank",
-      "discontinued": true
-    },
-    "10255": {
-      "price": 369900,
-      "name": "Assembly Square"
-    },
-    "10260": {
-      "price": 0,
-      "name": "Downtown Diner",
-      "discontinued": true
-    },
-    "10264": {
-      "price": 0,
-      "name": "Corner Garage",
-      "discontinued": true
-    },
-    "10270": {
-      "price": 259900,
-      "name": "Bookshop"
-    },
-    "10278": {
-      "price": 0,
-      "name": "Police Station",
-      "discontinued": true
-    },
-    "10297": {
-      "price": 289900,
-      "name": "Boutique Hotel"
-    },
-    "10312": {
-      "price": 289900,
-      "name": "Jazz Club"
-    },
-    "10326": {
-      "price": 419900,
-      "name": "Natural History Museum"
-    },
-    "10350": {
-      "price": 299900,
-      "name": "Tudor Corner"
-    },
-    "10318": {
-      "price": 249900,
-      "name": "Concorde"
-    },
-    "21318": {
-      "price": 299900,
-      "name": "Tree House"
-    },
-    "21325": {
-      "price": 0,
-      "name": "Medieval Blacksmith",
-      "discontinued": true
-    },
-    "21323": {
-      "price": 0,
-      "name": "Grand Piano",
-      "discontinued": true
-    },
-    "21327": {
-      "price": 0,
-      "name": "Typewriter",
-      "discontinued": true
-    },
-    "10365": {
-      "price": 0,
-      "name": "Black Pearl",
-      "note": "BDP"
-    }
+    "10294": { "price": 890000, "name": "LEGO Titanic" },
+    "42151": { "price": 72900, "name": "Bugatti Bolide" },
+    "10307": { "price": 649000, "name": "Eiffel Tower" },
+    "10276": { "price": 299900, "name": "Colosseum" },
+    "75192": { "price": 1099000, "name": "Millennium Falcon" },
+    "71040": { "price": 499900, "name": "Disney Castle" },
+    "10305": { "price": 549000, "name": "Lion Knights Castle" },
+    "10182": { "price": 0, "name": "Cafe Corner", "discontinued": true },
+    "10197": { "price": 0, "name": "Fire Brigade", "discontinued": true },
+    "10211": { "price": 0, "name": "Grand Emporium", "discontinued": true },
+    "10218": { "price": 0, "name": "Pet Shop", "discontinued": true },
+    "10224": { "price": 0, "name": "Town Hall", "discontinued": true },
+    "10232": { "price": 0, "name": "Palace Cinema", "discontinued": true },
+    "10243": { "price": 0, "name": "Parisian Restaurant", "discontinued": true },
+    "10246": { "price": 0, "name": "Detectives Office", "discontinued": true },
+    "10251": { "price": 0, "name": "Brick Bank", "discontinued": true },
+    "10255": { "price": 369900, "name": "Assembly Square" },
+    "10260": { "price": 0, "name": "Downtown Diner", "discontinued": true },
+    "10264": { "price": 0, "name": "Corner Garage", "discontinued": true },
+    "10270": { "price": 259900, "name": "Bookshop" },
+    "10278": { "price": 0, "name": "Police Station", "discontinued": true },
+    "10297": { "price": 289900, "name": "Boutique Hotel" },
+    "10312": { "price": 289900, "name": "Jazz Club" },
+    "10326": { "price": 419900, "name": "Natural History Museum" },
+    "10350": { "price": 299900, "name": "Tudor Corner" },
+    "10318": { "price": 249900, "name": "Concorde" },
+    "21318": { "price": 299900, "name": "Tree House" },
+    "21325": { "price": 0, "name": "Medieval Blacksmith", "discontinued": true },
+    "21323": { "price": 0, "name": "Grand Piano", "discontinued": true },
+    "21327": { "price": 0, "name": "Typewriter", "discontinued": true },
+    "10365": { "price": 0, "name": "Black Pearl", "note": "BDP" },
+    "910001": { "usd": 199.99, "name": "Castle in the Forest", "source": "BDP" },
+    "910002": { "usd": 199.99, "name": "Studgate Train Station", "source": "BDP" },
+    "910003": { "usd": 179.99, "name": "Mountain Windmill", "source": "BDP" },
+    "910004": { "usd": 199.99, "name": "Winter Chalet", "source": "BDP" },
+    "910008": { "usd": 199.99, "name": "Modular Construction Site", "source": "BDP" },
+    "910009": { "usd": 199.99, "name": "Modular LEGO Store", "source": "BDP" },
+    "910010": { "usd": 199.99, "name": "Great Fishing Boat", "source": "BDP" },
+    "910011": { "usd": 199.99, "name": "1950s Diner", "source": "BDP" },
+    "910013": { "usd": 199.99, "name": "Retro Bowling Alley", "source": "BDP" },
+    "910015": { "usd": 129.99, "name": "Clockwork Aquarium", "source": "BDP" },
+    "910016": { "usd": 79.99, "name": "Sheriff's Safe", "source": "BDP" },
+    "910017": { "usd": 79.99, "name": "Kakapo", "source": "BDP" },
+    "910023": { "usd": 199.99, "name": "Venetian Houses", "source": "BDP" },
+    "910027": { "usd": 199.99, "name": "Mountain View Observatory", "source": "BDP" },
+    "910028": { "usd": 199.99, "name": "Pursuit of Flight", "source": "BDP" },
+    "910029": { "usd": 199.99, "name": "Mountain Fortress", "source": "BDP" },
+    "910030": { "usd": 99.99, "name": "Snack Shack", "source": "BDP" },
+    "910031": { "usd": 199.99, "name": "General Store", "source": "BDP" },
+    "910032": { "usd": 199.99, "name": "Parisian Street", "source": "BDP" },
+    "910033": { "usd": 199.99, "name": "Old Train Engine Shed", "source": "BDP" },
+    "910034": { "usd": 99.99, "name": "Brick Cross", "source": "BDP" },
+    "910035": { "usd": 199.99, "name": "Logging Railway", "source": "BDP" },
+    "910036": { "usd": 199.99, "name": "Ocean House", "source": "BDP" },
+    "910037": { "usd": 99.99, "name": "Mushroom House", "source": "BDP" },
+    "910038": { "usd": 199.99, "name": "Ominous Isle", "source": "BDP" },
+    "910039": { "usd": 199.99, "name": "The Art of Chocolate", "source": "BDP" },
+    "910040": { "usd": 199.99, "name": "Harbormaster's Office", "source": "BDP" },
+    "910041": { "usd": 99.99, "name": "Camping Adventure", "source": "BDP" },
+    "910042": { "usd": 199.99, "name": "Lost City", "source": "BDP" },
+    "910043": { "usd": 199.99, "name": "Forest Stronghold", "source": "BDP" },
+    "910044": { "usd": 199.99, "name": "Wild West Train", "source": "BDP" },
+    "910045": { "usd": 99.99, "name": "Siege Encampment", "source": "BDP" },
+    "910046": { "usd": 199.99, "name": "Merchant Boat", "source": "BDP" },
+    "910047": { "usd": 199.99, "name": "Medieval Seaside Market", "source": "BDP" },
+    "910048": { "usd": 99.99, "name": "Riverside Scholars", "source": "BDP" },
+    "910049": { "usd": 199.99, "name": "Adventure in Transylvania", "source": "BDP" },
+    "910050": { "usd": 199.99, "name": "Antique Shop", "source": "BDP" },
+    "910051": { "usd": 99.99, "name": "Mushroom Village", "source": "BDP" },
+    "910052": { "usd": 79.99, "name": "Popcorn Wagon", "source": "BDP" },
+    "910053": { "usd": 199.99, "name": "The Thieves of Tortuga", "source": "BDP" },
+    "910054": { "usd": 199.99, "name": "The Art Factory", "source": "BDP" },
+    "910055": { "usd": 199.99, "name": "Gold Mine Expedition", "source": "BDP" },
+    "910056": { "usd": 99.99, "name": "Off-Road Adventure", "source": "BDP" },
+    "910057": { "usd": 199.99, "name": "Outlaw Forest Den", "source": "BDP" },
+    "910058": { "usd": 199.99, "name": "Sequoia Tree Trail", "source": "BDP" },
+    "910059": { "usd": 199.99, "name": "Privateer Frigate Fortuna", "source": "BDP" },
+    "910060": { "usd": 199.99, "name": "Sushi Restaurant", "source": "BDP" },
+    "910061": { "usd": 199.99, "name": "Antique Collection", "source": "BDP" },
+    "910062": { "usd": 199.99, "name": "Alchemist's Shop", "source": "BDP" },
+    "910063": { "usd": 199.99, "name": "W.A.L.T.", "source": "BDP" }
   }
 }
