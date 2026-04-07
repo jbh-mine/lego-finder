@@ -68,34 +68,13 @@ function SetDetailPage() {
     })();
   }, [setNum, t]);
 
-  // Load multiple images when set is available
+  // Load images from Rebrickable only (match Rebrickable set page exactly)
   useEffect(function() {
     if (!set) return;
     var images = [];
     if (set.set_img_url) images.push(set.set_img_url);
     setAllImages(images);
     setImgIdx(0);
-
-    // Try loading additional images from BrickLink CDN
-    var extraUrls = [
-      'https://img.bricklink.com/ItemImage/SN/0/' + set.set_num + '.png',
-      'https://img.bricklink.com/ItemImage/ON/0/' + set.set_num + '.png',
-    ];
-
-    var mainUrl = set.set_img_url || '';
-    extraUrls.forEach(function(url) {
-      var img = new Image();
-      img.onload = function() {
-        if (img.naturalWidth > 10 && img.naturalHeight > 10) {
-          setAllImages(function(prev) {
-            if (prev.indexOf(url) >= 0) return prev;
-            return prev.concat([url]);
-          });
-        }
-      };
-      img.onerror = function() {};
-      img.src = url;
-    });
   }, [set]);
 
   var loadPP = async function(pg) {
