@@ -53,11 +53,34 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 /* New Products */
 .new-products-header{margin-bottom:8px}
 .new-products-desc{font-size:.9rem;color:#888;margin-top:2px}
+.new-products-source-notice{display:flex;align-items:flex-start;gap:10px;margin:14px 0 4px;padding:14px 18px;background:linear-gradient(135deg,#E3F2FD 0%,#BBDEFB 100%);border:2px solid #1976D2;border-left:6px solid #0D47A1;border-radius:var(--radius);box-shadow:0 2px 6px rgba(13,71,161,.12)}
+.new-products-source-icon{font-size:1.25rem;flex-shrink:0;line-height:1.4}
+.new-products-source-text{font-size:.95rem;font-weight:600;color:#0D47A1;line-height:1.5}
+.new-products-source-link{color:#0D47A1;font-weight:800;text-decoration:underline;text-underline-offset:2px}
+.new-products-source-link:hover{color:#D32F2F}
 .new-products-filters{margin-top:12px}
 .new-products-year-tabs{display:flex;gap:8px;flex-wrap:wrap}
 .new-year-tab{padding:10px 20px;border:2px solid var(--lego-border);border-radius:var(--radius);background:#fff;color:var(--lego-dark);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;min-height:44px}
 .new-year-tab:hover{border-color:var(--lego-blue);color:var(--lego-blue)}
 .new-year-tab.active{background:var(--lego-red);border-color:var(--lego-red);color:#fff}
+/* MOC Page */
+.moc-search-form{display:flex;gap:12px;margin-top:12px}
+.moc-search-form input{flex:1;padding:10px 14px;border:2px solid var(--lego-border);border-radius:var(--radius);font-size:.95rem;outline:none;min-height:42px}
+.moc-search-form input:focus{border-color:var(--lego-blue)}
+.moc-search-form button[type="submit"]{padding:10px 22px;background:var(--lego-blue);color:#fff;border:none;border-radius:var(--radius);font-weight:600;cursor:pointer;min-height:42px}
+.moc-search-form button[type="submit"]:hover{background:#005a96}
+.moc-filter-row{margin-top:12px}
+.moc-filter-row select{width:100%;max-width:360px;padding:8px 12px;border:2px solid var(--lego-border);border-radius:var(--radius);font-size:.9rem;background:#fff;outline:none;min-height:40px}
+.moc-sort-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.moc-sort-tab{padding:8px 18px;border:2px solid var(--lego-border);border-radius:20px;background:#fff;color:var(--lego-dark);font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;min-height:38px;white-space:nowrap}
+.moc-sort-tab:hover{border-color:var(--lego-green);color:var(--lego-green)}
+.moc-sort-tab.active{background:var(--lego-green);border-color:var(--lego-green);color:#fff}
+.moc-card-link{display:block;text-decoration:none;color:inherit}
+.moc-designer{font-size:.75rem;color:#888;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.moc-likes{font-size:.78rem;color:#D32F2F;font-weight:700;margin-top:4px}
+.moc-desc{margin:14px 0;font-size:.92rem;color:#555;line-height:1.55;white-space:pre-wrap}
+.moc-rebrickable-btn{display:inline-block;text-decoration:none;background:var(--lego-blue)!important;color:#fff!important}
+.moc-rebrickable-btn:hover{background:#005a96!important}
 /* Funding Filter Row */
 .funding-filter-row{display:flex;gap:12px;margin-top:16px;align-items:center}
 .funding-filter-year{flex-shrink:0}
