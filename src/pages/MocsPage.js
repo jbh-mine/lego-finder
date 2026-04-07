@@ -1,0 +1,212 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { searchMocs } from '../utils/mocApi';
+import { useLanguage } from '../contexts/LanguageContext';
+import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
+
+var SORT_OPTIONS = [
+  { key: 'hottest', value: '' },
+  { key: 'newest', value: '-published' },
+  { key: 'mostLiked', value: '-likes' },
+  { key: 'mostParts', value: '-num_parts' },
+];
+
+function MocsPage() {
+  var lc = useLanguage();
+  var t = lc.t;
+
+  var s1 = useState(''); var query = s1[0]; var setQuery = s1[1];
+  var s2 = useState(''); var qInput = s2[0]; var setQInput = s2[1];
+  var s3 = useState(''); var theme = s3[0]; var setTheme = s3[1];
+  var s4 = useState(''); var sort = s4[0]; var setSort = s4[1];
+  var s5 = useState([]); var results = s5[0]; var setResults = s5[1];
+  var s6 = useState([]); var themes = s6[0]; var setThemes = s6[1];
+  var s7 = useState(0); var total = s7[0]; var setTotal = s7[1];
+  var s8 = useState(false); var loading = s8[0]; var setLoading = s8[1];
+  var s9 = useState(null); var error = s9[0]; var setError = s9[1];
+  var s10 = useState(false); var loaded = s10[0]; var setLoaded = s10[1];
+  var s11 = useState(1); var page = s11[0]; var setPage = s11[1];
+  var s12 = useState(false); var hasMore = s12[0]; var setHasMore = s12[1];
+
+  var sentinelRef = useRef(null);
+  var stateRef = useRef({ query: '', theme: '', sort: '', page: 1 });
+
+  var doFetch = useCallback(async function(opts, append) {
+    setLoading(true);
+    setError(null);
+    try {
+      var data = await searchMocs(opts);
+      if (append) {
+        setResults(function(prev) { return prev.concat(data.results); });
+      } else {
+        setResults(data.results);
+      }
+      setTotal(data.total);
+      if (data.themes && data.themes.length > 0) setThemes(data.themes);
+      setHasMore(data.results.length >= 30);
+      setLoaded(true);
+    } catch (e) {
+      setError(t('apiError'));
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
+  useEffect(function() {
+    stateRef.current = { query: '', theme: '', sort: '', page: 1 };
+    doFetch({ page: 1 }, false);
+  }, []); // eslint-disable-line
+
+  var applySearch = function(e) {
+    if (e) e.preventDefault();
+    setQuery(qInput);
+    setPage(1);
+    stateRef.current = { query: qInput, theme: theme, sort: sort, page: 1 };
+    doFetch({ q: qInput, theme: theme, sort: sort, page: 1 }, false);
+  };
+
+  var changeTheme = function(v) {
+    setTheme(v);
+    setPage(1);
+    stateRef.current = { query: query, theme: v, sort: sort, page: 1 };
+    doFetch({ q: query, theme: v, sort: sort, page: 1 }, false);
+  };
+
+  var changeSort = function(v) {
+    setSort(v);
+    setPage(1);
+    stateRef.current = { query: query, theme: theme, sort: v, page: 1 };
+    doFetch({ q: query, theme: theme, sort: v, page: 1 }, false);
+  };
+
+  useEffect(function() {
+    if (!sentinelRef.current) return;
+    var obs = new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting && hasMore && !loading && loaded) {
+        var st = stateRef.current;
+        var nextPage = st.page + 1;
+        st.page = nextPage;
+        doFetch({ q: st.query, theme: st.theme, sort: st.sort, page: nextPage }, true);
+        setPage(nextPage);
+      }
+    }, { rootMargin: '300px' });
+    obs.observe(sentinelRef.current);
+    return function() { obs.disconnect(); };
+  });
+
+  var headerSection = React.createElement('div', { className: 'search-section' },
+    React.createElement('div', { className: 'new-products-header' },
+      React.createElement('h2', null, t('mocsTitle')),
+      React.createElement('p', { className: 'new-products-desc' }, t('mocsDesc')),
+      React.createElement('div', { className: 'new-products-source-notice' },
+        React.createElement('span', { className: 'new-products-source-icon' }, '\u2139\uFE0F'),
+        React.createElement('span', { className: 'new-products-source-text' },
+          t('mocSourceNotice'),
+          React.createElement('a', {
+            href: 'https://rebrickable.com/mocs/',
+            target: '_blank',
+            rel: 'noopener noreferrer',
+            className: 'new-products-source-link'
+          }, 'rebrickable.com/mocs'),
+          t('mocSourceNoticeSuffix')
+        )
+      )
+    ),
+    React.createElement('form', { className: 'moc-search-form', onSubmit: applySearch },
+      React.createElement('div', { className: 'search-input-wrapper' },
+        React.createElement('input', {
+          type: 'text',
+          placeholder: t('mocSearchPlaceholder'),
+          value: qInput,
+          onChange: function(e) { setQInput(e.target.value); }
+        }),
+        qInput ? React.createElement('button', {
+          type: 'button',
+          className: 'search-clear-btn',
+          onClick: function() { setQInput(''); }
+        }, '\u00D7') : null
+      ),
+      React.createElement('button', { type: 'submit' }, t('searchBtn'))
+    ),
+    React.createElement('div', { className: 'moc-filter-row' },
+      React.createElement('select', {
+        className: 'funding-year-select',
+        value: theme,
+        onChange: function(e) { changeTheme(e.target.value); }
+      },
+        React.createElement('option', { value: '' }, t('mocAllThemes')),
+        themes.map(function(th) {
+          return React.createElement('option', { key: th.value, value: th.value }, th.name);
+        })
+      )
+    ),
+    React.createElement('div', { className: 'moc-sort-tabs' },
+      SORT_OPTIONS.map(function(opt) {
+        return React.createElement('button', {
+          key: opt.key,
+          type: 'button',
+          className: 'moc-sort-tab' + (sort === opt.value ? ' active' : ''),
+          onClick: function() { changeSort(opt.value); }
+        }, t('mocSort_' + opt.key));
+      })
+    )
+  );
+
+  var resultsSection = null;
+  if (results.length > 0) {
+    var summaryText = (total > 0 ? (t('total') + ' ' + total + ' MOCs') : (results.length + ' MOCs'));
+    var summary = React.createElement('div', { className: 'search-results-summary' }, summaryText);
+    var grid = React.createElement('div', { className: 'set-grid' },
+      results.map(function(moc) {
+        return React.createElement(Link, {
+          key: moc.mocNum,
+          to: '/moc/' + moc.mocNum,
+          state: { moc: moc },
+          className: 'set-card moc-card-link'
+        },
+          React.createElement('img', {
+            className: 'set-card-img',
+            src: moc.img,
+            alt: moc.name,
+            loading: 'lazy',
+            onError: function(e) { e.target.style.opacity = '0.3'; }
+          }),
+          React.createElement('div', { className: 'set-card-body' },
+            React.createElement('div', { className: 'set-card-num' }, moc.mocNum),
+            React.createElement('div', { className: 'set-card-name' }, moc.name),
+            moc.designer ? React.createElement('div', { className: 'moc-designer' },
+              '\uC9C0\uC740\uC774: ' + moc.designer) : null,
+            React.createElement('div', { className: 'set-card-meta' },
+              React.createElement('span', null, moc.parts ? (moc.parts + ' ' + t('numParts')) : ''),
+              React.createElement('span', null, moc.year || '')
+            ),
+            moc.likes > 0 ? React.createElement('div', { className: 'moc-likes' },
+              '\u2665 ' + moc.likes) : null
+          )
+        );
+      })
+    );
+    resultsSection = React.createElement(React.Fragment, null, summary, grid);
+  }
+
+  var initialLoading = (loading && results.length === 0) ? React.createElement(Loading, null) : null;
+  var loadingMore = (loading && results.length > 0) ? React.createElement(Loading, null) : null;
+  var emptyResults = (!loading && !error && loaded && results.length === 0)
+    ? React.createElement(EmptyState, { title: t('noResults'), message: t('mocNoResults') })
+    : null;
+
+  return React.createElement('div', null,
+    headerSection,
+    initialLoading,
+    error ? React.createElement(ErrorMessage, {
+      message: error,
+      onRetry: function() { doFetch({ q: query, theme: theme, sort: sort, page: 1 }, false); }
+    }) : null,
+    resultsSection,
+    loadingMore,
+    emptyResults,
+    React.createElement('div', { ref: sentinelRef, style: { height: 1, marginBottom: 40 } })
+  );
+}
+
+export default MocsPage;

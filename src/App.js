@@ -10,6 +10,8 @@ import PartsSearchPage from './pages/PartsSearchPage';
 import PartDetailPage from './pages/PartDetailPage';
 import NewProductsPage from './pages/NewProductsPage';
 import FundingPage from './pages/FundingPage';
+import MocsPage from './pages/MocsPage';
+import MocDetailPage from './pages/MocDetailPage';
 import './styles/App.css';
 
 function App() {
@@ -27,6 +29,8 @@ function App() {
             <Route path="/collection" element={<CollectionPage />} />
             <Route path="/new" element={<NewProductsPage />} />
             <Route path="/funding" element={<FundingPage />} />
+            <Route path="/mocs" element={<MocsPage />} />
+            <Route path="/moc/:mocNum" element={<MocDetailPage />} />
           </Routes>
         </main>
       </Router>
