@@ -32,8 +32,8 @@ function fmtKrw(n) {
   return '\u20A9' + Math.round(n).toLocaleString('ko-KR');
 }
 
-// Normalize a setNum (strip the "-1" variant suffix that prices.json
-// sometimes carries) so the API call always uses the canonical form.
+// Normalize a setNum to the canonical "<num>-1" form that Rebrickable
+// expects. prices.json keys are stored without the variant suffix.
 function normalizeSetNum(s) {
   if (!s) return '';
   return String(s).indexOf('-') >= 0 ? s : s + '-1';
@@ -54,14 +54,18 @@ function PppPage() {
   var fetchAll = useCallback(async function() {
     setLoading(true);
 
-    // Build the input list from prices.json keys, but filter to those
-    // that resolve to a real KRW price via getKrwPrice (handles aliases
-    // and variant suffixes consistently with SearchPage / ScarcityPage).
-    var keys = Object.keys(pricesJson || {}).filter(function(k) {
-      // Skip the meta object
-      if (k === 'meta' || k === '_meta') return false;
-      var entry = pricesJson[k];
-      return entry && typeof entry === 'object' && (entry.price || entry.priceKrw);
+    // prices.json has shape { meta: {...}, prices: { "10294": {...}, ... } }
+    // — iterate the nested .prices object, not the top-level file.
+    var pricesObj = (pricesJson && pricesJson.prices) || {};
+    var keys = Object.keys(pricesObj).filter(function(k) {
+      var entry = pricesObj[k];
+      if (!entry || typeof entry !== 'object') return false;
+      // Skip discontinued / unpriced. We only consider entries with a
+      // positive KRW price (USD-only BDP entries are skipped here since
+      // they need an async exchange-rate lookup).
+      if (entry.discontinued) return false;
+      if (!entry.price || entry.price <= 0) return false;
+      return true;
     });
 
     setTotal(keys.length);
@@ -70,7 +74,6 @@ function PppPage() {
     var now = Date.now();
     var results = [];
 
-    // Process in CONCURRENCY chunks
     var idx = 0;
     var doneCount = 0;
     async function worker() {
@@ -103,7 +106,10 @@ function PppPage() {
         }
 
         if (meta && meta.numParts && meta.numParts > 0) {
-          var krw = getKrwPrice(canonical);
+          // getKrwPrice returns { price, discontinued, name } or null —
+          // unwrap the .price number before computing PPP.
+          var krwInfo = getKrwPrice(canonical);
+          var krw = krwInfo && !krwInfo.discontinued ? krwInfo.price : 0;
           if (krw && krw > 0) {
             results.push({
               setNum: meta.setNum || canonical,
