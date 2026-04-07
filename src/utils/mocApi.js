@@ -1,6 +1,13 @@
 // Rebrickable MOC scraper. There is no public MOC API, so we scrape
 // rebrickable.com/mocs/ HTML via a chain of CORS proxies and parse the
 // `.set-tn` cards. Results are cached in localStorage for a short window.
+//
+// Stability strategy (3 layers):
+//   1. Static snapshot   (mocsStatic.json, refreshed daily by CI)
+//        - Used instantly for the 4 default views (hottest/newest/mostLiked/mostParts)
+//   2. localStorage cache (30-min fresh, served-stale on fetch failure)
+//   3. Runtime CORS-proxy fetch (last resort, with timeout + validation)
+import mocsStatic from '../data/mocsStatic.json';
 
 // v2: bumped after fixing the lazy-load image extraction so previously cached
 // search results (which had empty img fields) are invalidated.
@@ -224,6 +231,33 @@ function parseThemes(html) {
   return themes;
 }
 
+// Map a sort value (as used by the form) to a static-snapshot view key.
+// A `null` return means "no static snapshot for this combination".
+function staticViewKeyFor(opts) {
+  // Static snapshots only cover: no q, no theme, no parts/year filters, page 1.
+  if (opts.q || opts.theme || opts.minYear || opts.maxYear ||
+      opts.minParts || opts.maxParts) return null;
+  if (opts.page && opts.page > 1) return null;
+  switch (opts.sort || '') {
+    case '':           return 'hottest';
+    case '-published': return 'newest';
+    case '-likes':     return 'mostLiked';
+    case '-num_parts': return 'mostParts';
+    default:           return null;
+  }
+}
+
+function getStaticView(key) {
+  if (!key || !mocsStatic || !mocsStatic.views) return null;
+  var v = mocsStatic.views[key];
+  if (!v || !v.results || v.results.length === 0) return null;
+  return {
+    results: v.results,
+    total: v.total || v.results.length,
+    themes: mocsStatic.themes || [],
+  };
+}
+
 export async function searchMocs(opts) {
   opts = opts || {};
   var normalizedQ = normalizeMocQuery(opts.q);
@@ -241,16 +275,32 @@ export async function searchMocs(opts) {
   var qs = params.join('&');
   var url = 'https://rebrickable.com/mocs/?' + qs;
 
-  // Cache check
+  // Layer 2: localStorage cache check (fresh window).
   var cache = loadCache(CACHE_KEY);
   var entry = cache[qs];
   if (entry && entry.t && (Date.now() - entry.t) < CACHE_TTL_MS) {
     return entry.data;
   }
 
+  // Layer 1: pre-scraped static snapshot for default views.
+  // Serve immediately so the page never appears empty for these views.
+  var staticKey = staticViewKeyFor(opts);
+  var staticData = getStaticView(staticKey);
+  if (staticData) {
+    // Cache it as a "fresh" entry so subsequent calls (re-renders) don't
+    // re-enter the runtime fetch path until cache expires.
+    cache[qs] = { t: Date.now(), data: staticData };
+    saveCache(CACHE_KEY, cache);
+    return staticData;
+  }
+
+  // Layer 3: runtime fetch via CORS-proxy chain.
   var html = await fetchHtml(url);
   if (!html) {
-    return { results: [], total: 0, themes: [] };
+    // Stale-while-revalidate: if the runtime fetch failed but we have a
+    // (now-expired) cached entry, serve it instead of returning empty.
+    if (entry && entry.data) return entry.data;
+    return { results: [], total: 0, themes: (mocsStatic && mocsStatic.themes) || [] };
   }
   var results = parseMocCards(html);
   var total = parseTotalCount(html);
@@ -273,7 +323,11 @@ export async function getMocDetail(mocNum) {
 
   var url = 'https://rebrickable.com/mocs/' + mocNum + '/';
   var html = await fetchHtml(url);
-  if (!html) return null;
+  if (!html) {
+    // Stale-while-revalidate: serve previously cached detail (even if expired).
+    if (entry && entry.data) return entry.data;
+    return null;
+  }
 
   // og:title, og:image, og:url, og:description
   function ogValue(prop) {

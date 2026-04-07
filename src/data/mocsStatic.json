@@ -1,0 +1,14 @@
+{
+  "meta": {
+    "lastUpdated": "",
+    "source": "rebrickable.com/mocs",
+    "note": "Pre-scraped default MOC views. Populated by scripts/fetch-mocs.js (run daily by GitHub Actions)."
+  },
+  "themes": [],
+  "views": {
+    "hottest":   { "results": [], "total": 0 },
+    "newest":    { "results": [], "total": 0 },
+    "mostLiked": { "results": [], "total": 0 },
+    "mostParts": { "results": [], "total": 0 }
+  }
+}
