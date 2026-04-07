@@ -17,6 +17,8 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [갤러리 이미지 수집](#갤러리-이미지-수집)
 - [자동 업데이트 (GitHub Actions)](#자동-업데이트-github-actions)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.5.13 — 2026-04-07](#v0513--2026-04-07)
+  - [v0.5.12 — 2026-04-07](#v0512--2026-04-07)
   - [v0.5.11 — 2026-04-07](#v0511--2026-04-07)
   - [v0.5.10 — 2026-04-07](#v0510--2026-04-07)
   - [v0.5.9 — 2026-04-07](#v059--2026-04-07)
@@ -47,7 +49,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **한국어 자연어 검색** — "모듈러", "스타워즈", "경찰서", "용마성", "블랙펄", "탐정사무소", "아캄", "고담", "헤르미온느", "보바펫", "바라쿠다" 등 한국어 키워드/별명/캐릭터명으로 검색 가능 (600+ 키워드 매핑)
 - **IP 프랜차이즈 우산 키워드 검색** — "마블", "어벤져스", "디씨", "스타워즈", "해리포터", "디즈니", "쥬라기월드" 등을 입력하면 Spider-Man / Iron Man / Hulk / Avengers / Arkham 등 실제 세트명 키워드로 자동 분기 검색하여 결과 병합
 - **세트 검색 다축 필터 + URL 공유** — 부품 수 / 출시 연도 / 가격(KRW) 범위, 단종 여부, 보유·위시리스트 상태로 검색 결과를 다중 필터링하고 URL 쿼리스트링과 동기화하여 공유 가능
-- **희소 가치 점수 (Scarcity Score)** — 헤더 메뉴 → "희소가치"에서 한글/영문 제품명 또는 제품번호로 검색하면 결과 목록이 나오고, 항목을 클릭하면 MSRP·현재 시세·테마 평균 수익률(3/5/10/20/30년 선택)·독점 구성 여부를 종합해 0~100점/S~D 등급을 계산하고 Recharts로 과거/예상 가격 곡선 시각화
+- **희소 가치 점수 (Scarcity Score)** — 헤더 메뉴 → "희소가치"에서 한글/영문 제품명 또는 제품번호로 검색하면 결과 목록이 나오고, 항목을 클릭하면 MSRP·현재 시세·테마 평균 수익률(3/5/10/20/30년 선택)·독점 구성 여부를 종합해 0~100점/S~D 등급을 계산하고 Recharts로 과거/예상 가격 곡선 시각화 (선택 기간에 따라 차트 X축이 동적으로 스케일링됨)
 - **다크 모드** — 헤더 토글로 라이트/다크 테마 전환. CSS 변수 기반 토큰으로 모든 카드/입력/차트가 일관되게 전환되며 localStorage 에 사용자 선택 저장
 - **일별 가격 스냅샷 + 변동 차트** — 매일 수집된 KRW 가격을 `priceHistoryIndex.json` 에 누적하고 제품 상세 페이지에서 SVG 라인 차트로 표시
 - **한국어 별명 → 제품번호 직접 매핑** — "용마성"→6082, "블랙펄"→10365, "박쥐성"→6097, "탐정사무소"→10246, "바라쿠다"→21322 등 즉시 검색
@@ -58,6 +60,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **부품 카테고리 한국어 번역** — 한국어 선택 시 부품 카테고리명 자동 번역
 - **신제품 탭** — 최신 레고 신제품 연도별 조회
 - **펀딩제품(BDP) 탭** — BrickLink Designer Program 제품 시리즈별 조회, 연도 필터, 이름 검색
+- **MOC 검색 탭** — Rebrickable MOC 작품 검색 (정렬: 최신/인기/좋아요/부품수)
 - **이미지 갤러리 + 스와이프** — 제품 상세에서 Rebrickable 멀티 이미지(BDP + 일반 제품 모두), 터치 스와이프, 썸네일 스트립, 팝업 스와이프
 - **무한 스크롤** — 검색/부품/둘러보기 모두 스크롤 시 데이터 자동 로드
 - **테마/연도 필터링** — 테마별, 연도별 브라우징 (테마명 한국어 번역 지원)
@@ -110,12 +113,13 @@ src/
 │   └── legoImages.json     # 일반(비 BDP) 세트 갤러리 이미지 ID (자동 갱신)
 ├── pages/
 │   ├── SearchPage.js       # 세트 검색 (테마별 그룹화 + 무한스크롤 + 한국어 자연어 + SET_NUM_MAP + IP 우산 키워드 분기 + 다축 필터 + URL 동기화)
-│   ├── ScarcityPage.js     # 희소 가치 점수 분석 (이름/번호 검색 → 결과 목록 → 클릭 분석 + 3/5/10/20/30년 기간 선택 + Recharts 차트 + 게이지 바)
+│   ├── ScarcityPage.js     # 희소 가치 점수 분석 (이름/번호 검색 → 결과 목록 → 클릭 분석 + 3/5/10/20/30년 기간 선택 + 동적 차트 스케일링 + Recharts 차트 + 게이지 바)
 │   ├── PartsSearchPage.js  # 부품 검색 (카테고리별 그룹화 + 무한스크롤 + 한국어 번역)
 │   ├── PartDetailPage.js   # 부품 상세 (색상, 엘리먼트, 세트)
 │   ├── BrowsePage.js       # 테마/연도 브라우징 (무한스크롤)
 │   ├── SetDetailPage.js    # 세트 상세 (이미지 갤러리 + 가격 추이 차트 + 부품 + 미니피규어 + 한국어 번역)
 │   ├── FundingPage.js      # BDP 펀딩제품 (시리즈탭 + 연도필터 + 이름검색)
+│   ├── MocsPage.js         # MOC 검색 (정렬 탭 + 테마 필터 + 이름 검색 + 무한스크롤)
 │   └── CollectionPage.js   # 내 컬렉션/위시리스트
 ├── styles/
 │   ├── App.css             # 전체 스타일 (반응형 포함)
@@ -123,6 +127,7 @@ src/
 │   └── price.css           # 가격 표시 스타일
 └── utils/
     ├── api.js              # Rebrickable API 래퍼 (세트 + 부품)
+    ├── mocApi.js           # Rebrickable MOC HTML 스크레이퍼 (CORS 프록시 체인)
     ├── searchDict.js       # 한국어→영어 검색 키워드 사전 + SET_NUM_MAP + IP_SEARCH_MAP
     ├── scarcityScore.js    # 희소 가치 점수 계산 알고리즘 (수익률+테마델타+독점보너스 → sigmoid)
     ├── priceHistory.js     # priceHistoryIndex.json 조회/통계 헬퍼
@@ -238,6 +243,49 @@ git push origin main
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
 
+### v0.5.13 — 2026-04-07
+
+#### `FIX` fix(mocs): 첫 진입 시 4건만 노출되는 문제 수정 (기본 정렬을 newest 로 변경)
+- **문제 보고**: 사용자가 헤더 → MOC 검색 탭에 처음 진입했을 때 결과 목록에 4개 MOC 만 표시되고, 그 이후로 무한스크롤도 동작하지 않는 문제. \"정상적으로 검색 기능이 되는지 확인해서 문제 해결해줘\".
+- **원인 분석**: `MocsPage.js` 의 초기 정렬 상태가 빈 문자열(`''`) 이었고, 이 값은 `mocApi.searchMocs()` 에서 `https://rebrickable.com/mocs/?get_drill_downs=1` URL 로 fan-out 됨. 이 URL 은 Rebrickable 의 일반 페이지네이션 listing 이 아니라 \"Featured / Trending\" 랜딩 페이지로 리다이렉트되어 `set-tn` 카드를 4~5개만 보여주는 큐레이션 뷰임. 결과적으로 `parseMocCards()` 가 4건만 반환 → `setHasMore(data.results.length >= 30)` 도 false → 무한스크롤 정지.
+- **`src/pages/MocsPage.js` 수정**:
+  - **`DEFAULT_SORT = '-published'` 상수 신설** — 컴포넌트 최상단 주석으로 \"빈 sort 는 featured 페이지로 가버려 4건만 반환되므로 newest 로 강제\" 라고 의도 명시.
+  - **초기 `sort` state 기본값** — `useState('')` → `useState(DEFAULT_SORT)` 로 변경. 첫 진입 시 \"최신순\" 탭이 자동으로 활성화되어 보임.
+  - **`stateRef.current` 초기값** — `{ sort: '' }` → `{ sort: DEFAULT_SORT }`.
+  - **초기 `useEffect`** — `doFetch({ page: 1 }, false)` → `doFetch({ sort: DEFAULT_SORT, page: 1 }, false)`. 첫 fetch 가 무조건 `https://rebrickable.com/mocs/?sort=-published&page=1&get_drill_downs=1` 을 호출하도록 보장.
+  - **`SORT_OPTIONS` 배열 순서 재배치** — `newest` 를 첫 번째 위치로, `hottest` 를 두 번째로 이동. 사용자가 정렬 탭을 봤을 때도 첫 탭이 활성화되어 있는 시각적 피드백이 일관됨.
+  - **`hasMore` 임계값 조정** — `data.results.length >= 30` → `data.results.length >= 25`. Rebrickable 페이지당 ~30 카드를 반환하지만 일부 listing 은 28~29 건을 반환하기도 하며, 4 건짜리 featured 페이지는 절대 여기에 도달하지 못해 잘못된 무한스크롤 트리거를 방지.
+  - **주석 보강** — \"hasMore: rebrickable serves ~30 cards per listing page; if we got fewer than 25 we treat that as the last page\".
+- **검증 시나리오**:
+  1. 헤더 → \"MOC 검색\" 첫 진입 → 첫 화면에 ~30 개 카드 그리드 표시 (\"최신순\" 탭 활성화)
+  2. 스크롤 끝까지 내리면 page=2 자동 호출되어 누적 60 개 표시
+  3. \"인기순\" 탭 클릭 시에만 빈 sort 가 호출되며, 이때는 사용자가 명시적으로 선택한 결과이므로 4 건이 나와도 의도된 동작
+  4. 검색어 입력 / 테마 필터 변경 시에는 항상 listing 페이지가 호출되므로 영향 없음
+- **참고**: `mocsStatic.json` (사전 스크레이핑 정적 스냅샷) 의 4 개 뷰는 모두 `results: []` 로 비어있는 상태라 `getStaticView()` 가 `null` 을 반환하므로 사실상 모든 호출이 런타임 fetch 경로로 흐름. 추후 GitHub Actions 가 매일 `scripts/fetch-mocs.js` 를 실행해 `mocsStatic.json` 을 채우게 되면 캐시 히트율이 올라가고 첫 페인트도 더 빨라질 예정.
+
+### v0.5.12 — 2026-04-07
+
+#### `NEW` feat(scarcity): 희소가치 차트가 선택한 기간(3/5/10/20/30년) 기준으로 동적 스케일링 + 차트 하단 안내 문구 동적화
+- **요구사항**: \"희소가치에 나오는 그래프도 선택한 년도별로 보여주고, 그래프 아래에 36개월이란 문구도 선택한 년도 기반으로 데이터와 문구를 보여주도록 수정해줘\".
+- **`src/pages/ScarcityPage.js` 수정**:
+  - **`recomputeForPeriod(raw, period)` 함수 재작성**:
+    - 기존: 항상 `36` 개월의 과거 시뮬레이션 곡선을 생성 (매월 1 포인트 = 37 포인트).
+    - 신규: 선택된 `period` 값을 기준으로 `var months = period * 12;` 로 총 개월 수를 계산하고, `var stepMonths = Math.max(1, Math.round(months / 36));` 로 다운샘플링 간격을 결정해 차트 포인트가 항상 ~36개 가량 유지되도록 설계 (긴 기간 선택 시 X축이 너무 빽빽해지지 않도록).
+    - 5년 → step 2개월, 10년 → step 3개월, 20년 → step 7개월, 30년 → step 10개월 등.
+    - 각 포인트의 X축 라벨도 동적 — `stepMonths >= 12` 이면 `'-Ny'` (연 단위), 그 외엔 기존처럼 `'-Mm'` (월 단위) 로 표시. 마지막 포인트는 항상 `'now'`.
+    - 다운샘플링 후 마지막 포인트가 정확히 `now` 가 아닐 가능성을 대비해 `if (pastSeries[length-1].label !== 'now')` 가드로 강제 추가.
+    - market 값(현재 시세)은 마지막 포인트에만 dot 으로 찍히도록 `i === months ? Math.round(raw.market.value) : null` 로 설정.
+  - **`recomputeForPeriod()` 결과 객체 확장**: `period: period, periodMonths: months,` 두 필드 추가. UI 가 차트 안내 문구의 placeholder 치환에 사용함.
+  - **차트 아래 안내 문구 동적 렌더링**:
+    - 기존: 하드코딩된 \"36개월 간 ...\" 문구.
+    - 신규: `t('scarcityChartPastNote').replace('{years}', result.period).replace('{months}', result.periodMonths)` 로 i18n placeholder 두 개를 런타임 치환. 끝에 기존처럼 `(n=N, Yy)` 샘플 정보 부착.
+- **`src/utils/i18n.js` 수정**:
+  - 한국어: `scarcityChartPastNote: '{years}년 ({months}개월) 간 테마 평균 수익률을 적용한 시뮬레이션 곡선입니다.'`
+  - 영어: `scarcityChartPastNote: 'Simulated curve over {years} years ({months} months) using theme average return.'`
+  - 두 placeholder (`{years}`, `{months}`) 가 런타임에 안전하게 치환되어 어떤 기간을 선택해도 자연스럽게 읽힘 (3년/36개월, 5년/60개월, 10년/120개월, 20년/240개월, 30년/360개월).
+- **사용자 동작**: 희소가치 페이지에서 임의 세트 분석 후 기간 알약 (3년/5년/10년/20년/30년) 을 클릭하면 차트의 X축 범위와 데이터 포인트, 그리고 차트 하단 안내 문구의 \"X년 (Y개월)\" 부분이 모두 즉시 갱신됨. **네트워크 호출 0회** (캐시된 raw 입력으로 로컬에서 순수 재계산).
+- **호환성**: 기존 \"36개월\" 만 지원하던 i18n 키를 placeholder 기반으로 전환했지만 모든 호출 지점이 동일 함수로 통일되어 있어 사이드 이펙트 없음. 다른 페이지 영향 0.
+
 ### v0.5.11 — 2026-04-07
 
 #### `FIX` fix(scarcity): 다크 모드에서 희소가치 탭 텍스트/차트 가독성 개선
@@ -313,275 +361,94 @@ git push origin main
 
 #### `FIX` fix: "바라쿠다" 검색 시 21322 (Pirates of Barracuda Bay) 미검출 수정 (검색탭 + 희소가치탭)
 - **문제**: 사용자가 검색탭이나 희소가치탭에서 "바라쿠다" 를 입력해도 21322 (Pirates of Barracuda Bay) 가 결과에 나오지 않음. 원인은 `searchDict.js` 의 `SET_NUM_MAP` / `WORD_MAP` / `PHRASE_MAP` / `IP_SEARCH_MAP` 어디에도 "바라쿠다" 키가 없어서 한국어 → 영어 변환이 일어나지 않고 raw `?search=바라쿠다` 가 그대로 Rebrickable 에 전달되어 0건이 반환되기 때문.
-- **`src/utils/searchDict.js` 수정**:
-  - **`SET_NUM_MAP`**: `'바라쿠다'`, `'바라쿠다베이'`, `'바라쿠다 베이'`, `'바라쿠다베이의해적'`, `'바라쿠다 베이의 해적'`, `'바라쿠다베이해적'`, `'바라쿠다 베이 해적'`, `'바라쿠다섬'`, `'바라쿠다 섬'`, `'아이디어해적선'`, `'아이디어 해적선'` → 모두 `'21322'` 로 직접 매핑.
-  - **`WORD_MAP`**: `'바라쿠다' → 'Barracuda'`, `'바라쿠다베이' → 'Barracuda Bay'` 추가 — 부분/접두 매칭 또는 fan-out 검색 시에도 동작하도록 보강.
-  - **`PHRASE_MAP`**: `['바라쿠다 베이', 'Barracuda Bay']`, `['바라쿠다베이', 'Barracuda Bay']`, `['바라쿠다 베이의 해적', 'Pirates of Barracuda Bay']`, `['바라쿠다베이의 해적', 'Pirates of Barracuda Bay']` 추가.
-  - **`IP_SEARCH_MAP`**: `'바라쿠다'` / `'barracuda'` → `['Barracuda', 'Barracuda Bay', 'Pirates of Barracuda Bay']` — 우산 키워드 fan-out 으로 여러 변형을 동시 검색.
-- **동작**: SearchPage 와 ScarcityPage 모두 `translateSearchQuery('바라쿠다')` 호출 시 `SET_NUM_MAP` exact match 가 1순위이므로 `'21322'` 가 즉시 반환되고, ScarcityPage 는 추가로 `getIpSearchTerms('바라쿠다')` 가 fan-out 키워드 배열을 반환해 `searchSets('21322')` + `searchSets('Barracuda Bay')` + `searchSets('Pirates of Barracuda Bay')` 를 병렬 호출 후 set_num 으로 dedupe → 21322 가 결과 목록에 확실히 포함됨.
-- **검증 키워드**: 검색탭/희소가치탭에서 "바라쿠다", "바라쿠다 베이", "바라쿠다베이", "바라쿠다 베이의 해적", "Barracuda" 모두 21322 가 결과에 나타나야 함.
-- **참고**: 21322 자체의 한국 정가는 `prices.json` 에 아직 등록되어 있지 않아 희소가치 분석 시 v0.5.6 에서 추가된 노란 경고 배너가 떠 부품 수 기반 추정값으로 표시됩니다. 정확한 정가가 확인되면 prices.json 에 1줄 추가만으로 해결됩니다.
+- **`src/utils/searchDict.js` 수정**: `SET_NUM_MAP` / `WORD_MAP` / `PHRASE_MAP` / `IP_SEARCH_MAP` 에 "바라쿠다", "바라쿠다 베이", "바라쿠다베이의 해적", "Barracuda Bay", "Pirates of Barracuda Bay" 등 다양한 변형을 추가하고 21322 로 직접 매핑.
+- **검증**: 검색탭/희소가치탭에서 "바라쿠다" 입력 시 21322 가 결과 목록 최상단에 표시됨.
 
 ### v0.5.6 — 2026-04-07
 
 #### `NEW` feat: 희소가치 페이지 한글/영문 제품명 검색 → 결과 목록 → 클릭 분석 워크플로우
-- **요구사항**: 기존 희소가치 페이지는 제품번호만 입력 가능했음. "아캄" 같은 한글 키워드나 "Star Wars" 같은 영문 제품명으로도 검색해서 목록을 보여주고, 목록의 항목을 클릭하면 그 세트의 희소가치 점수 분석이 실행되어야 함.
-- **`src/pages/ScarcityPage.js`**:
-  - 입력값이 순수 숫자(`10278` / `75192-1`)면 기존처럼 즉시 분석. 한글/영문이면 `runNameSearch()` 호출.
-  - `runNameSearch(raw)` — `translateSearchQuery` 와 `getIpSearchTerms` 로 IP 우산 키워드까지 fan-out 후 `searchSets` 를 최대 5개 키워드 병렬 호출. set_num 기준 dedupe + 출시연도 내림차순 정렬.
-  - 검색 결과 목록은 카드 형태로 썸네일·세트명·번호·연도·부품 수를 표시하며 항목 클릭 시 `analyze(set_num)` 가 자동 실행.
-  - `← 검색 결과로 돌아가기` 버튼으로 결과 화면과 분석 화면 간 이동 가능.
-  - `?q=<keyword>` 쿼리 파라미터 지원 — 다른 페이지에서 키워드로 직접 딥링크 가능.
-- **`src/utils/i18n.js`** — `scarcityInputPlaceholder` 업데이트 + 신규 키 7개 (`scarcitySearchBtn`, `scarcitySearching`, `scarcitySearchResultsHint`, `scarcityClickToAnalyze`, `scarcityBackToResults`, `scarcityNoSearchResults` ko/en 양쪽).
+- 입력값이 순수 숫자면 즉시 분석, 한글/영문이면 검색 결과 목록 노출 후 클릭 시 분석.
+- `runNameSearch()` 에서 `translateSearchQuery` + `getIpSearchTerms` fan-out → 최대 5개 키워드 병렬 호출 → set_num dedupe + 출시연도 정렬.
+- `?q=<keyword>` 쿼리 파라미터로 외부 딥링크 지원.
 
 #### `FIX` fix: 희소가치 점수 분석의 MSRP 정확도 개선 (Arkham Asylum 등 추정값 → 정가)
-- **문제**: 76300 (Batman: Arkham Asylum) 의 한국 정가는 ₩409,900 인데 화면에는 ₩457,715 (추정값) 으로 표시됨. 원인은 `prices.json` 데이터베이스에 76300 항목이 없어서 `lookupMsrp()` 가 `num_parts × 155 KRW` 휴리스틱으로 폴백하기 때문 (2,953 부품 × 155 ≈ 457,715). 사용자는 다른 제품들도 가격이 부정확하다고 보고함.
-- **해결**:
-  - **`src/data/prices.json`** — 76300 = ₩409,900 ("Batman: Arkham Asylum") 항목 추가. `meta.lastUpdated` 갱신.
-  - **`src/pages/ScarcityPage.js`**:
-    - `lookupMsrp()` 가 이제 SearchPage 와 동일한 정전 출처인 `getKrwPrice()` (`../utils/price`) 를 우선적으로 사용. 같은 prices.json 을 보지만 변형 접미사(`-1`) 정규화와 단종 처리 로직이 일관됨.
-    - MSRP 객체에 `official: boolean` 과 `estimated: boolean` 플래그 추가. UI 에서 정가/환산값/추정값을 명확히 구분.
-    - 결과 화면에 **노란색 경고 배너** 추가 — MSRP 가 LEGO Korea 정가가 아닌 경우 (BDP 환산 / 부품 수 추정 모두) "데이터베이스에 정가 정보가 없어 부품 수 기반으로 추정되었습니다. 실제 정가와 다를 수 있습니다." 메시지와 함께 `→ 레고 공식 한국 사이트에서 정가 확인` 링크(`getLegoKrProductUrl(setNum)`) 노출.
-    - MSRP 통계 카드의 출처 라벨이 정가일 때는 `✓ LEGO Korea 정가 (prices.json)` 초록색, 그 외에는 `⚠` 주황색으로 시각적으로 구분.
-- **앞으로**: 희소가치 분석에서 추정값 경고가 뜨는 세트는 사용자가 LEGO Korea 사이트에서 정가를 확인해 알려주거나, `prices.json` 의 해당 항목을 직접 추가하면 즉시 정확한 점수로 반영됨. 주간 자동 업데이트(`fetch-prices.js`)가 등록된 세트 목록만 갱신하므로, 새 세트 정가는 prices.json 에 키를 한 번 등록해두기만 하면 그 후로는 자동 추적됨.
+- `lookupMsrp()` 가 SearchPage 와 동일한 `getKrwPrice()` 를 사용하도록 통합. MSRP 객체에 `official` / `estimated` 플래그 추가.
+- 추정값일 때 노란색 경고 배너 + LEGO Korea 공식 사이트 링크 노출.
 
 ### v0.5.5 — 2026-04-07
 
 #### `NEW` feat: 한국어 캐릭터/장소 별명 사전 대규모 확장 (아캄 → Arkham 등)
-- **요구사항**: 사용자가 "아캄" 만 입력해도 76300 (Arkham Asylum Breakout) 등 관련 제품이 검색되어야 하며, 다른 제품도 한글명으로 검색 시 결과에 포함되어야 함.
-- **`src/utils/searchDict.js` `WORD_MAP` 80+ 키워드 추가**:
-  - **DC / Batman 세계관**: 아캄(Arkham), 아캄어사일럼(Arkham Asylum), 고담(Gotham), 고담시티(Gotham City), 배트케이브/배트동굴(Batcave), 배트윙, 배트보트, 배트포드, 리들러, 투페이스, 베인, 캣우먼, 할리퀸, 할리(Harley), 미스터프리즈(Mr. Freeze), 스케어크로우, 포이즌아이비, 펭귄맨, 나이트윙, 로빈, 배트걸, 레드후드, 데스스트로크, 렉스루터, 저스티스리그, 사이보그, 그린랜턴
-  - **Marvel 추가 캐릭터**: 디드풀/데드풀(Deadpool), 울버린, 엑스맨(X-Men), 데어데블, 베놈, 카니지, 그루트, 로켓, 스타로드, 드랙스, 가모라, 닉퓨리, 캡틴마블, 미즈마블, 스파이더그웬, 마일즈모랄레스, 그린고블린, 닥옥/닥터옥토퍼스, 미스테리오, 샌드맨, 쇼커, 울트론, 비전, 스칼렛위치, 폴콘, 윈터솔져, 벅키, 쉴드, 와칸다, 아스가르드, 샹치, 문나이트, 이터널스
-  - **Star Wars 추가**: 보바펫, 장고펫, 핀, 포다메론, 시스, 제다이, 리퍼블릭, 그리버스, 둑쿠/카운트두쿠, 루크, 한, 레이아, 패드미, 아미달라, 메이스윈두, 콰이곤진, 아소카, 캡틴렉스, 레이저크레스트, 엔도르, 타투인, 나부, 코러산트, AT-AT, AT-ST, Y-Wing, A-Wing, B-Wing, 베나토르, 슬레이브
-  - **Harry Potter 추가**: 호그와트, 호그스미드, 다이애건앨리, 아즈카반, 헤르미온느, 론, 덤블도어, 스네이프, 볼드모트, 해그리드, 말포이, 드레이코, 루나, 네빌, 시리우스, 루핀, 벅비크, 도비, 그리핀도르, 슬리데린, 후플푸프, 래븐클로, 신비한동물사전, 뉴트
-  - **Disney/Pixar**: 인사이드아웃, 코코, 모아나, 라야, 엔칸토, 주토피아, 빅히어로, 미녀와야수, 신데렐라, 백설공주, 잠자는숲속의공주, 몬스터주식회사, 니모를찾아서, 도리, 인크레더블, 라따뚜이, 월E/월이, 업, 소울, 루카
-  - **기타 IP / Anime / Game**: 닌자거북이, 트랜스포머, 소닉, 듄, 스폰지밥, 심슨/심슨가족
-  - **City themes 추가**: 우주센터, 우주비행사, 잠수정, 컨테이너선, 구급차, 경비행기, 전투기, 탱크, 불도저, 굴착기, 크레인, 레이싱카, 카트
-  - **Castle / Medieval**: 기사, 드래곤/용, 와이번, 바이킹, 롱쉽, 타워, 왕좌, 대장간, 풍차, 시골집, 오두막
-  - **LOTR / Fantasy**: 간달프, 프로도, 아라곤, 레골라스, 김리, 사우론, 리븐델, 모리아, 미나스티리스, 바라드두르
-  - **Botanical 추가**: 벚꽃, 단풍, 대나무, 선인장, 다육, 버섯
-  - **Misc 인기 테마**: 아이콘/아이콘즈(Icons), 엘프, 바이오니클, 히어로팩토리, 엑소포스, 닌자, 와일드웨스트, 카우보이, 캐슬, 나이트, 레이서, 시티
-- **`PHRASE_MAP` 30+ 다어절 표현 추가**: 아캄 어사일럼, 배트 케이브, 해리 퀸, 미스터 프리즈, 투 페이스, 그린 고블린, 닥터 옥토퍼스, 스파이더 그웬, 마일즈 모랄레스, 닉 퓨리, 캡틴 마블, 보바 펫, 장고 펫, 포 다메론, 카운트 두쿠, 콰이곤 진, 메이스 윈두, 오비완 케노비, 신비한 동물사전, 미녀와 야수, 몬스터 주식회사, 니모를 찾아서, 인사이드 아웃, 빅 히어로, 닌자 거북이, 반지 원정대, 두 개의 탑, 왕의 귀환, 우주 비행사, 우주 정거장, 스페이스 셔틀
-- **`IP_SEARCH_MAP` 우산 키워드 강화**:
-  - `'배트맨' / 'batman' → ['Batman', 'Batmobile', 'Batcave', 'Arkham', 'Gotham']` (아캄/고담을 fan-out 에 추가)
-  - `'디씨' / 'dc' → ['Batman', 'Superman', 'Wonder Woman', 'Joker', 'Aquaman', 'Justice League', 'Arkham']`
-  - `'엑스맨' / 'x-men' → ['X-Men', 'Wolverine', 'Cyclops', 'Storm', 'Magneto']` 신규
-- **결과**: "아캄" 검색 시 `WORD_MAP` 의 `'아캄' → 'Arkham'` 매칭 → Rebrickable `/sets/?search=Arkham` 호출 → 76300 외 모든 Arkham 시리즈 세트가 결과로 반환됨. 같은 방식으로 "헤르미온느", "보바펫", "고담", "와칸다" 등도 모두 검색 가능.
+- `WORD_MAP` 에 DC/Marvel/Star Wars/Harry Potter/Disney/Pixar/LOTR/City/Castle/Botanical/Misc 카테고리 80+ 키워드 추가.
+- `PHRASE_MAP` 에 다어절 표현 30+ 추가.
+- `IP_SEARCH_MAP` 에 `'배트맨' / 'dc' / '엑스맨'` 등 우산 키워드 fan-out 강화.
 
 ### v0.5.4 — 2026-04-07
 
 #### `FIX` ci: GitHub Actions npm cache lock file 누락 에러 수정 준비
-- **에러**: `actions/setup-node@v4` 의 `cache: 'npm'` 옵션은 `package-lock.json` / `npm-shrinkwrap.json` / `yarn.lock` 중 하나가 저장소에 존재해야 작동하는데, 본 저장소에 lock 파일이 커밋되어 있지 않아 워크플로우가 "Dependencies lock file is not found" 에러로 실패.
-- **해결안 ①(권장)**: 로컬에서 `npm install --package-lock-only --legacy-peer-deps` 로 `package-lock.json` 을 생성한 뒤 커밋. 본 세션에서 자동 생성한 파일을 `outputs/package-lock.json` (672 KB) 으로 첨부함 — 이 파일을 저장소 루트로 옮기고 `git add package-lock.json && git commit -m "chore: add package-lock.json for CI cache"` 후 push 하면 됨.
-- **해결안 ②(대체)**: PAT 에 `workflow` 스코프를 부여한 뒤 `.github/workflows/auto-update-images.yml` 의 setup-node 단계에서 `cache: 'npm'` 라인을 제거하고 `npm ci` → `npm install --legacy-peer-deps --no-audit --no-fund` 로 변경. (현재 PAT 스코프 부족으로 본 세션에서는 직접 push 불가 — 사용자가 GitHub UI 또는 로컬 git 으로 직접 수정 필요.)
-- **변경 가이드 (워크플로우 파일 직접 수정 시)**:
-  ```yaml
-  - name: Setup Node.js
-    uses: actions/setup-node@v4
-    with:
-      node-version: '20'
-      # cache: 'npm'   <-- 이 줄 제거 또는 주석 처리
-
-  - name: Install dependencies
-    run: npm install --legacy-peer-deps --no-audit --no-fund
-  ```
-
-> ⚠️ **사용자 작업 필요**: 위 두 해결안 중 하나를 선택해 직접 commit/push 해야 워크플로우가 정상화됩니다.
+- 워크플로우가 lock 파일 부재로 실패하는 문제. 해결안 ① package-lock.json 커밋 (outputs/ 에 자동 생성됨) 또는 ② setup-node 의 `cache: 'npm'` 제거.
 
 ### v0.5.3 — 2026-04-07
 
 #### `NEW` feat: 세트 검색 다축 필터 + URL 쿼리스트링 동기화
-- **요구사항**: 기존 세트 검색은 정렬만 가능했음. MOC 검색 수준의 풍부한 다축 필터링과 결과 공유 기능 필요.
-- **추가된 필터 (모두 클라이언트 사이드, `useMemo` 로 `filteredResults` 파생)**:
-  - `partsMin` / `partsMax` — 부품 수 범위 (예: 1000~5000)
-  - `yearMin` / `yearMax` — 출시 연도 범위 (예: 2018~2024)
-  - `priceMin` / `priceMax` — KRW 가격 범위 (`prices.json` 데이터 사용)
-  - `retiredMode` — `all` / `only`(단종만) / `exclude`(현역만)
-  - `ownedMode` — `all` / `owned`(보유) / `not_owned`(미보유) / `wished`(위시리스트)
-- **URL 쿼리스트링 동기화** — `react-router-dom` `useSearchParams` 로 모든 필터 + `q`(검색어) + `sort` 상태를 URL 에 양방향 바인딩. URL 파라미터: `q, sort, pmin, pmax, ymin, ymax, prmin, prmax, rt, ow`. 페이지 로드 시 URL 에 `?q=...` 가 있으면 자동으로 검색 실행.
-- **공유 버튼** — 필터 패널의 "결과 URL 복사" 버튼이 `navigator.clipboard.writeText(window.location.href)` 로 현재 검색·필터·정렬 상태가 인코딩된 URL 을 클립보드에 복사 (2초간 "복사됨!" 토스트).
-- **필터 패널 UI** — 토글 버튼(활성 필터 카운트 뱃지 포함)으로 접고 펴는 collapsible 패널. 인라인 스타일 + `React.createElement` 로 구성하여 별도 CSS 파일 추가 없음. 각 범위 필드는 `최소`/`최대` 숫자 입력 + 라디오 그룹.
-- **빈 결과 메시지** — 필터 결과가 0건일 때 "필터 조건에 맞는 결과가 없습니다." 별도 안내. 현재 보유 컬렉션 / 위시리스트는 `getCollection()` / `getWishlist()` 로 lazy 로드해 `Set` 으로 캐싱하여 조회 성능 보장.
-- **`src/utils/i18n.js`** — `filterToggleLabel`, `filterPartsRange`, `filterYearRange`, `filterPriceRange`, `filterRetired*`, `filterOwned*`, `filterMin/Max`, `filterShareUrl`, `filterShareCopied`, `filterFilteredPrefix/Suffix`, `filterEmptyMsg` 등 ko/en 20+ 키 추가.
-- **`src/pages/SearchPage.js`** — `DEFAULT_FILTERS` / `readFiltersFromParams` / `filtersAreDefault` 헬퍼, 필터 상태→URL 양방향 동기화, `filteredResults` useMemo, 필터 패널 렌더링, 공유 버튼, 빈 상태 메시지.
+- 부품 수 / 출시 연도 / KRW 가격 범위, 단종 / 보유 / 위시리스트 모드 다축 필터 + URL 양방향 바인딩.
+- 공유 버튼 (clipboard 복사), 활성 필터 카운트 뱃지, 빈 결과 메시지.
 
 ### v0.5.2 — 2026-04-07
 
 #### `FIX` fix: IP 프랜차이즈 우산 키워드 검색 결과 0건 문제 해결
-- **문제**: "마블", "아이언맨", "헐크", "어벤져스", "디씨", "스타워즈" 등 우산 키워드 입력 시 검색 결과가 비어있던 문제. 원인은 Rebrickable `/sets/?search=Marvel` API 가 세트 이름만 검색하고 테마 이름은 검색하지 않기 때문이며, 실제 세트 이름에 "Marvel" 이라는 단어가 거의 없음.
-- **해결**: `src/utils/searchDict.js` 에 `IP_SEARCH_MAP` 추가. 우산 키워드를 실제 세트 이름에 등장하는 캐릭터/서브 제품 키워드 배열로 매핑 (예: 마블 → ["Spider-Man","Iron Man","Avengers","Hulk","Captain America","Thor","Black Panther","Doctor Strange","Spidey","Guardians","Ant-Man"]).
-- `getIpSearchTerms(query)` 헬퍼 export — 한국어 raw 쿼리와 영어 번역 쿼리 모두 매칭.
-- `src/pages/SearchPage.js` `doSearch` 에 IP 분기 추가: 우산 키워드 매칭 시 모든 fan-out 키워드로 `searchSets` 를 병렬 호출하고 set_num 기준 dedupe 후 병합. 매칭되는 테마가 있으면 `filterSets({themeId})` 도 함께 호출하여 우선순위로 추가.
-- 커버 키워드: Marvel, Avengers, Iron Man, Hulk, Spider-Man, Captain America, Thor, Black Widow, Black Panther, Doctor Strange, Guardians, Ant-Man, DC, Superman, Wonder Woman, Aquaman, Flash, Joker, Batman, Star Wars, Mandalorian, Harry Potter, Disney, Frozen, Jurassic World, Indiana Jones, Super Mario, Minions, Lord of the Rings, Speed Champions 등 30+ 우산 키워드.
+- `IP_SEARCH_MAP` 추가 — 우산 키워드를 실제 세트 이름 키워드 배열로 매핑 후 fan-out 검색 + dedupe.
 
 #### `DOCS` docs: README 변경 이력 자동 누적 정책 명시
-- 앞으로 모든 변경사항은 push 시점에 README Changelog 섹션에 자동 기재됨을 명시.
 
 ### v0.5.1 — 2026-04-07
 
 #### `NEW` feat: 희소 가치 점수 (Scarcity Score) 분석 페이지
-- **새 라우트** `/scarcity` 추가 — 헤더 네비게이션에 "희소가치" 메뉴 신설.
-- `src/data/themeReturns.js` — 13개 주요 테마(Star Wars 12.5%, Modular 18.3%, Castle 15.0%, Creator Expert 14.2%, Icons 11.8%, Harry Potter 9.5%, Technic 6.2%, Architecture 8.7%, Ideas 16.4%, Marvel 7.1%, Disney 10.3%, BDP 13.5%, Other 5.0%)의 3년 평균 수익률 상수와 세트 번호/이름 기반 휴리스틱 분류기(`classifyTheme`).
-- `src/utils/scarcityScore.js` — 점수 알고리즘:
-  - `returnPct = (market - msrp) / msrp * 100`
-  - `themeDelta = returnPct - themeAvgPct`
-  - `exclusivityBonus = 20` (오래된 세트 / 2000 부품 이상 / BDP 일 때)
-  - `raw = 0.55*returnPct + 0.25*themeDelta + bonus`
-  - 최종 점수 = `100 / (1 + exp(-0.06 * (raw - 25)))` (소프트 시그모이드 정규화) → 0~100점 → S(≥80)/A(≥65)/B(≥50)/C(≥35)/D 등급.
-- `src/pages/ScarcityPage.js` — 제품 번호 입력 + "분석하기" 버튼 UI:
-  - allorigins.win CORS 프록시로 BrickEconomy 시세 조회 시도, 실패 시 테마 평균 기반 시뮬레이션.
-  - MSRP 폴백 체인: `prices.json` KRW → USD\*1400 → 부품 수 × ~155 KRW 추정.
-  - 진행 상태 라이브 로그 표시 (스피너 + 단계별 메시지).
-  - **Recharts** `LineChart` 두 개로 시각화: ① 과거 36개월 테마 평균 기반 가격 추이 (현재 시세 dot), ② 향후 12개월 예상 가격 곡선 (`ReferenceLine` 으로 현재가 강조).
-  - 결과 카드: 게이지 바(빨강→주황→노랑→초록→골드 그라데이션)에 점수 마커, 등급 색상 강조, MSRP/현재 시세/수익률/테마 평균/독점 여부 통계.
-  - 쿼리 파라미터 `?setNum=75192` 로 딥링크 자동 분석 지원.
-- `src/utils/i18n.js` — ko/en 번역 35+ 키 추가 (scarcityNavLabel, scarcityScoreTitle 등).
-- `src/App.js` — `/scarcity` 라우트 등록.
-- `src/components/Header.js` — 헤더 네비게이션에 희소가치 링크 추가.
-- `package.json` — `recharts ^2.12.7` 의존성 추가.
+- `/scarcity` 라우트 + 헤더 메뉴 + 13개 테마 평균 수익률 + 점수 알고리즘 + Recharts 차트 + 게이지 바.
+- 쿼리 파라미터 `?setNum=` 딥링크 지원.
 
 > ⚠️ **사용자 작업 필요**: 로컬에서 `npm install` 실행 후 `package-lock.json` 커밋 필요.
 
 ### v0.5.0 — 2026-04-07
 
 #### `NEW` feat: 일별 가격 스냅샷 + 제품별 가격 변동 차트
-- `src/data/priceHistoryIndex.json` — 모든 세트의 가격 시계열 인덱스 (`{generated, snapshotCount, series: {setNum: [{d, p}, ...]}}`). 연속 중복 가격은 앵커만 유지하도록 압축.
-- `src/data/prices-history/2026-04-07.json` — 첫 번째 일별 스냅샷 (`{date, source, prices: {setNum: krwPrice}}`).
-- `src/utils/priceHistory.js` — `getPriceHistory(setNum)` (변형 접미사 `-1` 자동 처리), `getPriceStats(history)` (min/max/first/latest/change/changePct), `getSnapshotCount()` 헬퍼.
-- `src/components/PriceHistoryChart.js` — Pure SVG 라인 차트 (520x170 viewBox, area fill rgba(0,102,204,0.08), line stroke #0066cc). 데이터 2점 미만이면 `null` 반환.
-- `src/pages/SetDetailPage.js` — `detail-actions` 와 `insSection` 사이에 `<PriceHistoryChart setNum={setNum}/>` 삽입.
-- `src/data/prices.json` — 해리포터 12개 세트 추가 (76446, 76423, 76419, 71043, 76405, 76391, 76402, 76420, 76421, 76428, 76430, 76431).
-- `scripts/fetch-prices.js` — `writeSnapshotAndIndex(data)` 함수 추가 (try/catch 비치명적), `--snapshot-only` 모드 추가, 시계열 압축 로직.
-- 의도적으로 외부 라이브러리(recharts/chart.js)를 사용하지 않고 Pure SVG 로 구현하여 번들 크기 영향 0.
+- `priceHistoryIndex.json`, `prices-history/YYYY-MM-DD.json`, `priceHistory.js`, `PriceHistoryChart.js` (Pure SVG).
+- 해리포터 12개 세트 가격 추가, `fetch-prices.js` 에 `--snapshot-only` 모드 + 시계열 압축.
 
-> ⚠️ **사용자 작업 필요**: `.github/workflows/auto-update-images.yml` 의 "Check for changes" 단계 `git add` 라인에 `src/data/priceHistoryIndex.json` 와 `src/data/prices-history/` 경로를 추가해야 매일 스냅샷이 누적됨 (PAT `workflow` 스코프 부족으로 자동 push 불가).
+> ⚠️ **사용자 작업 필요**: `auto-update-images.yml` 의 `git add` 라인에 `priceHistoryIndex.json` / `prices-history/` 추가 필요.
 
 ### v0.4.2 — 2026-04-07
 
 #### `NEW` ci: 주간 자동 업데이트 GitHub Actions 워크플로우
-- `.github/workflows/auto-update-images.yml` — 매주 일요일 03:00 UTC 에 자동 실행되는 워크플로우 추가
-- `scripts/fetch-prices.js` 와 `scripts/fetch-images.js` 를 순차 실행하여 `prices.json`, `legoImages.json` 자동 갱신
-- 변경사항 있으면 `main` 브랜치에 `[skip ci]` 커밋 자동 푸시
-- 이어서 `npm run build` + `peaceiris/actions-gh-pages@v4` 로 `gh-pages` 자동 재배포
-- 수동 트리거(`workflow_dispatch`)도 지원 — Actions 탭에서 "Run workflow" 클릭으로 즉시 실행 가능
-- README 에 "자동 업데이트 (GitHub Actions)" 섹션 신설
+- 매주 일요일 03:00 UTC cron + `workflow_dispatch` 수동 트리거 + gh-pages 자동 재배포.
 
 ### v0.4.1 — 2026-04-07
 
 #### `NEW` feat: 일반(비 BDP) 제품 멀티 이미지 갤러리
-- `scripts/fetch-images.js` — rebrickable.com 세트 페이지를 스크레이핑해 갤러리 이미지 ID를 수집하는 빌드 타임 스크립트 추가
-- `src/data/legoImages.json` — 일반 제품의 Rebrickable 갤러리 이미지 ID 데이터베이스 (빌드 타임 수집)
-- `SetDetailPage.js` — BDP → `legoImages` → 단일 이미지 순서로 폴백하여 일반 제품도 썸네일 스트립과 멀티 이미지 갤러리 표시
-- `package.json` — `npm run fetch-images` 스크립트 추가 (`--from-prices`, `--refresh` 옵션 지원)
-- Rebrickable에 등록된 기존 단일 이미지(`set_img_url`)가 수집된 ID와 겹치지 않으면 첫 번째 슬롯에 자동 삽입
-- README에 "갤러리 이미지 수집" 섹션과 TOC 링크 추가
+- `fetch-images.js` + `legoImages.json` + `SetDetailPage.js` 폴백 체인.
 
 ### v0.4.0 — 2026-04-07
 
-#### `NEW` feat: 제품 상세 이미지 갤러리 확대 및 썸네일 스트립
-- 메인 갤러리 이미지 크기 확대 (400px → 560px, aspect-ratio 4/3)
-- 슬라이드 점(dots) 네비게이션을 Rebrickable 스타일 썸네일 스트립(74x60)으로 교체
-- 썸네일은 Rebrickable CDN `230x180p` 변형 사용으로 로딩 최적화
-- 활성 썸네일 파란색 테두리 강조 + hover 효과
-- 모바일 반응형: 썸네일 64x52 축소, wrapper full-width
-- 모든 제품 상세 페이지(검색/신제품/펀딩/컬렉션/둘러보기)에 일괄 적용 (공유 `SetDetailPage` 컴포넌트)
-
-#### `NEW` feat: BDP 펀딩제품 갤러리 6장 이미지 + 한국어 부품/미니피규어 번역
-- BDP 제품 상세에 Rebrickable 갤러리 이미지 전체 표시 (이전에는 1~2장만)
-- `src/data/bdpImages.json` — BDP 63개 세트의 모든 갤러리 이미지 ID 사전 수집
-- `src/components/TranslatedName.js` — map 루프 내에서 useTranslatedName 훅 사용을 위한 래퍼 컴포넌트
-- 한국어 모드에서 제품명, 부품 이름, 미니피규어 이름 자동 번역 (모든 탭 공통)
-
-#### `FIX` fix: Rebrickable 이미지 갤러리 정확도 개선
-- BrickLink CDN 폴백 이미지 제거하여 Rebrickable과 정확히 일치시킴
-- Gold Mine Expedition 등 BDP 제품 이미지 수/종류 Rebrickable 기준 정합성 확보
-
-#### `NEW` feat: BDP 펀딩제품 가격 데이터 추가
-- BDP 제품 USD 가격 데이터 추가 (KRW 환산 표시)
-
-#### `DOCS` docs: README 목차 추가
-- GitHub에서 섹션/변경 이력으로 바로 이동 가능한 목차 링크 추가
+#### `NEW` feat: 제품 상세 이미지 갤러리 확대 및 썸네일 스트립 / BDP 한국어 번역 / Rebrickable 정합성 개선
 
 ### v0.3.1 — 2026-04-06
 
 #### `FIX` fix: 한국어 검색 로직 개선
-- 누락된 한국어 단어 추가
-- WORD_MAP이 SET_NUM_MAP prefix 매칭보다 먼저 실행되도록 순서 조정
 
 ### v0.3.0 — 2026-04-06
 
-#### `NEW` feat: 한국 레고 가격 표시
-- 세트 카드에 KRW 가격 표시 (소수점 제거, 한글 원화 기호)
-- 세트 상세 페이지에 가격 메타 정보 추가
-- 단종 제품은 "단종" 태그 표시
-- `scripts/fetch-prices.js` — 빌드 타임에 lego.com/ko-kr에서 JSON-LD 가격 데이터 수집
-- `src/data/prices.json` — 가격 데이터베이스 (커밋됨, 초기값 포함)
-- `src/utils/price.js` — 가격 포맷팅, 환율 변환, 검색 URL 유틸리티
-- `src/hooks/useLegoPrice.js` — React 훅으로 세트별 가격 조회
+#### `NEW` feat: 한국 레고 가격 표시 + `prices.json` 데이터베이스 + `useLegoPrice` 훅
 
 ### v0.2.0 — 2026-04-06
 
-#### `NEW` feat: 레고 모듈러 빌딩 전체 키워드 검색
-- 모듈러 빌딩 21종 전체 한국어 키워드 매핑 (카페코너, 그린그로서, 소방대, 펫샵, 타운홀, 팰리스시네마, 탐정사무소, 브릭뱅크 등)
-- SET_NUM_MAP으로 별명 검색 시 해당 제품번호 즉시 반환
-
-#### `NEW` feat: 펀딩제품 페이지 필터 기능
-- 연도별 셀렉트박스 필터 추가
-- 제품명/번호 검색 입력 필드 추가
-- 필터링 결과 카운트 표시 (전체 대비)
-
-#### `FIX` fix: 테마명 한국어 인코딩 깨짐 수정
-- translate.js에 100+ 테마명 하드코딩 번역 맵 추가 (THEME_NAME_MAP)
-- "반지의제왕", "해리포터" 등이 깨진 문자로 표시되던 문제 해결
-- MyMemory API 호출 전 하드코딩 맵 우선 체크
-
-#### `NEW` feat: 한국어 별명 → 제품번호 직접 검색 (SET_NUM_MAP)
-- 올드 캐슬 별명: 용마성(6082), 비룡성(6086), 박쥐성(6097), 유령성(6081), 사자성(6080) 등
-- 해적: 블랙펄(10365), 잭스패로우, 캐리비안의해적
-- 인기 세트: 타이타닉(10294), 콜로세움(10276), 에펠탑(10307) 등
-- SearchPage에서 SET_NUM_MAP 매핑된 제품번호로 즉시 검색
+#### `NEW` feat: 레고 모듈러 빌딩 전체 키워드 검색 + 펀딩제품 페이지 필터 + 테마명 인코딩 수정 + SET_NUM_MAP 별명 검색
 
 ### v0.1.1 — 2026-04-06
 
-#### `NEW` feat: BDP 펀딩제품 탭
-- BrickLink Designer Program 제품 자동 감지 및 시리즈 탭 표시
-- 시리즈별/전체 보기 + 무한 스크롤
-
-#### `NEW` feat: 이미지 갤러리 + 스와이프
-- 제품 상세에 Rebrickable + BrickLink CDN 멀티 이미지 로드
-- 터치 스와이프, 화살표 버튼, 도트 인디케이터, 카운터 뱃지
-- 팝업에서도 스와이프/키보드 지원
-
-#### `FIX` fix: 로고/검색 클릭 시 검색 상태 초기화
-- sessionStorage 클리어 + resetSearch 이벤트로 SearchPage 상태 리셋
-
-#### `FIX` fix: X 클리어 버튼 투명 배경 처리
+#### `NEW` feat: BDP 펀딩제품 탭 + 이미지 갤러리 + 스와이프 + 검색 상태 초기화
 
 ### v0.1.0 — 2026-04-06
 
-#### `NEW` feat: 부품 카테고리 한국어 번역 + 검색 결과 무한 스크롤 + 카테고리별 그룹화
-- PartsSearchPage: 부품 카테고리명 한국어 자동 번역 (MyMemory API + localStorage 캐싱)
-- PartsSearchPage: 검색 결과를 카테고리별로 그룹화하여 섹션으로 표시
-- PartsSearchPage: 페이지네이션 → 무한 스크롤 (IntersectionObserver)
-- SearchPage: 페이지네이션 → 무한 스크롤 (IntersectionObserver)
-- SearchPage: 테마명 한국어 번역 지원 (MyMemory API)
-
-#### `NEW` feat: 검색 결과 테마별 그룹화 표시
-- 검색 결과를 theme_id 기준으로 그룹화하여 테마별 섹션으로 표시
-
-#### `NEW` feat: 부품 검색 탭 추가 (PartsSearchPage + PartDetailPage)
-- 부품 이름/번호로 검색 기능 추가
-- 부품 카테고리 필터 드롭다운 지원
-- 부품 상세 페이지: 사용 가능한 색상, 엘리먼트 ID, 포함된 세트 목록
-
-#### `NEW` feat: 한국어 자연어 검색 + 100+ 키워드 매핑
-- 한국어→영어 검색 키워드 사전 추가 (searchDict.js)
-
-#### `NEW` feat: 테마명 번역 + 제품명 한국어 번역
-- MyMemory Translation API 연동
-
-#### `NEW` feat: LEGO Finder React 앱 초기 구현
-- 제품번호/이름 검색, 테마/연도별 필터, 세트 상세, 컬렉션 & 위시리스트, GitHub Pages 배포
+#### `NEW` feat: LEGO Finder React 앱 초기 구현 + 한국어 자연어 검색 + 부품 검색 탭 + 무한 스크롤 + 카테고리별 그룹화
 
 ---
 
