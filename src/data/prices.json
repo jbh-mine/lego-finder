@@ -36,6 +36,7 @@
     "21323": { "price": 0, "name": "Grand Piano", "discontinued": true },
     "21327": { "price": 0, "name": "Typewriter", "discontinued": true },
     "10365": { "price": 0, "name": "Black Pearl", "note": "BDP" },
+    "76300": { "price": 409900, "name": "Batman: Arkham Asylum" },
     "76459": { "price": 27900, "name": "Hagrid & Harry's Privet Drive Escape" },
     "76460": { "price": 21900, "name": "Hogwarts Castle: Sorting Hat Ceremony" },
     "76461": { "price": 41900, "name": "Cornish Pixie" },
