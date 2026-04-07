@@ -15,7 +15,9 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [배포](#배포)
 - [가격 데이터 업데이트](#가격-데이터-업데이트)
 - [갤러리 이미지 수집](#갤러리-이미지-수집)
+- [자동 업데이트 (GitHub Actions)](#자동-업데이트-github-actions)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.4.2 — 2026-04-07](#v042--2026-04-07)
   - [v0.4.1 — 2026-04-07](#v041--2026-04-07)
   - [v0.4.0 — 2026-04-07](#v040--2026-04-07)
   - [v0.3.1 — 2026-04-06](#v031--2026-04-06)
@@ -48,6 +50,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **내 컬렉션 관리** — localStorage 기반 컬렉션 및 위시리스트
 - **한/영 전환** — 헤더 토글 버튼으로 언어 전환
 - **모바일 반응형** — 햄버거 메뉴, 터치 영역 확대 등 모바일 최적화
+- **주간 자동 업데이트** — GitHub Actions로 매주 일요일 가격 & 갤러리 이미지 자동 수집 및 재배포
 
 ---
 
@@ -59,6 +62,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **BrickLink CDN** — 제품 대체 이미지 (SN/ON)
 - **MyMemory Translation API** — 제품명/테마명/카테고리명 한국어 번역 (localStorage 캐싱)
 - **GitHub Pages** (gh-pages) 배포
+- **GitHub Actions** — 주간 데이터 자동 수집 + 자동 배포 파이프라인
 
 ---
 
@@ -77,9 +81,9 @@ src/
 ├── contexts/
 │   └── LanguageContext.js  # 언어 상태 관리 (Context API)
 ├── data/
-│   ├── prices.json         # 한국 레고 가격 데이터베이스
+│   ├── prices.json         # 한국 레고 가격 데이터베이스 (자동 갱신)
 │   ├── bdpImages.json      # BDP 갤러리 이미지 ID 사전 수집
-│   └── legoImages.json     # 일반(비 BDP) 세트 갤러리 이미지 ID 사전 수집
+│   └── legoImages.json     # 일반(비 BDP) 세트 갤러리 이미지 ID (자동 갱신)
 ├── pages/
 │   ├── SearchPage.js       # 세트 검색 (테마별 그룹화 + 무한스크롤 + 한국어 자연어 + SET_NUM_MAP)
 │   ├── PartsSearchPage.js  # 부품 검색 (카테고리별 그룹화 + 무한스크롤 + 한국어 번역)
@@ -102,6 +106,9 @@ src/
 scripts/
 ├── fetch-prices.js         # 빌드 타임 lego.com/ko-kr JSON-LD 가격 수집
 └── fetch-images.js         # 빌드 타임 rebrickable.com 세트 페이지 갤러리 이미지 ID 수집
+
+.github/workflows/
+└── auto-update-images.yml  # 주간 자동 데이터 갱신 + 자동 배포 워크플로우
 ```
 
 ---
@@ -125,7 +132,7 @@ npm run deploy
 
 ## 가격 데이터 업데이트
 
-빌드 시간에 한국 레고 가격을 자동 갱신하려면:
+빌드 시간에 한국 레고 가격을 수동 갱신하려면:
 
 ```bash
 # 특정 세트들의 가격 가져오기
@@ -162,9 +169,56 @@ npm run fetch-images -- --refresh
 
 ---
 
+## 자동 업데이트 (GitHub Actions)
+
+수동으로 스크립트를 실행하지 않아도 되도록 **주간 자동 업데이트 워크플로우**가 구성되어 있습니다.
+
+**워크플로우 파일**: `.github/workflows/auto-update-images.yml`
+
+**동작 방식**:
+
+1. **매주 일요일 03:00 UTC (12:00 KST)** 에 자동 실행 (cron)
+2. 필요 시 **수동 실행**도 가능 (Actions 탭 → "Auto-update LEGO images & prices" → "Run workflow")
+3. `npm run fetch-prices -- --refresh` 로 `prices.json` 재수집 (lego.com/ko-kr)
+4. `npm run fetch-images -- --from-prices` 로 `legoImages.json` 재수집 (rebrickable.com)
+5. 변경사항이 있으면 `main` 에 `chore(data): weekly auto-refresh ...` 커밋 자동 푸시
+6. `npm run build` 후 `peaceiris/actions-gh-pages` 로 `gh-pages` 브랜치에 자동 배포
+
+**최초 설정 방법** (이 워크플로우 파일은 GitHub API에서 `workflow` 스코프가 필요하므로 직접 커밋이 필요합니다):
+
+```bash
+# 1. auto-update-images.yml 을 .github/workflows/ 아래에 배치
+mkdir -p .github/workflows
+cp /path/to/auto-update-images.yml .github/workflows/
+
+# 2. 커밋 & 푸시
+git add .github/workflows/auto-update-images.yml
+git commit -m "ci: add weekly auto-update workflow"
+git push origin main
+
+# 3. GitHub 저장소 설정 확인
+#    Settings → Actions → General → Workflow permissions
+#    "Read and write permissions" 체크 (커밋/푸시를 허용)
+#    Settings → Pages → Build and deployment → Source: "Deploy from a branch" (gh-pages)
+```
+
+**수동 실행 방법**: GitHub 저장소 → Actions 탭 → "Auto-update LEGO images & prices" → "Run workflow" 버튼
+
+---
+
 ## 변경 이력 (Changelog)
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다.
+
+### v0.4.2 — 2026-04-07
+
+#### `NEW` ci: 주간 자동 업데이트 GitHub Actions 워크플로우
+- `.github/workflows/auto-update-images.yml` — 매주 일요일 03:00 UTC 에 자동 실행되는 워크플로우 추가
+- `scripts/fetch-prices.js` 와 `scripts/fetch-images.js` 를 순차 실행하여 `prices.json`, `legoImages.json` 자동 갱신
+- 변경사항 있으면 `main` 브랜치에 `[skip ci]` 커밋 자동 푸시
+- 이어서 `npm run build` + `peaceiris/actions-gh-pages@v4` 로 `gh-pages` 자동 재배포
+- 수동 트리거(`workflow_dispatch`)도 지원 — Actions 탭에서 "Run workflow" 클릭으로 즉시 실행 가능
+- README 에 "자동 업데이트 (GitHub Actions)" 섹션 신설
 
 ### v0.4.1 — 2026-04-07
 
