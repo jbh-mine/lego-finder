@@ -14,7 +14,9 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [설치 및 실행](#설치-및-실행)
 - [배포](#배포)
 - [가격 데이터 업데이트](#가격-데이터-업데이트)
+- [갤러리 이미지 수집](#갤러리-이미지-수집)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.4.1 — 2026-04-07](#v041--2026-04-07)
   - [v0.4.0 — 2026-04-07](#v040--2026-04-07)
   - [v0.3.1 — 2026-04-06](#v031--2026-04-06)
   - [v0.3.0 — 2026-04-06](#v030--2026-04-06)
@@ -37,7 +39,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **부품 카테고리 한국어 번역** — 한국어 선택 시 부품 카테고리명 자동 번역
 - **신제품 탭** — 최신 레고 신제품 연도별 조회
 - **펀딩제품(BDP) 탭** — BrickLink Designer Program 제품 시리즈별 조회, 연도 필터, 이름 검색
-- **이미지 갤러리 + 스와이프** — 제품 상세에서 Rebrickable + BrickLink CDN 멀티 이미지, 터치 스와이프, 팝업 스와이프
+- **이미지 갤러리 + 스와이프** — 제품 상세에서 Rebrickable 멀티 이미지(BDP + 일반 제품 모두), 터치 스와이프, 썸네일 스트립, 팝업 스와이프
 - **무한 스크롤** — 검색/부품/둘러보기 모두 스크롤 시 데이터 자동 로드
 - **테마/연도 필터링** — 테마별, 연도별 브라우징 (테마명 한국어 번역 지원)
 - **세트 상세 정보** — 부품 목록, 미니피규어, 색상 정보 확인
@@ -76,7 +78,8 @@ src/
 │   └── LanguageContext.js  # 언어 상태 관리 (Context API)
 ├── data/
 │   ├── prices.json         # 한국 레고 가격 데이터베이스
-│   └── bdpImages.json      # BDP 갤러리 이미지 ID 사전 수집
+│   ├── bdpImages.json      # BDP 갤러리 이미지 ID 사전 수집
+│   └── legoImages.json     # 일반(비 BDP) 세트 갤러리 이미지 ID 사전 수집
 ├── pages/
 │   ├── SearchPage.js       # 세트 검색 (테마별 그룹화 + 무한스크롤 + 한국어 자연어 + SET_NUM_MAP)
 │   ├── PartsSearchPage.js  # 부품 검색 (카테고리별 그룹화 + 무한스크롤 + 한국어 번역)
@@ -95,6 +98,10 @@ src/
     ├── price.js            # 가격 유틸리티 (KRW 포맷팅, 환율, 검색)
     ├── i18n.js             # 한/영 UI 번역 리소스
     └── collection.js       # localStorage 컬렉션 관리
+
+scripts/
+├── fetch-prices.js         # 빌드 타임 lego.com/ko-kr JSON-LD 가격 수집
+└── fetch-images.js         # 빌드 타임 rebrickable.com 세트 페이지 갤러리 이미지 ID 수집
 ```
 
 ---
@@ -132,9 +139,42 @@ npm run fetch-prices --refresh
 
 ---
 
+## 갤러리 이미지 수집
+
+일반(비 BDP) 제품의 갤러리 이미지를 Rebrickable에서 미리 수집하여 제품 상세 페이지에서 멀티 이미지 갤러리로 표시할 수 있습니다.
+
+```bash
+# 특정 세트들의 갤러리 이미지 ID 가져오기
+npm run fetch-images 10294-1 42151-1 75192-1
+
+# 등록된 가격 목록(prices.json)의 모든 세트에 대해 한번에 수집
+npm run fetch-images -- --from-prices
+
+# 이미 legoImages.json에 있는 항목 새로고침
+npm run fetch-images -- --refresh
+```
+
+생성된 `src/data/legoImages.json`은 빌드 타임에 번들에 포함되며, `SetDetailPage`는 다음 순서로 이미지를 로드합니다:
+
+1. BDP 세트 → `bdpImages.json`
+2. 일반 세트 → `legoImages.json` (여러 장이면 썸네일 스트립 표시)
+3. 폴백 → Rebrickable `set_img_url` 단일 이미지
+
+---
+
 ## 변경 이력 (Changelog)
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다.
+
+### v0.4.1 — 2026-04-07
+
+#### `NEW` feat: 일반(비 BDP) 제품 멀티 이미지 갤러리
+- `scripts/fetch-images.js` — rebrickable.com 세트 페이지를 스크레이핑해 갤러리 이미지 ID를 수집하는 빌드 타임 스크립트 추가
+- `src/data/legoImages.json` — 일반 제품의 Rebrickable 갤러리 이미지 ID 데이터베이스 (빌드 타임 수집)
+- `SetDetailPage.js` — BDP → `legoImages` → 단일 이미지 순서로 폴백하여 일반 제품도 썸네일 스트립과 멀티 이미지 갤러리 표시
+- `package.json` — `npm run fetch-images` 스크립트 추가 (`--from-prices`, `--refresh` 옵션 지원)
+- Rebrickable에 등록된 기존 단일 이미지(`set_img_url`)가 수집된 ID와 겹치지 않으면 첫 번째 슬롯에 자동 삽입
+- README에 "갤러리 이미지 수집" 섹션과 TOC 링크 추가
 
 ### v0.4.0 — 2026-04-07
 
