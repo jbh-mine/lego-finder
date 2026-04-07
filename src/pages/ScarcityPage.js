@@ -7,6 +7,7 @@ import { searchSets, getSetDetail } from '../utils/api';
 import { translateSearchQuery, getIpSearchTerms } from '../utils/searchDict';
 import { computeScarcityScore } from '../utils/scarcityScore';
 import { classifyTheme, getThemeReturn } from '../data/themeReturns';
+import { getKrwPrice, getLegoKrProductUrl } from '../utils/price';
 import priceData from '../data/prices.json';
 
 var PROXY = 'https://api.allorigins.win/raw?url=';
@@ -20,15 +21,27 @@ function fmtKRW(v) {
   return String.fromCharCode(8361) + Math.round(v).toLocaleString('ko-KR');
 }
 
+// Canonical Korean MSRP lookup. Prefers the same source as SearchPage (getKrwPrice),
+// falling back to the raw priceData.prices entry (USD-only items become KRW estimates).
+// Returns null when nothing is known so caller can decide whether to estimate from parts.
 function lookupMsrp(setNum) {
   var n = stripVariant(setNum);
+  // 1) Canonical KRW source
+  try {
+    var krw = getKrwPrice(n);
+    if (krw && krw.price > 0) {
+      return { value: krw.price, source: 'LEGO Korea \uC815\uAC00 (prices.json)', official: true };
+    }
+  } catch (e) {}
+  // 2) Raw entry (covers USD-only BDP items)
   var entry = priceData.prices[n];
-  if (!entry) return null;
-  if (typeof entry.price === 'number' && entry.price > 0) {
-    return { value: entry.price, source: 'prices.json (KRW)' };
-  }
-  if (typeof entry.usd === 'number' && entry.usd > 0) {
-    return { value: entry.usd * USD_TO_KRW_FALLBACK, source: 'prices.json (USD est)' };
+  if (entry) {
+    if (typeof entry.price === 'number' && entry.price > 0) {
+      return { value: entry.price, source: 'LEGO Korea \uC815\uAC00 (prices.json)', official: true };
+    }
+    if (typeof entry.usd === 'number' && entry.usd > 0) {
+      return { value: Math.round(entry.usd * USD_TO_KRW_FALLBACK), source: 'BDP USD x ' + USD_TO_KRW_FALLBACK + ' (\uD658\uC0B0)', official: false };
+    }
   }
   return null;
 }
@@ -97,7 +110,12 @@ function ScarcityPage() {
       var msrp = lookupMsrp(setNum);
       if (!msrp) {
         if (detail && detail.num_parts > 0) {
-          msrp = { value: detail.num_parts * 155, source: t('scarcityMsrpEstimated') };
+          msrp = {
+            value: detail.num_parts * 155,
+            source: t('scarcityMsrpEstimated') + ' (' + detail.num_parts + ' x \u20A9155)',
+            official: false,
+            estimated: true
+          };
           pushStatus(t('scarcityStatusMsrpEstimated'));
         } else {
           throw new Error(t('scarcityErrorNoMsrp'));
@@ -380,12 +398,30 @@ function ScarcityPage() {
       )
     );
 
+    // Banner shown when MSRP is not the official LEGO Korea price
+    var msrpWarnEl = (!result.msrp.official) ? React.createElement('div', {
+      style: {
+        background: '#fff8e1', border: '1px solid #ffd88a', color: '#7a5200',
+        padding: '8px 12px', borderRadius: 6, marginBottom: 12, fontSize: '0.82rem'
+      }
+    },
+      '\u26A0\uFE0F ' + (result.msrp.estimated
+        ? '\uC774 \uC81C\uD488\uC740 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uC5D0 \uC815\uAC00 \uC815\uBCF4\uAC00 \uC5C6\uC5B4 \uBD80\uD488 \uC218 \uAE30\uBC18\uC73C\uB85C \uCD94\uC815\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uC2E4\uC81C \uC815\uAC00\uC640 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.'
+        : '\uC774 \uC81C\uD488\uC740 \uD658\uC735 \uD658\uC0B0\uAC12\uC774\uBA70 \uC2E4\uC81C \uD55C\uAD6D \uC815\uAC00\uC640 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.') + ' ',
+      React.createElement('a', {
+        href: getLegoKrProductUrl(result.setNum),
+        target: '_blank', rel: 'noopener noreferrer',
+        style: { color: '#0066cc', fontWeight: 600 }
+      }, '\u2192 \uB808\uACE0 \uACF5\uC2DD \uD55C\uAD6D \uC0AC\uC774\uD2B8\uC5D0\uC11C \uC815\uAC00 \uD655\uC778')
+    ) : null;
+
     var statsEl = React.createElement('div', { style: cardStyle },
       React.createElement('div', { style: rowStyle },
         React.createElement('div', { style: { flex: '1 1 140px' } },
           React.createElement('div', { style: labelStyle }, t('scarcityMsrp')),
           React.createElement('div', { style: valueStyle }, fmtKRW(result.msrp.value)),
-          React.createElement('div', { style: { fontSize: '0.7rem', color: '#999' } }, result.msrp.source)
+          React.createElement('div', { style: { fontSize: '0.7rem', color: result.msrp.official ? '#0a8a4e' : '#c97a00' } },
+            (result.msrp.official ? '\u2713 ' : '\u26A0 ') + result.msrp.source)
         ),
         React.createElement('div', { style: { flex: '1 1 140px' } },
           React.createElement('div', { style: labelStyle }, t('scarcityMarket')),
@@ -475,6 +511,7 @@ function ScarcityPage() {
     resultEl = React.createElement('div', null,
       backBtn,
       setHeaderEl,
+      msrpWarnEl,
       gaugeEl,
       statsEl,
       pastChartEl,
