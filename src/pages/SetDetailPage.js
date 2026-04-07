@@ -12,6 +12,7 @@ import Pagination from '../components/Pagination';
 import { Loading, ErrorMessage } from '../components/Loading';
 import TranslatedName from '../components/TranslatedName';
 import bdpImagesData from '../data/bdpImages.json';
+import legoImagesData from '../data/legoImages.json';
 import '../styles/price.css';
 
 var PH = 'https://rebrickable.com/static/img/nil_mf.jpg';
@@ -72,15 +73,30 @@ function SetDetailPage() {
 
   // Load images from Rebrickable (match Rebrickable set page exactly)
   // For BDP sets, use pre-fetched gallery image IDs from bdpImages.json
+  // For regular sets, fallback to legoImages.json (also pre-fetched via scripts/fetch-images.js)
   useEffect(function() {
     if (!set) return;
     var images = [];
     var bdpIds = bdpImagesData.sets && bdpImagesData.sets[set.set_num];
+    var legoIds = legoImagesData.sets && legoImagesData.sets[set.set_num];
     if (bdpIds && bdpIds.length > 0) {
-      // Build gallery URLs from Rebrickable CDN using pre-fetched IDs
+      // Build gallery URLs from Rebrickable CDN using pre-fetched IDs (BDP sets)
       images = bdpIds.map(function(id) {
         return 'https://cdn.rebrickable.com/media/thumbs/sets/' + set.set_num + '/' + id + '.jpg/1000x800p.jpg';
       });
+    } else if (legoIds && legoIds.length > 0) {
+      // Regular (non-BDP) sets: use pre-fetched Rebrickable gallery IDs
+      images = legoIds.map(function(id) {
+        return 'https://cdn.rebrickable.com/media/thumbs/sets/' + set.set_num + '/' + id + '.jpg/1000x800p.jpg';
+      });
+      // If the primary set_img_url isn't represented, prepend it as the first image
+      if (set.set_img_url && images.indexOf(set.set_img_url) === -1) {
+        var primaryIdMatch = set.set_img_url.match(/\/sets\/[^/]+\/(\d+)\.jpg\//);
+        var primaryId = primaryIdMatch ? primaryIdMatch[1] : null;
+        if (!primaryId || legoIds.indexOf(primaryId) === -1) {
+          images.unshift(set.set_img_url);
+        }
+      }
     } else if (set.set_img_url) {
       images.push(set.set_img_url);
     }
