@@ -12,6 +12,7 @@ import NewProductsPage from './pages/NewProductsPage';
 import FundingPage from './pages/FundingPage';
 import MocsPage from './pages/MocsPage';
 import MocDetailPage from './pages/MocDetailPage';
+import ScarcityPage from './pages/ScarcityPage';
 import './styles/App.css';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
             <Route path="/funding" element={<FundingPage />} />
             <Route path="/mocs" element={<MocsPage />} />
             <Route path="/moc/:mocNum" element={<MocDetailPage />} />
+            <Route path="/scarcity" element={<ScarcityPage />} />
           </Routes>
         </main>
       </Router>
