@@ -1,0 +1,316 @@
+/* ============================================================
+ * LEGO Brick / Baseplate aesthetic overlay
+ *
+ * Loaded AFTER App.css and theme-dark.css so it can override
+ * border-radius and add brick-stud decorations using class
+ * selectors that already exist in the markup.
+ *
+ * Design tokens:
+ *   --brick-radius        : 6px  (LEGO brick rounding feel: 4~8px range)
+ *   --brick-stud-color    : top-row stud pseudo dots
+ *   --brick-shadow        : subtle bottom shadow that mimics a stud edge
+ * ============================================================ */
+
+:root {
+  --brick-radius: 6px;
+  --brick-radius-sm: 4px;
+  --brick-radius-lg: 8px;
+  --brick-stud-color: rgba(255, 255, 255, 0.55);
+  --brick-stud-shadow: rgba(0, 0, 0, 0.18);
+  --brick-shadow: 0 2px 0 rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+  --baseplate-dot: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] {
+  --brick-stud-color: rgba(255, 255, 255, 0.18);
+  --brick-stud-shadow: rgba(0, 0, 0, 0.6);
+  --brick-shadow: 0 2px 0 rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.35);
+  --baseplate-dot: rgba(255, 255, 255, 0.04);
+}
+
+/* ----- Subtle baseplate dot pattern on the page background ----- */
+body {
+  background-image:
+    radial-gradient(circle, var(--baseplate-dot) 1.4px, transparent 1.6px);
+  background-size: 22px 22px;
+  background-attachment: fixed;
+}
+
+/* ----- Card border-radius normalization (4-8px LEGO feel) ----- */
+.set-card,
+.part-result-card,
+.set-detail,
+.search-section,
+.search-results-summary,
+.filter-section,
+.collection-stats,
+.error-message,
+.ins-card,
+.part-card,
+.new-products-source-notice,
+.funding-info-notice,
+.moc-card-link {
+  border-radius: var(--brick-radius) !important;
+}
+
+.set-card-img,
+.part-result-img,
+.set-detail-img,
+.image-gallery,
+.gallery-thumb {
+  border-radius: var(--brick-radius-sm) !important;
+}
+
+/* Pill / button rounding stays slightly tighter so it reads as a "brick" */
+.new-year-tab,
+.moc-sort-tab,
+.funding-series-tab,
+.collection-tabs button,
+.pagination button,
+.theme-more button,
+.back-btn,
+.btn-icon,
+.search-bar input,
+.search-sort-select,
+.filter-group select,
+.filter-group input,
+.moc-search-form input,
+.moc-filter-row select,
+.funding-year-select,
+.funding-search-input {
+  border-radius: var(--brick-radius-sm) !important;
+}
+
+/* ----- Brick stud row on top of every set card -----
+ * 4 small dots applied via the ::before pseudo-element so we
+ * don't need to touch any JSX. The stud row is intentionally
+ * subtle (not full LEGO logo) so it doesn't compete with the
+ * product image. */
+.set-card,
+.moc-card-link {
+  position: relative;
+  box-shadow: var(--brick-shadow);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.set-card::before,
+.moc-card-link::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  background-image:
+    radial-gradient(circle at 12px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px),
+    radial-gradient(circle at 36px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px),
+    radial-gradient(circle at 60px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px),
+    radial-gradient(circle at 84px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px);
+  pointer-events: none;
+  opacity: 0.85;
+  z-index: 1;
+}
+
+.set-card:hover,
+.moc-card-link:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.14),
+    0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* ----- Bento grid utility classes -----
+ * Use on a wrapper div around result blocks to get a varied,
+ * brick-tray inspired layout. Cells flow into 12 columns and
+ * each child can request a span via data-bento-* attributes
+ * or the .bento-* helper classes. */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.bento-cell {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: var(--brick-radius);
+  padding: 16px;
+  box-shadow: var(--brick-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.bento-cell::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  background-image:
+    radial-gradient(circle at 12px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px),
+    radial-gradient(circle at 36px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px),
+    radial-gradient(circle at 60px 3px, var(--brick-stud-color) 2.4px, transparent 2.8px);
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.bento-cell-content {
+  position: relative;
+  z-index: 2;
+  margin-top: 8px;
+}
+
+/* Cell sizing helpers — used by ScarcityPage result layout */
+.bento-w-3  { grid-column: span 3; }
+.bento-w-4  { grid-column: span 4; }
+.bento-w-5  { grid-column: span 5; }
+.bento-w-6  { grid-column: span 6; }
+.bento-w-7  { grid-column: span 7; }
+.bento-w-8  { grid-column: span 8; }
+.bento-w-12 { grid-column: span 12; }
+
+@media (max-width: 1024px) {
+  .bento-w-3, .bento-w-4, .bento-w-5 { grid-column: span 6; }
+  .bento-w-7, .bento-w-8             { grid-column: span 12; }
+}
+@media (max-width: 640px) {
+  .bento-grid     { gap: 10px; }
+  .bento-w-3, .bento-w-4, .bento-w-5,
+  .bento-w-6, .bento-w-7, .bento-w-8 { grid-column: span 12; }
+}
+
+/* ============================================================
+ * Stacked LEGO brick gauge (replaces flat gradient gauge bar)
+ *
+ * Markup expected (created by ScarcityPage):
+ *   <div class="brick-stack" data-score="73">
+ *     <div class="brick-stack-track">
+ *       <div class="brick-stack-fill" style="height:73%"></div>
+ *     </div>
+ *     <div class="brick-stack-label">73 / 100</div>
+ *   </div>
+ *
+ * The fill is a vertical stack of 10 colored "bricks" rendered
+ * via repeating-linear-gradient so we don't need 10 DOM nodes,
+ * and the height is animated so the bricks appear to "stack up".
+ * ============================================================ */
+
+.brick-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.brick-stack-track {
+  width: 64px;
+  height: 220px;
+  background: var(--color-surface-soft, #f5f5f5);
+  border: 2px solid var(--color-border, #ddd);
+  border-radius: var(--brick-radius);
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.brick-stack-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  /* Each brick is 22px tall (10 bricks = 220px); the alternating
+   * dark line creates the stud-row separation between bricks. */
+  background:
+    repeating-linear-gradient(
+      to top,
+      var(--brick-color, #ffd500) 0px,
+      var(--brick-color, #ffd500) 18px,
+      rgba(0, 0, 0, 0.18) 18px,
+      rgba(0, 0, 0, 0.18) 22px
+    );
+  transition: height 0.7s cubic-bezier(0.34, 1.32, 0.64, 1);
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+}
+
+/* Score-band brick colors (LEGO palette) */
+.brick-stack[data-grade="S"] .brick-stack-fill { --brick-color: #ffd500; } /* gold */
+.brick-stack[data-grade="A"] .brick-stack-fill { --brick-color: #5ac35a; } /* green */
+.brick-stack[data-grade="B"] .brick-stack-fill { --brick-color: #4a9eff; } /* blue */
+.brick-stack[data-grade="C"] .brick-stack-fill { --brick-color: #ff8a3d; } /* orange */
+.brick-stack[data-grade="D"] .brick-stack-fill { --brick-color: #d6432f; } /* red */
+
+.brick-stack-label {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-text, #222);
+}
+
+/* ============================================================
+ * Brick badge for grade icons (S/A/B/C/D)
+ *
+ * A 2x1 LEGO brick rendered in pure CSS — colored body with
+ * two studs on top and the grade letter centered.
+ * ============================================================ */
+
+.brick-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 36px;
+  border-radius: var(--brick-radius-sm);
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  box-shadow:
+    inset 0 -3px 0 rgba(0, 0, 0, 0.18),
+    0 2px 0 rgba(0, 0, 0, 0.18),
+    0 3px 8px rgba(0, 0, 0, 0.15);
+  margin-top: 6px;
+}
+
+.brick-badge::before,
+.brick-badge::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  width: 14px;
+  height: 8px;
+  border-radius: 50% 50% 30% 30% / 70% 70% 30% 30%;
+  background: inherit;
+  box-shadow:
+    inset 0 -2px 0 rgba(0, 0, 0, 0.18),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.brick-badge::before { left: 12px; }
+.brick-badge::after  { right: 12px; }
+
+.brick-badge[data-grade="S"] { background: #ffd500; color: #1d1d1b; text-shadow: none; }
+.brick-badge[data-grade="A"] { background: #5ac35a; }
+.brick-badge[data-grade="B"] { background: #4a9eff; }
+.brick-badge[data-grade="C"] { background: #ff8a3d; }
+.brick-badge[data-grade="D"] { background: #d6432f; }
+
+/* ============================================================
+ * Status pill: green brick = New, gray brick = Retired
+ * ============================================================ */
+
+.brick-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 10px;
+  border-radius: var(--brick-radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+}
+.brick-status.new      { background: #5ac35a; }
+.brick-status.retired  { background: #8a91a0; }
+.brick-status.coming   { background: #4a9eff; }
