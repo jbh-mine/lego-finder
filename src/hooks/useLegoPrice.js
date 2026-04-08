@@ -26,12 +26,16 @@ function useLegoPrice(setNum) {
   var formatted = priceInfo && priceInfo.price > 0 ? formatKRW(priceInfo.price) : null;
   var isDiscontinued = priceInfo ? priceInfo.discontinued : false;
   var fromUsd = priceInfo ? priceInfo.fromUsd : null;
+  var priceFromUsd = priceInfo ? !!priceInfo.priceFromUsd : false;
+  var year = priceInfo ? priceInfo.year : null;
 
   return {
     priceInfo: priceInfo,
     formatted: formatted,
     isDiscontinued: isDiscontinued,
     fromUsd: fromUsd,
+    priceFromUsd: priceFromUsd,
+    year: year,
     loading: loading,
   };
 }
