@@ -37,8 +37,28 @@
   font-weight: 600;
 }
 
+/* BDP "당시 환율 적용" badge — historical USD→KRW conversion */
+.price-fx-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #5a4a00;
+  background: #fff3c4;
+  border: 1px solid #f0d97a;
+  border-radius: 8px;
+  vertical-align: middle;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
 @media (max-width: 600px) {
   .detail-price {
     font-size: 1.1rem;
+  }
+  .price-fx-badge {
+    font-size: 0.6rem;
+    padding: 1px 5px;
   }
 }
