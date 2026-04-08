@@ -17,6 +17,10 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [갤러리 이미지 수집](#갤러리-이미지-수집)
 - [자동 업데이트 (GitHub Actions)](#자동-업데이트-github-actions)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.5.21 — 2026-04-08](#v0521--2026-04-08)
+  - [v0.5.20 — 2026-04-08](#v0520--2026-04-08)
+  - [v0.5.19 — 2026-04-08](#v0519--2026-04-08)
+  - [v0.5.18 — 2026-04-08](#v0518--2026-04-08)
   - [v0.5.17 — 2026-04-07](#v0517--2026-04-07)
   - [v0.5.16 — 2026-04-07](#v0516--2026-04-07)
   - [v0.5.15 — 2026-04-07](#v0515--2026-04-07)
@@ -54,7 +58,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **IP 프랜차이즈 우산 키워드 검색** — "마블", "어벤져스", "디씨", "스타워즈", "해리포터", "디즈니", "쥬라기월드" 등을 입력하면 Spider-Man / Iron Man / Hulk / Avengers / Arkham 등 실제 세트명 키워드로 자동 분기 검색하여 결과 병합
 - **세트 검색 다축 필터 + URL 공유** — 부품 수 / 출시 연도 / 가격(KRW) 범위, 단종 여부, 보유·위시리스트 상태로 검색 결과를 다중 필터링하고 URL 쿼리스트링과 동기화하여 공유 가능
 - **희소 가치 점수 (Scarcity Score)** — 헤더 메뉴 → "희소가치"에서 한글/영문 제품명 또는 제품번호로 검색하면 결과 목록이 나오고, 항목을 클릭하면 MSRP·현재 시세·테마 평균 수익률(3/5/10/20/30년 선택)·독점 구성 여부를 종합해 0~100점/S~D 등급을 계산하고 Recharts로 과거/예상 가격 곡선 시각화. 점수는 적층형 LEGO 브릭 게이지로 시각화됨
-- **부품 단가 (PPP) 가성비 분석** — 헤더 메뉴 → "가성비"에서 KRW/부품 기준으로 베스트 세트 목록 확인. 테마 필터 + Top N 선택기 + BEST 배지 강조
+- **부품 단가 (PPP) 가성비 분석** — 헤더 메뉴 → "가성비"에서 KRW/부품 기준으로 베스트 세트 목록 확인. 한국 공식 시리즈 분류(스타워즈/해리포터/아이콘스/테크닉/마블 등) 테마 필터 + Top N 선택기 + 단종 제품 옵션 토글(과거 정가 기준 PPP) + 단종/테마 배지 강조
 - **다크 모드** — 헤더 토글로 라이트/다크 테마 전환. CSS 변수 기반 토큰으로 모든 카드/입력/차트가 일관되게 전환되며 localStorage 에 사용자 선택 저장
 - **PWA (홈화면 추가 + 오프라인 캐시)** — 모바일 사파리/크롬에서 "홈 화면에 추가" 시 standalone 앱처럼 실행. 정적 에셋 cache-first + JSON 데이터 stale-while-revalidate + 앱 셸 network-first 의 3-tier 캐시 전략
 - **일별 가격 스냅샷 + 변동 차트** — 매일 수집된 KRW 가격을 `priceHistoryIndex.json` 에 누적하고 제품 상세 페이지에서 SVG 라인 차트로 표시
@@ -67,12 +71,12 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **신제품 탭** — 최신 레고 신제품 연도별 조회
 - **펀딩제품(BDP) 탭** — BrickLink Designer Program 제품 시리즈별 조회, 연도 필터, 이름 검색
 - **MOC 검색 탭** — Rebrickable MOC 작품 검색 (정렬: 최신/인기/좋아요/부품수)
-- **이미지 갤러리 + 스와이프** — 제품 상세에서 Rebrickable 멀티 이미지(BDP + 일반 제품 모두), 터치 스와이프, 썸네일 스트립, 팝업 스와이프
+- **이미지 갤러리 + 라이트박스** — 제품 상세에서 Rebrickable 멀티 이미지(BDP + 일반 제품 모두), 터치 스와이프, 썸네일 스트립, 클릭하여 확대 라이트박스(팝업 안에서도 썸네일 네비 + 페이드 인 애니메이션)
 - **무한 스크롤** — 검색/부품/둘러보기 모두 스크롤 시 데이터 자동 로드
 - **테마/연도 필터링** — 테마별, 연도별 브라우징 (테마명 한국어 번역 지원)
 - **세트 상세 정보** — 부품 목록, 미니피규어, 색상 정보 확인
 - **부품 상세 정보** — 사용 가능한 색상, 엘리먼트 ID, 포함된 세트 목록
-- **한국 레고 가격 표시** — 세트 카드와 상세 페이지에서 KRW 가격 표시
+- **한국 레고 가격 표시** — 세트 카드와 상세 페이지에서 KRW 가격 표시 (단종 제품은 과거 한국 정가 표시)
 - **내 컬렉션 관리** — localStorage 기반 컬렉션 및 위시리스트
 - **한/영 전환** — 헤더 토글 버튼으로 언어 전환
 - **모바일 반응형** — 햄버거 메뉴, 터치 영역 확대 등 모바일 최적화
@@ -113,7 +117,7 @@ src/
 │   ├── LanguageContext.js
 │   └── ThemeContext.js
 ├── data/
-│   ├── prices.json
+│   ├── prices.json         # schemaVersion 2 — 한국 시리즈 themes 맵 + 단종 제품 과거 정가
 │   ├── priceHistoryIndex.json
 │   ├── prices-history/
 │   ├── themeReturns.js
@@ -122,7 +126,7 @@ src/
 ├── pages/
 │   ├── SearchPage.js
 │   ├── ScarcityPage.js     # 적층형 LEGO 브릭 게이지 + Recharts 차트 + 기간 선택
-│   ├── PppPage.js          # 부품 단가 (PPP) 가성비 분석
+│   ├── PppPage.js          # 부품 단가 (PPP) 가성비 분석 (한국 시리즈 테마 + 단종 옵션)
 │   ├── PartsSearchPage.js
 │   ├── PartDetailPage.js
 │   ├── BrowsePage.js
@@ -133,7 +137,8 @@ src/
 ├── styles/
 │   ├── App.css
 │   ├── theme-dark.css
-│   ├── lego-brick.css      # LEGO 브릭 디자인 시스템 (brick-stack/brick-badge/brick-status)
+│   ├── lego-brick.css      # LEGO 브릭 디자인 시스템 (brick-stack/brick-badge/brick-status + set-card edge accent)
+│   ├── filters.css         # 다축 필터 패널 + 라이트박스 폴리시
 │   └── price.css
 └── utils/
     ├── api.js
@@ -202,6 +207,52 @@ npm run fetch-images -- --refresh
 ## 변경 이력 (Changelog)
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
+
+### v0.5.21 — 2026-04-08
+
+#### `NEW` feat(ppp): 한국 시리즈 테마 + 단종 제품(과거 정가) PPP 분석 지원
+- **요구사항**: "가성비 페이지의 테마를 한국 공식 사이트의 시리즈별 목록으로 만들고, 각 시리즈 안에 들어가는 제품 목록과 가격을 그대로 표시하여 가성비 기능에 쓰이도록 해줘. 단종된 제품은 과거 공식 정가를 보여줘도 된다."
+- **`src/pages/PppPage.js` 리팩터링**:
+  - prices.json schemaVersion 2 의 `themes` 맵을 직접 소비. 테마 드롭다운이 더 이상 Rebrickable theme_id 에 의존하지 않고 `스타워즈 / 해리포터 / 아이콘스 / 크리에이터 익스퍼트 / 테크닉 / 마블 / DC / 아이디어 / 시티 / 닌자고 / 프렌즈 / 디즈니 / 아키텍처 / 보타니컬 컬렉션 / 스피드 챔피언 / 마인크래프트 / 쥬라기 월드 / 반지의 제왕 / 슈퍼 마리오 / 동물의 숲 / 소닉 / 인디아나 존스 / 포트나이트 / BDP 펀딩` 24개 한국 공식 시리즈 라벨을 `themes[*].order` 순으로 표시.
+  - `entry.theme` 키를 결과 행에 그대로 보존해 한국어/영어 라벨을 즉시 렌더 가능 (`themeLabel(key)` 헬퍼).
+  - **단종 제품 포함 토글** — `includeDiscontinued` 체크박스를 헤더 액션 영역에 추가. 기본 ON. 활성화 시 prices.json 의 historical KRW MSRP(예: Cafe Corner ₩199,900, Death Star ₩649,000, Diagon Alley ₩519,000, Grand Piano ₩549,000)가 PPP 분석 데이터셋에 포함되어 과거 발매가 기준 가성비 순위가 함께 계산됨. 토글 변경 시 fetch 가 재실행되어 데이터셋이 갱신.
+  - 가격을 `getKrwPrice()` 가 아닌 `entry.price` 에서 직접 읽어 단종 제품도 0원으로 마스킹되지 않고 PPP 가 정상 계산됨.
+  - 각 결과 카드에 한국 시리즈 라벨 칩(예: "스타워즈") + `단종/Retired` 빨간 LEGO 레드(`#DA291C`) 배지를 인라인으로 추가.
+- **결과**: "가성비" 페이지에서 한국 공식 시리즈 분류 그대로 필터링 가능하고, 단종된 모듈러/Star Wars UCS/해리포터 컬렉터스 에디션도 과거 정가 기준으로 KRW/부품 베스트 순위에 포함되어 비교 가능.
+
+### v0.5.20 — 2026-04-08
+
+#### `NEW` data(prices): prices.json schemaVersion 2 — 한국 LEGO 시리즈 분류 + 단종 제품 과거 정가 복원
+- **요구사항**: "한국 공식 사이트의 시리즈별 분류를 테마로 만들고, 단종된 제품들도 과거 공식 정가를 함께 데이터에 넣어줘."
+- **`src/data/prices.json` 전면 재구조화** (`schemaVersion: 2`):
+  - **`themes` 최상위 맵 신설** — 24개 한국 공식 LEGO 시리즈를 `id → { ko, en, order }` 형태로 카탈로그화. starwars, harrypotter, icons(아이콘스/모듈러), creator(크리에이터 익스퍼트), technic, marvel, dc, ideas, city, ninjago, friends, disney, architecture, botanical, speed, minecraft, jurassic, lotr, supermario, animalcrossing, sonic, indiana, fortnite, bdp.
+  - **모든 가격 엔트리에 `theme` + `year` 필드 추가** — 검색·필터·랭킹 페이지에서 비동기 API 없이 즉시 분류·정렬 가능.
+  - **단종 제품 historical KRW MSRP 복원** — 기존에 `price: 0` 으로 비어 있던 단종 제품들에 brickset/brickeconomy 기준의 과거 한국 발매 정가를 채움. 12개 모듈러(Cafe Corner ₩199,900, Fire Brigade ₩199,900, Grand Emporium ₩199,900, Pet Shop ₩169,900, Town Hall ₩199,900, Palace Cinema ₩169,900, Parisian Restaurant ₩199,900, Detective's Office ₩219,900, Brick Bank ₩219,900, Downtown Diner ₩219,900, Corner Garage ₩269,900, Police Station ₩269,900) + Star Wars UCS 클래식(Death Star 10188 ₩599,000, 75159 ₩649,000, Original Millennium Falcon 10179 ₩699,000, Super Star Destroyer ₩599,000, Red Five X-wing ₩269,900, Snowspeeder ₩269,900, Sandcrawler ₩269,900, Slave I ₩269,900) + Harry Potter(Diagon Alley ₩519,000, Hogwarts Astronomy Tower ₩109,900, Whomping Willow ₩109,900, Hogwarts Icons ₩309,900, Knight Bus ₩79,900) + Ideas(Grand Piano ₩549,000, Typewriter ₩269,900, Pirates of Barracuda Bay ₩269,900, Voltron ₩119,900, WALL-E ₩79,900, Central Perk ₩89,900, ISS ₩219,900, Medieval Blacksmith ₩199,900) + Technic(Bucket Wheel Excavator ₩379,900, Mercedes-Benz Arocs ₩379,900, Mobile Crane MK II ₩339,900, Rough Terrain Crane ₩699,000) + LOTR(Tower of Orthanc ₩269,900) + Botanical(Bonsai Tree ₩65,900, Flower Bouquet ₩65,900) + Marvel(Iron Man Hall of Armor ₩219,900, SHIELD Helicarrier ₩199,900) + DC(1989 Batmobile original ₩339,900).
+  - **신규 활성 세트 추가** — 42158 NASA Mars Rover Perseverance ₩119,900, 76218 Sanctum Sanctorum ₩339,900.
+  - 모든 BDP 펀딩 엔트리에 `theme: "bdp"` 태깅 (USD 가격은 그대로 유지).
+- **결과**: PPP·검색·희소가치 등 가격을 활용하는 모든 페이지가 한국 공식 시리즈 분류와 단종 제품 과거 정가를 일관되게 사용 가능. 단종 제품의 KRW/부품 가성비도 과거 발매가 기준으로 비교 가능해짐.
+
+### v0.5.19 — 2026-04-08
+
+#### `NEW` feat(ui): 다축 필터 패널 폴리시 + 이미지 라이트박스 강화
+- **요구사항**: 다축 필터 패널 가독성 개선 + 세트 상세의 이미지 갤러리에 라이트박스/줌 힌트/팝업 썸네일 추가.
+- **`src/styles/filters.css` 신규** — 인라인 스타일을 토큰화된 CSS 클래스로 마이그레이션.
+  - `.filter-toolbar`, `.filter-btn`(+`.primary` 변형 + `.filter-btn-count` 카운트 뱃지), `.filter-chip` + `.filter-chip-x`(개별 필터 제거 X 버튼), `.filter-panel`(상단에 LEGO 레드 5px 액센트 바 + `filterPanelIn` 슬라이드 인 keyframe), `.filter-grid` 2-col 반응형, `.filter-field`, `.filter-range` + `.filter-range-sep`, `.filter-segment`(`:has(input:checked)` 활용한 세그먼트형 라디오), `.filter-panel-actions`.
+  - 라이트박스 폴리시: `.gallery-main-img { cursor: zoom-in }`, `.gallery-zoom-hint`(호버 시 페이드인), `.popup-gallery-thumbs` + `.popup-gallery-thumb`(팝업 안 52×40 썸네일 스트립), `lightboxFade` + `lightboxImgIn` 페이드/슬라이드 keyframe.
+- **`src/App.js`** — `lego-brick.css` 다음에 `filters.css` import 추가.
+- **`src/pages/SearchPage.js`** — 인라인 스타일 → CSS 클래스 리팩터링. `chipDefs` 배열로 활성 필터 칩을 빌드해 각각 X 버튼으로 즉시 제거 가능. `clearOneFilter(key)` 헬퍼. 세그먼트형 라디오 헬퍼 `renderSegment(name, value, options)`. 필터 패널은 `.filter-grid` 2-col 레이아웃에 owned 세그먼트만 가로 풀폭 스팬. 하단에 reset/apply 액션 행 추가.
+- **`src/pages/SetDetailPage.js`** — 갤러리 이미지에 줌 힌트 뱃지(`gallery-zoom-hint` + `\u2922` 글리프) 추가. 팝업 라이트박스 안에 점-내비게이션 대신 썸네일 스트립(`popup-gallery-thumbs` / `popup-gallery-thumb`) 렌더. 팝업 img 의 `key: 'pimg-' + imgIdx` 로 이미지 전환마다 페이드 인 애니메이션 재트리거.
+- **결과**: 검색 필터 패널이 토큰화된 시각 언어(LEGO 레드 액센트 + 세그먼트 라디오 + 칩 + 액션 행)로 통일되고, 세트 상세 이미지가 호버 시 줌 힌트 → 클릭 시 라이트박스 → 팝업 안에서도 썸네일 직접 점프 + 페이드 인 애니메이션의 풀 갤러리 경험을 제공.
+
+### v0.5.18 — 2026-04-08
+
+#### `NEW` feat(design): 세트 카드 데코레이션 재설계 (어색한 4점 스터드 → 브릭 엣지 액센트)
+- **요구사항**: "세트 카드 썸네일 위의 4개 동그라미 데코레이션이 어색하니, LEGO 베이스플레이트 / Bento Grid / 4-8px 브릭 라운드 미감을 유지하면서 사용자 친화적으로 다시 디자인해줘."
+- **`src/styles/lego-brick.css` 수정**:
+  - **CSS 변수 추가** — `--brick-accent: #DA291C` (LEGO 클래식 레드), `--brick-accent-soft`. 다크 모드(`[data-theme="dark"]`)에서는 `#ff5147` 로 대비 보정.
+  - **`.set-card::before` / `.moc-card-link::before` 재설계** — 기존의 어색한 4점 스터드 줄을 카드 상단 5px 두께의 LEGO 레드 엣지 바로 교체. inset 하이라이트(상단 1px 흰빛) + 하단 미세 그림자로 브릭의 단면을 표현.
+  - **`::after` 단일 코너 스터드** — 상단 좌측(top:9px / left:10px)에 8×8px 단일 스터드 너브를 `radial-gradient` 로 렌더해 입체감 유지하면서도 시각적 노이즈 최소화.
+- **결과**: 카드 썸네일 상단이 깔끔한 LEGO 브릭 단면 + 단일 스터드 코너 너브로 정리됨. Bento Grid 의 전반적인 미감과 4-8px 브릭 라운드 코너 시스템과 자연스럽게 어우러짐.
 
 ### v0.5.17 — 2026-04-07
 
