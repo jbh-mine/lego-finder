@@ -17,6 +17,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [갤러리 이미지 수집](#갤러리-이미지-수집)
 - [자동 업데이트 (GitHub Actions)](#자동-업데이트-github-actions)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.5.25 — 2026-04-08](#v0525--2026-04-08)
   - [v0.5.24 — 2026-04-08](#v0524--2026-04-08)
   - [v0.5.23 — 2026-04-08](#v0523--2026-04-08)
   - [v0.5.22 — 2026-04-08](#v0522--2026-04-08)
@@ -210,6 +211,20 @@ npm run fetch-images -- --refresh
 ## 변경 이력 (Changelog)
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
+
+### v0.5.25 — 2026-04-08
+
+#### `FIX` data(prices): 단종 Star Wars / Technic 세트 historical KRW MSRP 재검증
+
+- **배경**: v0.5.20 에서 단종 Star Wars UCS / Technic 라인의 과거 한국 정가를 학습 메모리 기반 추정값으로 채워둔 부분이 남아 있어, "차근차근 공식 홈페이지 위주의 제품들 부터 가격 수정해줘" 지시의 연장으로 brickset / brickinside / namu.wiki / kream / 다나와 / 11번가 / brickstar / dpg.danawa.com 의 한국어 스니펫을 cross-reference 하여 단종 라인 가격을 재검증.
+- **검증된 보정 (4건)**:
+  - **10188** Death Star (Original, 2008)  ₩599,000 → **₩635,000** (한국 발매가 기록에서 직접 인용)
+  - **75159** Death Star (2016)             ₩649,000 → **₩699,900** (LEGO® Shop KR 한국 정가 700K 라인업)
+  - **75060** Slave I UCS (2015)             ₩269,900 → **₩299,900** (한국 출시 정가 ₩299,900 / 해외 $199.99 매칭)
+  - **42043** Mercedes-Benz Arocs 3245 (2015) ₩379,900 → **₩279,900** (한국 토이저러스 정식 가격 ₩279,900 — dpg.danawa.com 출처)
+- **유지된 항목 (검증 실패 → 변경 없음)**: 10179 Original UCS Falcon, 10221 Super Star Destroyer, 75095 TIE Fighter UCS, 10240 Red Five X-wing, 75144 Snowspeeder, 75059 Sandcrawler, 75105 Falcon (Force Awakens), 42082 Rough Terrain Crane, 42055 Bucket Wheel Excavator, 42009 Mobile Crane MK II — 모두 한국어 검색 스니펫에서 KRW 발매 정가를 직접 인용한 출처를 찾지 못했고 USD MSRP 또는 현재 중고가만 노출되어, 추정/환산 금지 원칙에 따라 기존 값 유지. 특히 10179 는 한국 미정식발매(브릭인사이드: "한국에서는 정식발매되지 않았으나") 라는 조건이 별도로 발견되어 후속 라운드에서 처리 방안을 결정 예정.
+- **방법론 원칙 재확인**: 10182 Cafe Corner / 10246 Detective's Office 검증과 동일하게 검색 스니펫에서 KRW 수치가 직접 언급된 경우만 수정. 추정/환산/USD 기반 재계산은 하지 않음 (no-fabrication 원칙 계속 적용).
+- **결과**: PPP / 희소가치 / 검색 페이지의 단종 Star Wars/Technic 분석이 4개 항목에 대해 검색 검증된 historical KRW 기준으로 수렴. 75060 Slave I 와 10188 Death Star 는 가격 상승, 42043 Arocs 와 75159 Death Star 의 KRW 가 보다 정확한 발매가로 정렬됨. 검증 실패 항목들은 후속 라운드(예: 한국 LEGO 매거진 광고 / 토이저러스 카탈로그 아카이브 등) 의 deeper search 대상으로 이월.
 
 ### v0.5.24 — 2026-04-08
 
