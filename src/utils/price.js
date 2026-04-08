@@ -9,7 +9,16 @@ function getKrwPrice(setNum) {
   var entry = priceData.prices[num];
   if (!entry) return null;
   if (entry.discontinued) return { price: 0, discontinued: true, name: entry.name };
-  if (entry.price > 0) return { price: entry.price, discontinued: false, name: entry.name };
+  if (entry.price > 0) {
+    return {
+      price: entry.price,
+      discontinued: false,
+      name: entry.name,
+      priceFromUsd: !!entry.priceFromUsd,
+      fromUsd: entry.usd || null,
+      year: entry.year || null,
+    };
+  }
   return null;
 }
 
@@ -19,7 +28,17 @@ async function getKrwPriceAsync(setNum) {
   var entry = priceData.prices[num];
   if (!entry) return null;
   if (entry.discontinued) return { price: 0, discontinued: true, name: entry.name };
-  if (entry.price > 0) return { price: entry.price, discontinued: false, name: entry.name };
+  if (entry.price > 0) {
+    return {
+      price: entry.price,
+      discontinued: false,
+      name: entry.name,
+      priceFromUsd: !!entry.priceFromUsd,
+      fromUsd: entry.usd || null,
+      year: entry.year || null,
+      source: entry.source || null,
+    };
+  }
   if (entry.usd > 0) {
     var rate = await getExchangeRate();
     var krw = Math.round(entry.usd * rate);
