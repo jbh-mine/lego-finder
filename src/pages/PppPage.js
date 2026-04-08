@@ -1,11 +1,17 @@
 // PPP (Price Per Part) cost-effectiveness ranking page.
 //
-// Iterates over every set in prices.json that has a valid KRW price,
-// fetches num_parts + theme via Rebrickable API (with localStorage cache
-// keyed by setNum and a 7-day TTL), computes KRW/part, and renders a
-// sortable bento-grid ranking. Users can filter by theme to find the
-// cheapest-per-part sets within a single theme (e.g. \"top 10 Star Wars
-// by PPP\").
+// Iterates over every set in prices.json that has a valid KRW price
+// (active OR discontinued — historical Korean MSRP is used for the
+// latter), fetches num_parts via Rebrickable API (with localStorage
+// cache keyed by setNum and a 7-day TTL), computes KRW/part, and
+// renders a sortable bento-grid ranking.
+//
+// As of schemaVersion 2, prices.json carries a top-level `themes` map
+// keyed by Korean LEGO series id (starwars, harrypotter, icons, ...)
+// and every entry has its own `theme` + `year` field. We use those
+// directly so the theme filter dropdown can show Korean labels and
+// works without waiting on Rebrickable. Discontinued sets are opt-in
+// via a toggle so users can rank historical-MSRP value-per-part too.
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -42,6 +48,7 @@ function normalizeSetNum(s) {
 function PppPage() {
   var lc = useLanguage();
   var t = lc.t;
+  var lang = lc.lang || lc.language || 'ko';
 
   var s1 = useState([]);    var rows = s1[0];     var setRows = s1[1];
   var s2 = useState(true);  var loading = s2[0];  var setLoading = s2[1];
@@ -49,22 +56,27 @@ function PppPage() {
   var s4 = useState(0);     var total = s4[0];    var setTotal = s4[1];
   var s5 = useState('all'); var themeFilter = s5[0]; var setThemeFilter = s5[1];
   var s6 = useState(20);    var topN = s6[0];     var setTopN = s6[1];
+  var s7 = useState(true);  var includeDiscontinued = s7[0]; var setIncludeDiscontinued = s7[1];
 
-  // Fetch metadata for every priced set on mount.
+  // Themes map from prices.json (schemaVersion 2). Keyed by series id
+  // (starwars, harrypotter, ...) -> { ko, en, order }.
+  var themesMap = (pricesJson && pricesJson.themes) || {};
+
+  // Fetch metadata for every priced set whenever the discontinued
+  // toggle changes. We re-run because the candidate key set differs.
   var fetchAll = useCallback(async function() {
     setLoading(true);
+    setProgress(0);
 
-    // prices.json has shape { meta: {...}, prices: { "10294": {...}, ... } }
-    // — iterate the nested .prices object, not the top-level file.
     var pricesObj = (pricesJson && pricesJson.prices) || {};
     var keys = Object.keys(pricesObj).filter(function(k) {
       var entry = pricesObj[k];
       if (!entry || typeof entry !== 'object') return false;
-      // Skip discontinued / unpriced. We only consider entries with a
-      // positive KRW price (USD-only BDP entries are skipped here since
-      // they need an async exchange-rate lookup).
-      if (entry.discontinued) return false;
+      // Skip USD-only BDP entries (they need an async exchange-rate
+      // lookup that PPP doesn't currently support).
       if (!entry.price || entry.price <= 0) return false;
+      // Discontinued sets carry historical Korean MSRP — opt-in.
+      if (entry.discontinued && !includeDiscontinued) return false;
       return true;
     });
 
@@ -80,6 +92,7 @@ function PppPage() {
       while (idx < keys.length) {
         var i = idx++;
         var setKey = keys[i];
+        var entry = pricesObj[setKey];
         var canonical = normalizeSetNum(setKey);
 
         var meta = null;
@@ -106,20 +119,22 @@ function PppPage() {
         }
 
         if (meta && meta.numParts && meta.numParts > 0) {
-          // getKrwPrice returns { price, discontinued, name } or null —
-          // unwrap the .price number before computing PPP.
-          var krwInfo = getKrwPrice(canonical);
-          var krw = krwInfo && !krwInfo.discontinued ? krwInfo.price : 0;
+          // Read price from prices.json directly so historical MSRP for
+          // discontinued sets still flows through. getKrwPrice would
+          // return discontinued:true and zero out the value.
+          var krw = entry.price;
           if (krw && krw > 0) {
             results.push({
               setNum: meta.setNum || canonical,
-              name: meta.name,
-              year: meta.year,
+              name: meta.name || entry.name || canonical,
+              year: meta.year || entry.year,
               numParts: meta.numParts,
+              themeKey: entry.theme || null,
               themeId: meta.themeId,
               imgUrl: meta.imgUrl,
               priceKrw: krw,
               ppp: krw / meta.numParts,
+              discontinued: !!entry.discontinued,
             });
           }
         }
@@ -139,32 +154,47 @@ function PppPage() {
     results.sort(function(a, b) { return a.ppp - b.ppp; });
     setRows(results);
     setLoading(false);
-  }, []);
+  }, [includeDiscontinued]);
 
   useEffect(function() { fetchAll(); }, [fetchAll]);
 
-  // Build the unique theme list from results.
-  // Rebrickable returns numeric theme_id only; we don't ship a full
-  // id->name table client-side, so we render "Theme {id}" as the option
-  // label. The actual filtering still works precisely on themeId.
+  // Build theme dropdown options from the prices.json themes map,
+  // sorted by the curated `order` field. Falls back to any theme keys
+  // observed in the result rows that aren't already in the map.
   var themeOptions = useMemo(function() {
     var seen = {};
     rows.forEach(function(r) {
-      if (r.themeId != null) seen[r.themeId] = true;
+      if (r.themeKey) seen[r.themeKey] = true;
     });
-    return Object.keys(seen).map(function(id) {
-      return { id: id, name: 'Theme ' + id };
+    Object.keys(themesMap).forEach(function(k) { seen[k] = true; });
+    var keys = Object.keys(seen);
+    keys.sort(function(a, b) {
+      var oa = themesMap[a] && themesMap[a].order != null ? themesMap[a].order : 999;
+      var ob = themesMap[b] && themesMap[b].order != null ? themesMap[b].order : 999;
+      return oa - ob;
     });
-  }, [rows]);
+    return keys.map(function(k) {
+      var th = themesMap[k];
+      var label = th ? (lang === 'ko' ? th.ko : th.en) : k;
+      return { id: k, name: label };
+    });
+  }, [rows, themesMap, lang]);
 
   // Filter + top-N
   var visible = useMemo(function() {
     var filtered = rows;
     if (themeFilter !== 'all') {
-      filtered = rows.filter(function(r) { return String(r.themeId) === String(themeFilter); });
+      filtered = rows.filter(function(r) { return r.themeKey === themeFilter; });
     }
     return filtered.slice(0, topN);
   }, [rows, themeFilter, topN]);
+
+  function themeLabel(key) {
+    if (!key) return '';
+    var th = themesMap[key];
+    if (!th) return key;
+    return lang === 'ko' ? th.ko : th.en;
+  }
 
   var statsCell = React.createElement('div', { className: 'bento-cell bento-w-4' },
     React.createElement('div', { className: 'bento-cell-content' },
@@ -199,6 +229,9 @@ function PppPage() {
     )
   ) : null;
 
+  var includeDiscLabel = lang === 'ko' ? '단종 제품 포함 (과거 정가 기준)' : 'Include discontinued (historical MSRP)';
+  var discBadgeText = lang === 'ko' ? '단종' : 'Retired';
+
   var headerSection = React.createElement('div', { className: 'search-section' },
     React.createElement('h2', null, t('pppPageTitle')),
     React.createElement('p', { className: 'new-products-desc' }, t('pppPageDesc')),
@@ -228,6 +261,23 @@ function PppPage() {
         [10, 20, 30, 50, 100].map(function(n) {
           return React.createElement('option', { key: n, value: n }, 'Top ' + n);
         })
+      ),
+      React.createElement('label', {
+        style: {
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          fontSize: '0.9rem',
+          color: 'var(--color-text-secondary, #666)',
+          cursor: 'pointer'
+        }
+      },
+        React.createElement('input', {
+          type: 'checkbox',
+          checked: includeDiscontinued,
+          onChange: function(e) { setIncludeDiscontinued(e.target.checked); }
+        }),
+        includeDiscLabel
       )
     )
   );
@@ -268,8 +318,32 @@ function PppPage() {
                 to: '/set/' + r.setNum,
                 style: { fontWeight: 700, color: 'var(--color-text, #222)', textDecoration: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
               }, r.name || r.setNum),
-              React.createElement('div', { style: { fontSize: '0.8rem', color: 'var(--color-text-muted, #888)' } },
-                r.setNum + ' \u00B7 ' + (r.year || ''))
+              React.createElement('div', { style: { fontSize: '0.8rem', color: 'var(--color-text-muted, #888)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' } },
+                React.createElement('span', null, r.setNum + ' \u00B7 ' + (r.year || '')),
+                r.themeKey ? React.createElement('span', {
+                  style: {
+                    display: 'inline-block',
+                    padding: '1px 6px',
+                    borderRadius: 4,
+                    background: 'var(--color-surface-soft, #f0f0f0)',
+                    color: 'var(--color-text-secondary, #555)',
+                    fontSize: '0.72rem',
+                    fontWeight: 600
+                  }
+                }, themeLabel(r.themeKey)) : null,
+                r.discontinued ? React.createElement('span', {
+                  style: {
+                    display: 'inline-block',
+                    padding: '1px 6px',
+                    borderRadius: 4,
+                    background: 'rgba(218, 41, 28, 0.12)',
+                    color: '#DA291C',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    border: '1px solid rgba(218, 41, 28, 0.35)'
+                  }
+                }, discBadgeText) : null
+              )
             )
           ),
           React.createElement('div', {
