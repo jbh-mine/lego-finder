@@ -70,6 +70,28 @@ function SetCard(props) {
     }
   }
 
+  var fxBadgeText = lang === 'ko' ? '당시 환율 적용' : 'historical FX';
+  var fxBadgeTitle = priceData.priceFromUsd && priceData.fromUsd
+    ? '$' + priceData.fromUsd.toFixed(2) + ' USD' + (priceData.year ? ' (' + priceData.year + ')' : '')
+    : '';
+
+  var priceNode = null;
+  if (priceData.formatted) {
+    var children = [priceData.formatted];
+    if (priceData.priceFromUsd) {
+      children.push(
+        React.createElement('span', {
+          key: 'fx-badge',
+          className: 'price-fx-badge',
+          title: fxBadgeTitle,
+        }, fxBadgeText)
+      );
+    }
+    priceNode = React.createElement('div', { className: 'set-card-price' }, children);
+  } else if (priceData.isDiscontinued) {
+    priceNode = React.createElement('div', { className: 'set-card-price discontinued' }, t('retired'));
+  }
+
   return React.createElement('div', { className: 'set-card', onClick: function() { nav('/set/' + set.set_num); } },
     React.createElement('img', { className: 'set-card-img', src: set.set_img_url || PH, alt: set.name, loading: 'lazy', onError: function(e) { e.target.src = PH; } }),
     React.createElement('div', { className: 'set-card-body' },
@@ -80,9 +102,7 @@ function SetCard(props) {
         React.createElement('span', null, set.year + t('yearSuffix')),
         React.createElement('span', null, (set.num_parts || 0).toLocaleString() + t('partsUnit'))
       ),
-      priceData.formatted ? React.createElement('div', { className: 'set-card-price' }, priceData.formatted)
-        : priceData.isDiscontinued ? React.createElement('div', { className: 'set-card-price discontinued' }, t('retired'))
-        : null
+      priceNode
     ),
     React.createElement('div', { className: 'set-card-actions' },
       React.createElement('button', { className: 'btn-icon' + (inC ? ' active' : ''), onClick: togC }, inC ? t('owned') : t('notOwned')),
