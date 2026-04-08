@@ -78,6 +78,7 @@ function SearchPage() {
   var s13 = useState(null); var matchedThemeId = s13[0]; var setMatchedThemeId = s13[1];
 
   // Whether state was restored from sessionStorage
+  // eslint-disable-next-line no-unused-vars
   var s14 = useState(false); var stateRestored = s14[0]; var setStateRestored = s14[1];
 
   // Multi-axis filter state
@@ -541,6 +542,14 @@ function SearchPage() {
       var n = Object.assign({}, prev); n[key] = value; return n;
     });
   };
+  var clearOneFilter = function(key) {
+    setFilters(function(prev) {
+      var n = Object.assign({}, prev);
+      if (key === 'retiredMode' || key === 'ownedMode') n[key] = 'all';
+      else n[key] = '';
+      return n;
+    });
+  };
   var resetFilters = function() {
     setFilters(DEFAULT_FILTERS);
   };
@@ -656,161 +665,199 @@ function SearchPage() {
   );
 
   // ---- Filter panel ----
-  var filterRowStyle = { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 };
-  var filterLabelStyle = { minWidth: 92, fontSize: 13, color: '#444', fontWeight: 600 };
-  var filterInputStyle = { width: 96, padding: '6px 8px', border: '1px solid #ccc', borderRadius: 4, fontSize: 13 };
-  var filterSepStyle = { color: '#999' };
-  var filterRadioWrapStyle = { display: 'flex', gap: 12, flexWrap: 'wrap' };
-  var filterRadioLabelStyle = { fontSize: 13, color: '#333', cursor: 'pointer' };
-
   var activeFilterCount = 0;
   ['partsMin','partsMax','yearMin','yearMax','priceMin','priceMax'].forEach(function(k) { if (filters[k]) activeFilterCount++; });
   if (filters.retiredMode && filters.retiredMode !== 'all') activeFilterCount++;
   if (filters.ownedMode && filters.ownedMode !== 'all') activeFilterCount++;
 
+  // Build active filter chips
+  var chipDefs = [];
+  if (filters.partsMin || filters.partsMax) {
+    chipDefs.push({
+      key: 'parts',
+      label: t('filterPartsRange') + ': ' + (filters.partsMin || '0') + '\u2013' + (filters.partsMax || '\u221E'),
+      onRemove: function() { setFilters(function(p) { return Object.assign({}, p, { partsMin: '', partsMax: '' }); }); },
+    });
+  }
+  if (filters.yearMin || filters.yearMax) {
+    chipDefs.push({
+      key: 'year',
+      label: t('filterYearRange') + ': ' + (filters.yearMin || '\u2013') + '\u2013' + (filters.yearMax || '\u2013'),
+      onRemove: function() { setFilters(function(p) { return Object.assign({}, p, { yearMin: '', yearMax: '' }); }); },
+    });
+  }
+  if (filters.priceMin || filters.priceMax) {
+    chipDefs.push({
+      key: 'price',
+      label: t('filterPriceRange') + ': ' + (filters.priceMin || '0') + '\u2013' + (filters.priceMax || '\u221E'),
+      onRemove: function() { setFilters(function(p) { return Object.assign({}, p, { priceMin: '', priceMax: '' }); }); },
+    });
+  }
+  if (filters.retiredMode && filters.retiredMode !== 'all') {
+    chipDefs.push({
+      key: 'retired',
+      label: t('filterRetired') + ': ' + t('filterRetired_' + filters.retiredMode),
+      onRemove: function() { clearOneFilter('retiredMode'); },
+    });
+  }
+  if (filters.ownedMode && filters.ownedMode !== 'all') {
+    chipDefs.push({
+      key: 'owned',
+      label: t('filterOwned') + ': ' + t('filterOwned_' + filters.ownedMode),
+      onRemove: function() { clearOneFilter('ownedMode'); },
+    });
+  }
+
+  var chipsRow = chipDefs.length > 0 ? React.createElement('div', { className: 'filter-chips' },
+    chipDefs.map(function(c) {
+      return React.createElement('span', { key: c.key, className: 'filter-chip' },
+        c.label,
+        React.createElement('button', {
+          type: 'button',
+          className: 'filter-chip-x',
+          onClick: c.onRemove,
+          'aria-label': t('reset'),
+        }, '\u00D7')
+      );
+    })
+  ) : null;
+
   var filterToggleBtn = React.createElement('button', {
     type: 'button',
+    className: 'filter-btn' + (filterPanelOpen ? ' primary' : ''),
     onClick: function() { setFilterPanelOpen(!filterPanelOpen); },
-    style: {
-      padding: '8px 14px',
-      border: '1px solid #0066cc',
-      background: filterPanelOpen ? '#0066cc' : '#fff',
-      color: filterPanelOpen ? '#fff' : '#0066cc',
-      borderRadius: 4,
-      cursor: 'pointer',
-      fontSize: 13,
-      fontWeight: 600,
-    },
-  }, t('filterToggleLabel') + (activeFilterCount > 0 ? ' (' + activeFilterCount + ')' : '') + (filterPanelOpen ? ' \u25B2' : ' \u25BC'));
-
-  var shareBtn = React.createElement('button', {
-    type: 'button',
-    onClick: copyShareUrl,
-    style: {
-      padding: '8px 14px',
-      border: '1px solid #888',
-      background: '#fff',
-      color: '#333',
-      borderRadius: 4,
-      cursor: 'pointer',
-      fontSize: 13,
-      marginLeft: 8,
-    },
-  }, t('filterShareUrl'));
-
-  var resetBtn = React.createElement('button', {
-    type: 'button',
-    onClick: resetFilters,
-    style: {
-      padding: '8px 14px',
-      border: '1px solid #888',
-      background: '#fff',
-      color: '#333',
-      borderRadius: 4,
-      cursor: 'pointer',
-      fontSize: 13,
-      marginLeft: 8,
-    },
-  }, t('reset'));
-
-  var filterBarRow = React.createElement('div', { style: { display: 'flex', alignItems: 'center', flexWrap: 'wrap', margin: '12px 0' } },
-    filterToggleBtn,
-    activeFilterCount > 0 ? resetBtn : null,
-    searched ? shareBtn : null,
-    shareMsg ? React.createElement('span', { style: { marginLeft: 12, fontSize: 12, color: '#0a7d0a' } }, shareMsg) : null
+  },
+    React.createElement('span', null, '\u2630 ' + t('filterToggleLabel')),
+    activeFilterCount > 0 ? React.createElement('span', { className: 'filter-btn-count' }, activeFilterCount) : null,
+    React.createElement('span', { className: 'filter-btn-caret' }, filterPanelOpen ? '\u25B2' : '\u25BC')
   );
 
-  var filterPanel = filterPanelOpen ? React.createElement('div', {
-    style: {
-      border: '1px solid #ddd',
-      borderRadius: 6,
-      padding: 14,
-      background: '#fafafa',
-      marginBottom: 14,
-    },
-  },
-    // Parts range
-    React.createElement('div', { style: filterRowStyle },
-      React.createElement('span', { style: filterLabelStyle }, t('filterPartsRange')),
-      React.createElement('input', {
-        type: 'number', min: 0, value: filters.partsMin, placeholder: t('filterMin'),
-        style: filterInputStyle,
-        onChange: function(e) { updateFilter('partsMin', e.target.value); },
-      }),
-      React.createElement('span', { style: filterSepStyle }, '\u2013'),
-      React.createElement('input', {
-        type: 'number', min: 0, value: filters.partsMax, placeholder: t('filterMax'),
-        style: filterInputStyle,
-        onChange: function(e) { updateFilter('partsMax', e.target.value); },
+  var resetBtn = activeFilterCount > 0 ? React.createElement('button', {
+    type: 'button',
+    className: 'filter-btn',
+    onClick: resetFilters,
+  }, '\u21BA ' + t('reset')) : null;
+
+  var shareBtn = searched ? React.createElement('button', {
+    type: 'button',
+    className: 'filter-btn',
+    onClick: copyShareUrl,
+  }, '\uD83D\uDD17 ' + t('filterShareUrl')) : null;
+
+  var shareMsgEl = shareMsg ? React.createElement('span', { className: 'filter-share-msg' }, shareMsg) : null;
+
+  var toolbar = React.createElement('div', { className: 'filter-toolbar' },
+    filterToggleBtn,
+    resetBtn,
+    React.createElement('div', { className: 'filter-toolbar-spacer' }),
+    shareBtn,
+    shareMsgEl
+  );
+
+  // Build segmented control helper
+  var renderSegment = function(name, value, options) {
+    return React.createElement('div', { className: 'filter-segment' },
+      options.map(function(opt) {
+        return React.createElement('label', {
+          key: opt.value,
+          className: value === opt.value ? 'active' : '',
+        },
+          React.createElement('input', {
+            type: 'radio',
+            name: name,
+            value: opt.value,
+            checked: value === opt.value,
+            onChange: function() { updateFilter(name, opt.value); },
+          }),
+          opt.label
+        );
       })
-    ),
-    // Year range
-    React.createElement('div', { style: filterRowStyle },
-      React.createElement('span', { style: filterLabelStyle }, t('filterYearRange')),
-      React.createElement('input', {
-        type: 'number', min: 1949, max: 2099, value: filters.yearMin, placeholder: t('filterMin'),
-        style: filterInputStyle,
-        onChange: function(e) { updateFilter('yearMin', e.target.value); },
-      }),
-      React.createElement('span', { style: filterSepStyle }, '\u2013'),
-      React.createElement('input', {
-        type: 'number', min: 1949, max: 2099, value: filters.yearMax, placeholder: t('filterMax'),
-        style: filterInputStyle,
-        onChange: function(e) { updateFilter('yearMax', e.target.value); },
-      })
-    ),
-    // Price range
-    React.createElement('div', { style: filterRowStyle },
-      React.createElement('span', { style: filterLabelStyle }, t('filterPriceRange')),
-      React.createElement('input', {
-        type: 'number', min: 0, value: filters.priceMin, placeholder: t('filterMin'),
-        style: filterInputStyle,
-        onChange: function(e) { updateFilter('priceMin', e.target.value); },
-      }),
-      React.createElement('span', { style: filterSepStyle }, '\u2013'),
-      React.createElement('input', {
-        type: 'number', min: 0, value: filters.priceMax, placeholder: t('filterMax'),
-        style: filterInputStyle,
-        onChange: function(e) { updateFilter('priceMax', e.target.value); },
-      })
-    ),
-    // Retired mode
-    React.createElement('div', { style: filterRowStyle },
-      React.createElement('span', { style: filterLabelStyle }, t('filterRetired')),
-      React.createElement('div', { style: filterRadioWrapStyle },
-        ['all','only','exclude'].map(function(mode) {
-          return React.createElement('label', { key: mode, style: filterRadioLabelStyle },
-            React.createElement('input', {
-              type: 'radio', name: 'retiredMode', value: mode,
-              checked: filters.retiredMode === mode,
-              onChange: function() { updateFilter('retiredMode', mode); },
-              style: { marginRight: 4 },
-            }),
-            t('filterRetired_' + mode)
-          );
-        })
+    );
+  };
+
+  var filterPanel = filterPanelOpen ? React.createElement('div', { className: 'filter-panel' },
+    React.createElement('div', { className: 'filter-grid' },
+      // Parts range
+      React.createElement('div', { className: 'filter-field' },
+        React.createElement('div', { className: 'filter-field-label' }, t('filterPartsRange')),
+        React.createElement('div', { className: 'filter-range' },
+          React.createElement('input', {
+            type: 'number', min: 0, value: filters.partsMin, placeholder: t('filterMin'),
+            onChange: function(e) { updateFilter('partsMin', e.target.value); },
+          }),
+          React.createElement('span', { className: 'filter-range-sep' }, '\u2013'),
+          React.createElement('input', {
+            type: 'number', min: 0, value: filters.partsMax, placeholder: t('filterMax'),
+            onChange: function(e) { updateFilter('partsMax', e.target.value); },
+          })
+        )
+      ),
+      // Year range
+      React.createElement('div', { className: 'filter-field' },
+        React.createElement('div', { className: 'filter-field-label' }, t('filterYearRange')),
+        React.createElement('div', { className: 'filter-range' },
+          React.createElement('input', {
+            type: 'number', min: 1949, max: 2099, value: filters.yearMin, placeholder: t('filterMin'),
+            onChange: function(e) { updateFilter('yearMin', e.target.value); },
+          }),
+          React.createElement('span', { className: 'filter-range-sep' }, '\u2013'),
+          React.createElement('input', {
+            type: 'number', min: 1949, max: 2099, value: filters.yearMax, placeholder: t('filterMax'),
+            onChange: function(e) { updateFilter('yearMax', e.target.value); },
+          })
+        )
+      ),
+      // Price range
+      React.createElement('div', { className: 'filter-field' },
+        React.createElement('div', { className: 'filter-field-label' }, t('filterPriceRange')),
+        React.createElement('div', { className: 'filter-range' },
+          React.createElement('input', {
+            type: 'number', min: 0, value: filters.priceMin, placeholder: t('filterMin'),
+            onChange: function(e) { updateFilter('priceMin', e.target.value); },
+          }),
+          React.createElement('span', { className: 'filter-range-sep' }, '\u2013'),
+          React.createElement('input', {
+            type: 'number', min: 0, value: filters.priceMax, placeholder: t('filterMax'),
+            onChange: function(e) { updateFilter('priceMax', e.target.value); },
+          })
+        )
+      ),
+      // Retired segmented
+      React.createElement('div', { className: 'filter-field' },
+        React.createElement('div', { className: 'filter-field-label' }, t('filterRetired')),
+        renderSegment('retiredMode', filters.retiredMode, [
+          { value: 'all', label: t('filterRetired_all') },
+          { value: 'exclude', label: t('filterRetired_exclude') },
+          { value: 'only', label: t('filterRetired_only') },
+        ])
+      ),
+      // Owned segmented (spans both columns)
+      React.createElement('div', { className: 'filter-field', style: { gridColumn: '1 / -1' } },
+        React.createElement('div', { className: 'filter-field-label' }, t('filterOwned')),
+        renderSegment('ownedMode', filters.ownedMode, [
+          { value: 'all', label: t('filterOwned_all') },
+          { value: 'owned', label: t('filterOwned_owned') },
+          { value: 'not_owned', label: t('filterOwned_not_owned') },
+          { value: 'wished', label: t('filterOwned_wished') },
+        ])
       )
     ),
-    // Owned mode
-    React.createElement('div', { style: filterRowStyle },
-      React.createElement('span', { style: filterLabelStyle }, t('filterOwned')),
-      React.createElement('div', { style: filterRadioWrapStyle },
-        ['all','owned','not_owned','wished'].map(function(mode) {
-          return React.createElement('label', { key: mode, style: filterRadioLabelStyle },
-            React.createElement('input', {
-              type: 'radio', name: 'ownedMode', value: mode,
-              checked: filters.ownedMode === mode,
-              onChange: function() { updateFilter('ownedMode', mode); },
-              style: { marginRight: 4 },
-            }),
-            t('filterOwned_' + mode)
-          );
-        })
-      )
+    React.createElement('div', { className: 'filter-panel-actions' },
+      React.createElement('button', {
+        type: 'button',
+        className: 'filter-btn',
+        onClick: resetFilters,
+        disabled: activeFilterCount === 0,
+      }, '\u21BA ' + t('reset')),
+      React.createElement('button', {
+        type: 'button',
+        className: 'filter-btn primary',
+        onClick: function() { setFilterPanelOpen(false); },
+      }, '\u2713 ' + t('applyFilter'))
     )
   ) : null;
 
-  var filterSection = React.createElement('div', null, filterBarRow, filterPanel);
+  var filterSection = React.createElement('div', null, toolbar, chipsRow, filterPanel);
 
   // ---- Results section ----
   var resultsSection = null;
