@@ -72,10 +72,6 @@ function SetDetailPage() {
   }, [setNum, t]);
 
   // Load images from Rebrickable in real-time (API-like).
-  // Strategy: ALL products fetch live from rebrickable.com via fetchSetImages.
-  // - Show set_img_url instantly as placeholder
-  // - Show cached IDs (if any) immediately for fast paint
-  // - Always trigger a fresh fetch in the background to keep gallery up to date
   useEffect(function() {
     if (!set) return;
     var setNum = set.set_num;
@@ -103,7 +99,6 @@ function SetDetailPage() {
       return images;
     };
 
-    // Step 1: Instant paint from cache (or set_img_url placeholder)
     var cachedIds = getCachedSetImages(setNum);
     if (cachedIds && cachedIds.length > 0) {
       setAllImages(prependPrimary(buildUrls(cachedIds)));
@@ -114,7 +109,6 @@ function SetDetailPage() {
     }
     setImgIdx(0);
 
-    // Step 2: Always fetch fresh in real-time from rebrickable.com
     var cancelled = false;
     fetchSetImages(setNum).then(function(ids) {
       if (cancelled || !ids || ids.length === 0) return;
@@ -202,6 +196,12 @@ function SetDetailPage() {
     draggable: false,
   }));
 
+  // Zoom hint badge (CSS handles fade in on hover)
+  galleryChildren.push(React.createElement('span', {
+    key: 'zoomhint',
+    className: 'gallery-zoom-hint',
+  }, '\u2922  ' + t('imageLabel')));
+
   // Left arrow
   if (showNav && imgIdx > 0) {
     galleryChildren.push(React.createElement('button', {
@@ -241,7 +241,6 @@ function SetDetailPage() {
   var thumbsEl = null;
   if (showNav) {
     var thumbButtons = allImages.map(function(url, i) {
-      // Use smaller Rebrickable variant for thumbnails if applicable
       var thumbUrl = url.indexOf('/1000x800p.jpg') !== -1
         ? url.replace('/1000x800p.jpg', '/230x180p.jpg')
         : url;
@@ -341,7 +340,6 @@ function SetDetailPage() {
     // Image area with swipe
     var popupContentChildren = [];
 
-    // Left arrow in popup
     if (showNav && imgIdx > 0) {
       popupContentChildren.push(React.createElement('button', {
         key: 'pleft',
@@ -351,7 +349,7 @@ function SetDetailPage() {
     }
 
     popupContentChildren.push(React.createElement('img', {
-      key: 'pimg',
+      key: 'pimg-' + imgIdx,
       className: 'image-popup-img',
       src: imgSrc,
       alt: set.name,
@@ -359,7 +357,6 @@ function SetDetailPage() {
       draggable: false,
     }));
 
-    // Right arrow in popup
     if (showNav && imgIdx < allImages.length - 1) {
       popupContentChildren.push(React.createElement('button', {
         key: 'pright',
@@ -376,17 +373,32 @@ function SetDetailPage() {
       onTouchEnd: handleTouchEnd,
     }, popupContentChildren));
 
-    // Popup dots
+    // Thumbnail strip inside popup (replaces tiny dots)
     if (showNav) {
-      popupChildren.push(React.createElement('div', { key: 'pdots', className: 'popup-gallery-dots' },
-        allImages.map(function(_, i) {
-          return React.createElement('button', {
-            key: i,
-            className: 'popup-gallery-dot' + (i === imgIdx ? ' active' : ''),
-            onClick: function() { setImgIdx(i); },
-          });
-        })
-      ));
+      var popupThumbButtons = allImages.map(function(url, i) {
+        var thumbUrl = url.indexOf('/1000x800p.jpg') !== -1
+          ? url.replace('/1000x800p.jpg', '/230x180p.jpg')
+          : url;
+        return React.createElement('button', {
+          key: 'pt-' + i,
+          className: 'popup-gallery-thumb' + (i === imgIdx ? ' active' : ''),
+          onClick: function(e) { e.stopPropagation(); setImgIdx(i); },
+          'aria-label': t('imageLabel') + ' ' + (i + 1),
+        },
+          React.createElement('img', {
+            src: thumbUrl,
+            alt: '',
+            loading: 'lazy',
+            onError: function(e) { e.target.src = PH; },
+            draggable: false,
+          })
+        );
+      });
+      popupChildren.push(React.createElement('div', {
+        key: 'pthumbs',
+        className: 'popup-gallery-thumbs',
+        onClick: function(e) { e.stopPropagation(); },
+      }, popupThumbButtons));
     }
 
     // Caption
