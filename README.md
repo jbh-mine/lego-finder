@@ -17,6 +17,8 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [갤러리 이미지 수집](#갤러리-이미지-수집)
 - [자동 업데이트 (GitHub Actions)](#자동-업데이트-github-actions)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.5.23 — 2026-04-08](#v0523--2026-04-08)
+  - [v0.5.22 — 2026-04-08](#v0522--2026-04-08)
   - [v0.5.21 — 2026-04-08](#v0521--2026-04-08)
   - [v0.5.20 — 2026-04-08](#v0520--2026-04-08)
   - [v0.5.19 — 2026-04-08](#v0519--2026-04-08)
@@ -207,6 +209,49 @@ npm run fetch-images -- --refresh
 ## 변경 이력 (Changelog)
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
+
+### v0.5.23 — 2026-04-08
+
+#### `NEW` data(prices) + ui: BDP 펀딩 제품 USD → 당시 환율 기준 KRW 변환 + UI 환율 배지
+
+- **요구사항**: "BrickLink Designer Program (BDP) 펀딩 제품들도 USD 가격이 아니라 펀딩 당시 환율로 환산한 원화로 표시하고, 환율로 환산된 가격임을 사용자가 알 수 있게 표시해줘."
+- **`src/data/prices.json` BDP 50개 엔트리 일괄 변환** — 910001 ~ 910063 의 모든 BDP 펀딩 세트에 출시 연도(`year`) + 원본 USD(`usd`) + 환산 KRW(`price`) + `priceFromUsd: true` 플래그를 부여. 환산은 IRS / x-rates / exchange-rates.org 의 연평균 USD/KRW 환율을 시리즈별 출시 연도에 매칭하여 적용:
+  - 2021 라운드 1 (910001~910004): **1 USD = 1,145 KRW** → ₩229,000 / ₩206,100
+  - 2022 라운드 2~3 (910008~910023): **1 USD = 1,292 KRW** → ₩258,400 / ₩167,900 / ₩103,300
+  - 2023 라운드 4 (910027~910036): **1 USD = 1,305 KRW** → ₩261,000 / ₩130,500
+  - 2024 라운드 5~6 (910037~910054): **1 USD = 1,364 KRW** → ₩272,800 / ₩136,400 / ₩109,100
+  - 2025 라운드 7 (910055~910063): **1 USD = 1,421 KRW** → ₩284,200 / ₩142,100
+- **`meta.bdpExchangeRates` 추가** — 사용된 연도별 환율을 메타에 명시해 분석 페이지에서 검증·디버깅 가능. `meta.notes` 도 새 BDP 변환 정책을 설명하도록 갱신.
+- **`src/utils/price.js`** — `getKrwPrice` / `getKrwPriceAsync` 가 BDP 엔트리의 `priceFromUsd`, `usd`(원본), `year`(환산 적용 연도) 를 결과 객체에 그대로 forward.
+- **`src/hooks/useLegoPrice.js`** — 훅 반환값에 `priceFromUsd`, `year` 노출.
+- **`src/styles/price.css`** — `.price-fx-badge` 신규. 노란 배경(#fff3c4) + 진한 황토색 보더(#f0d97a) + 6px 라운드의 작은 알약 형태. 모바일에서는 폰트 사이즈 자동 축소.
+- **`src/components/SetCard.js`** — `priceData.priceFromUsd` 가 true 일 때 환산 KRW 옆에 인라인으로 **`당시 환율 적용`** (한국어) / **`historical FX`** (영어) 배지 렌더. `title` 속성에 원본 USD + 환산 적용 연도를 표시 (예: `$199.99 USD (2024)`) 해 호버 시 환율 근거 확인 가능.
+- **결과**: BDP 펀딩 제품 카드가 더 이상 raw USD 표시나 현재 환율 기준의 부정확한 환산이 아니라, **펀딩 당시 환율로 환산된 KRW + 환율 배지** 를 표시. PPP/희소가치/검색 등 KRW 가격을 사용하는 모든 페이지가 일관된 historical KRW 값을 사용. 사용자는 배지를 통해 "이 가격은 펀딩 당시 환율로 환산된 값" 임을 즉시 인지 가능.
+
+### v0.5.22 — 2026-04-08
+
+#### `FIX` data(prices): prices.json 가격 일괄 재검증 (배치 1~5, 50+ 항목 보정)
+
+- **배경**: 21341 (Hocus Pocus Sanderson Sisters' Cottage) 가격이 학습 메모리 기반으로 추정되어 잘못 입력된 사건 이후, 사용자 요청으로 prices.json 의 모든 가격을 brickset / lego.com/ko-kr / 한국 리테일러 검색을 통해 처음부터 다시 검증. "차근차근 공식 홈페이지 위주의 제품들 부터 가격 수정해줘" 지시에 따라 활성 플래그십 → 단종/디스컨티뉴드 → BDP 순서로 단계별 보정.
+- **배치 3 — Star Wars UCS 보정**:
+  - 75355 X-Wing Starfighter UCS: ₩339,900 → **₩319,900**
+  - 75331 The Razor Crest UCS: ₩769,000 → **₩779,900** (year 2020 → 2022)
+  - 75290 Mos Eisley Cantina: ₩549,000 → **₩469,900**
+- **배치 4 — Star Wars / Harry Potter / Technic / Marvel / DC / LOTR (18건)**:
+  - Star Wars: 75257 Millennium Falcon ₩249,900→**₩239,900**, 75308 R2-D2 ₩339,900→**₩259,900**, 75252 Imperial Star Destroyer UCS ₩1,199,000→**₩910,000**.
+  - Harry Potter: 71043 Hogwarts Castle ₩599,000→**₩640,000**, 76405 Hogwarts Express Collectors ₩649,000→**₩649,900**, 76402 Dumbledore's Office ₩159,900→**₩129,900**.
+  - Technic: 42115 Lamborghini Sian ₩559,000→**₩599,900**, 42083 Bugatti Chiron ₩449,900→**₩570,000**, 42141 McLaren F1 ₩299,900→**₩239,900**, 42171 Mercedes-AMG F1 W14 ₩299,900→**₩289,900** (year→2024), 42143 Ferrari Daytona SP3 ₩599,000→**₩599,900**.
+  - Marvel: 76210 Hulkbuster ₩749,000→**₩709,900**, 76269 Avengers Tower ₩749,000→**₩649,900**, 76178 Daily Bugle ₩499,000→**₩419,900**.
+  - DC: 76161 (실제 제품명 **1989 Batwing**, 기존 JSON 명칭 오류 수정) ₩499,000→**₩259,900**, 76240 Batmobile Tumbler ₩359,900→**₩299,900**.
+  - LOTR: 10316 Rivendell ₩749,000→**₩649,900**, 10333 Barad-dur ₩599,000→**₩599,900**.
+- **배치 5 — Ideas / Harry Potter / Marvel / NASA / Disney (16건)**:
+  - Ideas: 21343 Viking Village ₩219,900→**₩194,900**, 21318 Tree House ₩299,900→**₩269,900**, 21323 Grand Piano ₩549,000→**₩469,900**, 21321 ISS ₩219,900→**₩89,900**, 21327 Typewriter ₩269,900→**₩259,900**, 21322 Pirates of Barracuda Bay ₩269,900→**₩259,900**.
+  - NASA / Icons: 92176 Apollo Saturn V ₩219,900→**₩179,900** (+`discontinued: true`), 10283 Space Shuttle Discovery ₩269,900→**₩259,900**, 10266 Apollo 11 Lunar Lander ₩149,900→**₩139,900**.
+  - Harry Potter: 75978 Diagon Alley ₩519,000→**₩499,900**, 76391 Hogwarts Icons Collectors ₩309,900→**₩329,900**, 76423 Hogwarts Express & Hogsmeade ₩169,900→**₩184,900**.
+  - Marvel: 76218 Sanctum Sanctorum ₩339,900→**₩329,900** (+`discontinued: true`), 76989 (실제 제품명 **Horizon Forbidden West: Tallneck**, 기존 JSON 명칭 "Iron Man Hall of Armor" 오류 수정) ₩219,900→**₩114,900** (year→2022).
+  - Disney: 43222 Disney Castle 100 Years ₩489,000→**₩519,900**.
+- **방법론**: 모든 보정은 WebSearch 결과의 한국어 스니펫(brickset / 다나와 / brickinside / lego.com/ko-kr) 기준으로만 적용. 검색에서 단가가 명확히 확인되지 않은 항목(42100 Liebherr R 9800, 42158 NASA Mars Rover, 21348 D&D Red Dragon 등) 은 보정하지 않고 기존 값 유지. 76989·76161 처럼 JSON 의 제품명 자체가 잘못된 케이스 2건은 이름·연도·가격을 모두 정정.
+- **결과**: prices.json 의 활성 플래그십 라인 50+ 항목이 학습 메모리 추정값에서 검색 검증값으로 교체. PPP / 희소가치 / 검색 페이지의 KRW 기반 분석이 더 신뢰 가능한 데이터셋을 사용. 단종 모듈러(10182~10278) 등 KRW 데이터를 검색으로 확인할 수 없는 historical MSRP 들은 별도 후속 작업으로 분리.
 
 ### v0.5.21 — 2026-04-08
 
