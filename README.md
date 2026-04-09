@@ -17,6 +17,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [갤러리 이미지 수집](#갤러리-이미지-수집)
 - [자동 업데이트 (GitHub Actions)](#자동-업데이트-github-actions)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.5.29 — 2026-04-09](#v0529--2026-04-09)
   - [v0.5.28 — 2026-04-09](#v0528--2026-04-09)
   - [v0.5.27 — 2026-04-09](#v0527--2026-04-09)
   - [v0.5.26 — 2026-04-09](#v0526--2026-04-09)
@@ -219,6 +220,29 @@ npm run fetch-images -- --refresh
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
 
+### v0.5.29 — 2026-04-09
+
+#### `NEW` feat(funding): BDP 예정작 BrickLink 스타일 상세 카드 + 실제 이미지 + 갤러리
+
+- **요구사항**: "펀딩 예정작품에 썸네일에 이미지가 안보이네요. www.bricklink.com 사이트에 상세화면도 있는데 화면과 정보 그대로 가져와서 우리 사이트에 맞게 화면과 기능구현해줘. 이미지도 나오도록 해야해."
+- **`src/data/bdpUpcoming.json` 전면 리뉴얼 (schemaVersion 2)**:
+  - **근본 원인**: 모든 `imageUrl` 필드가 빈 문자열(`""`)이라 썸네일 미표시.
+  - BrickLink CDN(`file.bricklink.info`) 에서 5개 제품의 실제 이미지 URL 수집. 각 제품당 5장의 갤러리 이미지 추가.
+  - 신규 필드: `galleryImages[]`, `brickLinkUrl`, `designerLocation`, `crowdfundingNote`, `minifigures`, `stickers`, `uniqueParts`, `descriptionEn`, `descriptionKo`.
+  - 디자이너명 정정: "ThomasRoeder" → "TRBricks". 출시일 정정: "2026-06-01" → "2026-06-09".
+- **`src/pages/FundingPage.js` 예정작 탭 전면 교체**:
+  - 기존 단순 카드 그리드(`.bdp-upcoming-grid`)를 BrickLink 스타일 상세 카드(`.bdp-detail-card`) 레이아웃으로 교체.
+  - **이미지 갤러리**: 메인 이미지 + 썸네일 스트립(클릭 전환). 갤러리 상태를 `useState({})` 로 관리.
+  - **스펙 테이블**: 시리즈/디자이너/부품수(고유부품)/미니피규어/스티커/크라우드펀딩일/상태를 정돈된 테이블로 표시.
+  - **설명 섹션**: 한국어/영어 자동 전환되는 제품 설명.
+  - **액션 버튼**: "BrickLink에서 보기" 프라이머리 버튼 + Ideas 링크.
+- **`src/styles/lego-brick.css` 신규 CSS (300+ 줄)**:
+  - `.bdp-detail-list/card/gallery/main-img-wrap/thumbs/thumb/info/header/name/spec-table/desc/actions/btn/notes` 전체 스타일 정의.
+  - 2단 그리드(갤러리 380px + 정보) → 800px 이하에서 1단 스택 반응형.
+  - `.bdp-detail-date-highlight` 크라우드펀딩 일자 강조 배지 (다크 모드 호환).
+- **`src/utils/i18n.js` 신규 키 9개**: `bdpDetailUniqueParts/Minifigures/Stickers/NoStickers/Crowdfunding/Status/Description/ViewOnBrickLink/By` 한/영 추가.
+- **결과**: 펀딩 예정작 탭에서 BDP Series 8 5개 제품이 BrickLink 상세 페이지와 유사한 레이아웃으로 실제 이미지·갤러리·스펙·설명과 함께 표시됨. 모바일 반응형 지원.
+
 ### v0.5.28 — 2026-04-09
 
 #### `FIX` fix(funding): BDP 테마 목록 로드 실패 시 "API 호출 중 오류" 수정
@@ -273,7 +297,7 @@ npm run fetch-images -- --refresh
 - **`src/utils/i18n.js` 신규 키**: `bdpTabReleased/Upcoming`, `bdpUpcomingTabLabel`, `bdpUpcomingStatusConfirmed/Reviewing/Rumor`, `bdpUpcomingExpected/Round/Designer/EstimatedUsd/EstimatedParts`, `bdpUpcomingViewOnIdeas/NoLink/Empty/Desc` 한/영 각 13개 추가. 희소가치 페이지용 `scarcityStatusMarketKream` / `scarcityMarketSourceKream` 도 선행 추가 (v0.5.27 KREAM 작업 준비).
 - **`scripts/promote-bdp-upcoming.js` 신규 (4.3KB)** — 마이그레이션 스크립트. `status === 'confirmed'` 이고 `expectedLaunchDate <= today (UTC)` 인 항목을 `prices.json` 의 BDP 섹션(910001~910999 레인지의 다음 사용 가능 id)으로 이동하고 `bdpUpcoming.json` 에서 제거. 가격은 발표 시점 미정이므로 `price: 0 + needsPriceVerification: true` 로 삽입되어 운영자가 후에 KRW 를 채우도록 유도. `--apply` 플래그 없으면 dry-run.
 - **`.github/workflows/auto-update-images.yml` — 수동 업데이트 필요**: 현재 세션의 GitHub MCP 토큰이 `workflow` 스코프를 갖지 않아 자동 commit 이 차단됨. 아래 단계를 수동으로 적용해야 함:
-  1. `Refresh gallery image IDs` 스텝 직후에 `- name: Promote BDP upcoming entries whose launch date has passed\n        continue-on-error: true\n        run: node scripts/promote-bdp-upcoming.js --apply` 추가.
+  1. `Refresh gallery image IDs` 스텝 직후에 `- name: Promote BDP upcoming entries whose launch date has passed\\n        continue-on-error: true\\n        run: node scripts/promote-bdp-upcoming.js --apply` 추가.
   2. `Check for changes` 의 `git add` 라인에 `src/data/bdpUpcoming.json` 을 포함.
   3. commit 메시지를 `chore(data): weekly auto-refresh of prices, gallery & BDP upcoming [skip ci]` 로 업데이트.
 - **결과**: 사용자가 펀딩제품 페이지 → "예정작" 탭에서 BDP Series 8 파이널리스트 5개를 상태 배지·디자이너·예상 출시일과 함께 확인 가능. 확정 후 2026-06-01 이 지나면 주간 Actions 가 이들을 자동으로 `prices.json` BDP 섹션으로 승격시켜 기존 "발매된 라운드" 탭에도 나타나게 됨 (workflow yaml 수동 반영 후).
@@ -289,7 +313,7 @@ npm run fetch-images -- --refresh
   - **75060** Slave I UCS (2015)             ₩269,900 → **₩299,900** (한국 출시 정가 ₩299,900 / 해외 $199.99 매칭)
   - **42043** Mercedes-Benz Arocs 3245 (2015) ₩379,900 → **₩279,900** (한국 토이저러스 정식 가격 ₩279,900 — dpg.danawa.com 출처)
 - **유지된 항목 (검증 실패 → 변경 없음)**: 10179 Original UCS Falcon, 10221 Super Star Destroyer, 75095 TIE Fighter UCS, 10240 Red Five X-wing, 75144 Snowspeeder, 75059 Sandcrawler, 75105 Falcon (Force Awakens), 42082 Rough Terrain Crane, 42055 Bucket Wheel Excavator, 42009 Mobile Crane MK II — 모두 한국어 검색 스니펫에서 KRW 발매 정가를 직접 인용한 출처를 찾지 못했고 USD MSRP 또는 현재 중고가만 노출되어, 추정/환산 금지 원칙에 따라 기존 값 유지. 특히 10179 는 한국 미정식발매(브릭인사이드: "한국에서는 정식발매되지 않았으나") 라는 조건이 별도로 발견되어 후속 라운드에서 처리 방안을 결정 예정.
-- **방법론 원칙 재확인**: 10182 Cafe Corner / 10246 Detective's Office 검증과 동일하게 검색 스니펫에서 KRW 수치가 직접 언급된 경우만 수정. 추정/환산/USD 기반 재계산은 하지 않음 (no-fabrication 원칙 계속 적용).
+- **방법론 원칙 재확인**: 10182 Cafe Corner / 10246 Detective's Office 검증과 동일하게 검색 스니펫에서 KRW 수치가 직접 언급된 경우만 수정. 추정/환산은 하지 않음 (no-fabrication 원칙 계속 적용).
 - **결과**: PPP / 희소가치 / 검색 페이지의 단종 Star Wars/Technic 분석이 4개 항목에 대해 검색 검증된 historical KRW 기준으로 수렴. 75060 Slave I 와 10188 Death Star 는 가격 상승, 42043 Arocs 와 75159 Death Star 의 KRW 가 보다 정확한 발매가로 정렬됨. 검증 실패 항목들은 후속 라운드(예: 한국 LEGO 매거진 광고 / 토이저러스 카탈로그 아카이브 등) 의 deeper search 대상으로 이월.
 
 ### v0.5.24 — 2026-04-08
