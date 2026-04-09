@@ -429,7 +429,17 @@ function FundingPage() {
     resultsSection = React.createElement(React.Fragment, null, summary, sections);
   }
 
-  // Upcoming grid (placeholder SVG + cards)
+  // ---- Upcoming detail view: BrickLink-style product cards with gallery ----
+  var upcomingGalleryState = useState({}); // { [itemId]: selectedIndex }
+  var galleryIndexes = upcomingGalleryState[0]; var setGalleryIndexes = upcomingGalleryState[1];
+
+  var setGalleryIdx = function(itemId, idx) {
+    setGalleryIndexes(function(prev) {
+      var o = {}; o[itemId] = idx;
+      return Object.assign({}, prev, o);
+    });
+  };
+
   var upcomingSection = null;
   if (segment === 'upcoming') {
     if (upcomingItems.length === 0) {
@@ -452,65 +462,155 @@ function FundingPage() {
 
       var cards = upcomingItems.map(function(item) {
         var name = (lang === 'ko' && item.nameKo) ? item.nameKo : item.nameEn;
-        var imageEl = item.imageUrl
-          ? React.createElement('img', { className: 'bdp-upcoming-img', src: item.imageUrl, alt: name, loading: 'lazy' })
+        var desc = (lang === 'ko' && item.descriptionKo) ? item.descriptionKo : (item.descriptionEn || '');
+        var gallery = item.galleryImages && item.galleryImages.length > 0 ? item.galleryImages : (item.imageUrl ? [item.imageUrl] : []);
+        var currentIdx = galleryIndexes[item.id] || 0;
+        var currentImgSrc = gallery[currentIdx] || item.imageUrl || '';
+
+        // --- Image gallery section ---
+        var mainImageEl = currentImgSrc
+          ? React.createElement('img', {
+              className: 'bdp-detail-main-img',
+              src: currentImgSrc,
+              alt: name,
+              loading: 'lazy',
+              key: 'gimg-' + item.id + '-' + currentIdx
+            })
           : placeholderSvg;
 
-        var linkProps = {
-          className: 'bdp-upcoming-link',
-          href: item.ideasProjectUrl || '#',
-          target: '_blank',
-          rel: 'noopener noreferrer'
-        };
-        if (!item.ideasProjectUrl) {
-          linkProps['aria-disabled'] = 'true';
-          linkProps.onClick = function(e) { e.preventDefault(); };
-        }
+        var thumbStrip = gallery.length > 1
+          ? React.createElement('div', { className: 'bdp-detail-thumbs' },
+              gallery.map(function(src, idx) {
+                return React.createElement('img', {
+                  key: 'thumb-' + idx,
+                  className: 'bdp-detail-thumb' + (idx === currentIdx ? ' active' : ''),
+                  src: src,
+                  alt: name + ' ' + (idx + 1),
+                  loading: 'lazy',
+                  onClick: function() { setGalleryIdx(item.id, idx); }
+                });
+              })
+            )
+          : null;
 
-        var metaItems = [];
-        metaItems.push(React.createElement('span', { key: 'round' },
-          React.createElement('strong', null, t('bdpUpcomingRound') + ': '), item.round));
-        if (item.designer) {
-          metaItems.push(React.createElement('span', { key: 'designer' },
-            React.createElement('strong', null, t('bdpUpcomingDesigner') + ': '), item.designer));
-        }
-        if (item.expectedLaunchDate) {
-          metaItems.push(React.createElement('span', { key: 'date' },
-            React.createElement('strong', null, t('bdpUpcomingExpected') + ': '), item.expectedLaunchDate));
-        }
+        var gallerySection = React.createElement('div', { className: 'bdp-detail-gallery' },
+          React.createElement('div', { className: 'bdp-detail-main-img-wrap' }, mainImageEl),
+          thumbStrip
+        );
+
+        // --- Spec table ---
+        var specRows = [];
+        specRows.push(React.createElement('tr', { key: 'round' },
+          React.createElement('th', null, t('bdpUpcomingRound')),
+          React.createElement('td', null, item.round)
+        ));
+        specRows.push(React.createElement('tr', { key: 'designer' },
+          React.createElement('th', null, t('bdpUpcomingDesigner')),
+          React.createElement('td', null,
+            item.designer,
+            item.designerLocation ? React.createElement('span', { className: 'bdp-detail-location' }, ' \u00B7 ' + item.designerLocation) : null
+          )
+        ));
         if (item.estimatedParts) {
-          metaItems.push(React.createElement('span', { key: 'parts' },
-            React.createElement('strong', null, t('bdpUpcomingEstimatedParts') + ': '), item.estimatedParts));
+          specRows.push(React.createElement('tr', { key: 'parts' },
+            React.createElement('th', null, t('bdpUpcomingEstimatedParts')),
+            React.createElement('td', null,
+              item.estimatedParts.toLocaleString(),
+              item.uniqueParts ? React.createElement('span', { className: 'bdp-detail-sub' }, ' (' + t('bdpDetailUniqueParts') + ': ' + item.uniqueParts + ')') : null
+            )
+          ));
+        }
+        if (item.minifigures != null) {
+          specRows.push(React.createElement('tr', { key: 'minifigs' },
+            React.createElement('th', null, t('bdpDetailMinifigures')),
+            React.createElement('td', null, item.minifigures)
+          ));
+        }
+        if (item.stickers != null) {
+          specRows.push(React.createElement('tr', { key: 'stickers' },
+            React.createElement('th', null, t('bdpDetailStickers')),
+            React.createElement('td', null, item.stickers === 0 ? t('bdpDetailNoStickers') : item.stickers)
+          ));
         }
         if (item.estimatedUsd) {
-          metaItems.push(React.createElement('span', { key: 'usd' },
-            React.createElement('strong', null, t('bdpUpcomingEstimatedUsd') + ': '), '$' + item.estimatedUsd));
+          specRows.push(React.createElement('tr', { key: 'price' },
+            React.createElement('th', null, t('bdpUpcomingEstimatedUsd')),
+            React.createElement('td', null, '$' + item.estimatedUsd)
+          ));
         }
+        specRows.push(React.createElement('tr', { key: 'crowdfunding' },
+          React.createElement('th', null, t('bdpDetailCrowdfunding')),
+          React.createElement('td', null,
+            React.createElement('span', { className: 'bdp-detail-date-highlight' },
+              item.crowdfundingNote || item.expectedLaunchDate
+            )
+          )
+        ));
+        specRows.push(React.createElement('tr', { key: 'status' },
+          React.createElement('th', null, t('bdpDetailStatus')),
+          React.createElement('td', null,
+            React.createElement('span', { className: 'brick-status ' + item.status }, statusLabel(item.status))
+          )
+        ));
 
+        var specTable = React.createElement('table', { className: 'bdp-detail-spec-table' },
+          React.createElement('tbody', null, specRows)
+        );
+
+        // --- Description ---
+        var descSection = desc
+          ? React.createElement('div', { className: 'bdp-detail-desc' },
+              React.createElement('h4', null, t('bdpDetailDescription')),
+              React.createElement('p', null, desc)
+            )
+          : null;
+
+        // --- Action buttons ---
+        var actionButtons = React.createElement('div', { className: 'bdp-detail-actions' },
+          item.brickLinkUrl ? React.createElement('a', {
+            className: 'bdp-detail-btn primary',
+            href: item.brickLinkUrl,
+            target: '_blank',
+            rel: 'noopener noreferrer'
+          }, t('bdpDetailViewOnBrickLink')) : null,
+          item.brickLinkUrl !== item.ideasProjectUrl && item.ideasProjectUrl ? React.createElement('a', {
+            className: 'bdp-detail-btn',
+            href: item.ideasProjectUrl,
+            target: '_blank',
+            rel: 'noopener noreferrer'
+          }, t('bdpUpcomingViewOnIdeas')) : null
+        );
+
+        // --- Notes ---
+        var notesEl = item.notes
+          ? React.createElement('div', { className: 'bdp-detail-notes' }, item.notes)
+          : null;
+
+        // --- Combined card ---
         return React.createElement('div', {
           key: item.id,
-          className: 'bdp-upcoming-card',
+          className: 'bdp-detail-card',
           'data-status': item.status
         },
-          React.createElement('div', { className: 'bdp-upcoming-img-wrap' }, imageEl),
-          React.createElement('div', { className: 'bdp-upcoming-header-row' },
-            React.createElement('div', null,
-              React.createElement('div', { className: 'bdp-upcoming-name' }, name),
-              item.designer ? React.createElement('div', { className: 'bdp-upcoming-designer' }, '@' + item.designer) : null
+          gallerySection,
+          React.createElement('div', { className: 'bdp-detail-info' },
+            React.createElement('div', { className: 'bdp-detail-header' },
+              React.createElement('h3', { className: 'bdp-detail-name' }, name),
+              React.createElement('span', { className: 'brick-status ' + item.status }, statusLabel(item.status))
             ),
-            React.createElement('span', {
-              className: 'brick-status ' + item.status
-            }, statusLabel(item.status))
-          ),
-          React.createElement('div', { className: 'bdp-upcoming-meta-row' }, metaItems),
-          item.notes ? React.createElement('div', { className: 'bdp-upcoming-notes' }, item.notes) : null,
-          React.createElement('a', linkProps,
-            item.ideasProjectUrl ? t('bdpUpcomingViewOnIdeas') : t('bdpUpcomingNoLink')
+            item.designer ? React.createElement('div', { className: 'bdp-detail-designer-line' },
+              t('bdpDetailBy') + ' ',
+              React.createElement('strong', null, item.designer)
+            ) : null,
+            specTable,
+            descSection,
+            notesEl,
+            actionButtons
           )
         );
       });
 
-      upcomingSection = React.createElement('div', { className: 'bdp-upcoming-grid' }, cards);
+      upcomingSection = React.createElement('div', { className: 'bdp-detail-list' }, cards);
     }
   }
 
