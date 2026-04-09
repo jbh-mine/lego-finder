@@ -11,6 +11,28 @@ var PAGE_SIZE = 40;
 // Status display order for upcoming cards (confirmed first, rumors last)
 var STATUS_ORDER = { confirmed: 0, reviewing: 1, rumor: 2 };
 
+// localStorage cache for BDP theme discovery (fast path + proxy-flake resilience)
+var BDP_CACHE_KEY = 'bdpThemeCache_v1';
+var BDP_CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
+
+function loadBdpCache() {
+  try {
+    var raw = typeof localStorage !== 'undefined' ? localStorage.getItem(BDP_CACHE_KEY) : null;
+    if (!raw) return null;
+    var parsed = JSON.parse(raw);
+    if (!parsed || !parsed.ts || Date.now() - parsed.ts > BDP_CACHE_TTL) return null;
+    if (!parsed.parentId || !parsed.series || !parsed.themeMap) return null;
+    return parsed;
+  } catch (e) { return null; }
+}
+
+function saveBdpCache(data) {
+  try {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(BDP_CACHE_KEY, JSON.stringify(Object.assign({}, data, { ts: Date.now() })));
+  } catch (e) { /* quota or private mode — ignore */ }
+}
+
 function FundingPage() {
   var lc = useLanguage();
   var t = lc.t;
@@ -40,18 +62,53 @@ function FundingPage() {
   var sentinelRef = useRef(null);
   var currentSeriesRef = useRef('all');
 
-  // Load themes and find BDP theme on mount
+  // Load themes and find BDP theme on mount.
+  // Strategy:
+  //   1. Try localStorage cache first — instant load, avoids heavy paginated calls
+  //      through flaky public CORS proxies.
+  //   2. Always attempt a background refresh from Rebrickable.
+  //   3. If ALL pages fail AND no cache exists, show apiError.
+  //   4. If SOME pages fail but we already have cache, stay silent — user's
+  //      cached view keeps working.
   useEffect(function() {
+    var cached = loadBdpCache();
+    var hadCache = false;
+    if (cached) {
+      hadCache = true;
+      setBdpParentId(cached.parentId);
+      setBdpSeries(cached.series);
+      setThemeMap(cached.themeMap);
+    }
+
     (async function() {
       try {
         var allThemes = [];
         var pg = 1; var more = true;
-        while (more) {
-          var data = await getThemes(pg, 1000);
-          allThemes = allThemes.concat(data.results);
-          more = data.next != null;
-          pg++;
+        var MAX_PAGES = 20; // safety bound — Rebrickable currently has <5 pages at size 200
+        var PAGE_SIZE_THEMES = 200; // smaller than 1000 to be kinder to CORS proxies/timeouts
+        var pageFailures = 0;
+
+        while (more && pg <= MAX_PAGES) {
+          try {
+            var data = await getThemes(pg, PAGE_SIZE_THEMES);
+            allThemes = allThemes.concat((data && data.results) || []);
+            more = data && data.next != null;
+            pg++;
+          } catch (pageErr) {
+            console.error('[FundingPage] getThemes page ' + pg + ' failed:',
+              pageErr && pageErr.message, pageErr && pageErr.response && pageErr.response.status);
+            pageFailures++;
+            // If we already collected SOMETHING, break and use what we have.
+            if (allThemes.length > 0) { more = false; break; }
+            // Otherwise, give up the loop and rely on cache / error path below.
+            throw pageErr;
+          }
         }
+
+        if (allThemes.length === 0) {
+          throw new Error('No themes returned from Rebrickable');
+        }
+
         var map = {};
         allThemes.forEach(function(theme) {
           map[theme.id] = theme.name;
@@ -63,21 +120,26 @@ function FundingPage() {
         });
 
         if (bdpParent) {
-          setBdpParentId(bdpParent.id);
           var children = allThemes.filter(function(theme) {
             return theme.parent_id === bdpParent.id;
           }).sort(function(a, b) {
             return a.name.localeCompare(b.name);
           });
+          setBdpParentId(bdpParent.id);
           setBdpSeries(children);
-        } else {
+          saveBdpCache({ parentId: bdpParent.id, series: children, themeMap: map });
+        } else if (!hadCache) {
           setError(t('bdpThemeNotFound'));
           setLoading(false);
         }
       } catch (e) {
-        console.error('Failed to load themes:', e);
-        setError(t('apiError'));
-        setLoading(false);
+        console.error('[FundingPage] Failed to load themes:',
+          e && e.message, e && e.response && e.response.status);
+        // Only surface an error if we have NO cached fallback to show the user.
+        if (!hadCache) {
+          setError(t('apiError'));
+          setLoading(false);
+        }
       }
     })();
   }, []);
@@ -137,6 +199,8 @@ function FundingPage() {
       setHasMore(data.results.length >= PAGE_SIZE);
       setLoaded(true);
     } catch (err) {
+      console.error('[FundingPage] filterSets failed:',
+        err && err.message, err && err.response && err.response.status);
       setError(t('apiError'));
     } finally {
       setLoading(false);
