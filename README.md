@@ -17,6 +17,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [갤러리 이미지 수집](#갤러리-이미지-수집)
 - [자동 업데이트 (GitHub Actions)](#자동-업데이트-github-actions)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.5.26 — 2026-04-09](#v0526--2026-04-09)
   - [v0.5.25 — 2026-04-08](#v0525--2026-04-08)
   - [v0.5.24 — 2026-04-08](#v0524--2026-04-08)
   - [v0.5.23 — 2026-04-08](#v0523--2026-04-08)
@@ -211,6 +212,29 @@ npm run fetch-images -- --refresh
 ## 변경 이력 (Changelog)
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
+
+### v0.5.26 — 2026-04-09
+
+#### `NEW` feat(funding): BDP "다음 펀딩 예정작" 탭 + 큐레이션 JSON + 자동 승격 스크립트
+
+- **요구사항**: 펀딩제품 페이지에 다음 라운드 예정작(Series 8 이상)을 공식 발표 기반으로 미리 볼 수 있게 해줘. 상태별(확정/심사중/루머) 구분, 이미지·링크 폴백, 주간 자동 승격 기능 포함.
+- **`src/data/bdpUpcoming.json` 신규 (3.6KB)** — 수작업 큐레이션 JSON. 스키마: `{ schemaVersion, meta: { description, statusMeaning, lastUpdated }, upcoming: [{ id, nameEn, nameKo, designer, round, status, expectedLaunchDate, imageUrl, ideasProjectUrl, estimatedUsd, estimatedParts, notes }] }`. 초기 데이터로 BDP Series 8 5인 파이널리스트 전원(ThomasRoeder / KingCreations / brickhucker / BallisticBricks / ExeSandbox)을 `status: 'confirmed'`, `expectedLaunchDate: '2026-06-01'` 로 등록. 출처: brickset.com/article/122342, jaysbrickblog, bricksfanz.
+- **`src/pages/FundingPage.js` 리팩터링**:
+  - 상단에 `.bdp-segment-tabs` 2-세그먼트(발매된 라운드 / 예정작) 추가. 기본 탭은 `released` (기존 동작 보존).
+  - Upcoming 탭 진입 시 `bdpUpcomingData.upcoming` 을 status 우선순위(`confirmed → reviewing → rumor`) + expectedLaunchDate 오름차순으로 정렬해 `.bdp-upcoming-grid` 카드 그리드 렌더.
+  - 각 카드: 이미지(없으면 LEGO 스터드 SVG 플레이스홀더), 제품명(ko/en 자동), 디자이너, 상태 배지(`.brick-status.confirmed/reviewing/rumor`), round/designer/expectedLaunchDate/estimatedParts/estimatedUsd 메타 행, notes, LEGO Ideas/BrickLink 외부 링크(없으면 `aria-disabled`).
+  - 모든 infinite-scroll / 필터 로직은 `segment === 'released'` 가드로 분기.
+- **`src/styles/lego-brick.css` 확장**:
+  - `.brick-status.confirmed` (초록 #5ac35a), `.brick-status.reviewing` (파랑 #4a9eff), `.brick-status.rumor` (주황 #ff8a3d) 3개 신규 변형. 기존 `new/retired/coming` 유지.
+  - `.bdp-upcoming-grid` auto-fill minmax(260px, 1fr) + `.bdp-upcoming-card` (hover translateY, `[data-status="rumor"]` opacity 0.7) + `.bdp-upcoming-img-wrap` 4/3 aspect-ratio + `.bdp-upcoming-placeholder` currentColor SVG 지원.
+  - `.bdp-segment-tabs` / `.bdp-segment-tab` 피셔 토글 스타일 (활성 탭 = LEGO 레드 배경 + inset 섀도우).
+- **`src/utils/i18n.js` 신규 키**: `bdpTabReleased/Upcoming`, `bdpUpcomingTabLabel`, `bdpUpcomingStatusConfirmed/Reviewing/Rumor`, `bdpUpcomingExpected/Round/Designer/EstimatedUsd/EstimatedParts`, `bdpUpcomingViewOnIdeas/NoLink/Empty/Desc` 한/영 각 13개 추가. 희소가치 페이지용 `scarcityStatusMarketKream` / `scarcityMarketSourceKream` 도 선행 추가 (v0.5.27 KREAM 작업 준비).
+- **`scripts/promote-bdp-upcoming.js` 신규 (4.3KB)** — 마이그레이션 스크립트. `status === 'confirmed'` 이고 `expectedLaunchDate <= today (UTC)` 인 항목을 `prices.json` 의 BDP 섹션(910001~910999 레인지의 다음 사용 가능 id)으로 이동하고 `bdpUpcoming.json` 에서 제거. 가격은 발표 시점 미정이므로 `price: 0 + needsPriceVerification: true` 로 삽입되어 운영자가 후에 KRW 를 채우도록 유도. `--apply` 플래그 없으면 dry-run.
+- **`.github/workflows/auto-update-images.yml` — 수동 업데이트 필요**: 현재 세션의 GitHub MCP 토큰이 `workflow` 스코프를 갖지 않아 자동 commit 이 차단됨. 아래 단계를 수동으로 적용해야 함:
+  1. `Refresh gallery image IDs` 스텝 직후에 `- name: Promote BDP upcoming entries whose launch date has passed\n        continue-on-error: true\n        run: node scripts/promote-bdp-upcoming.js --apply` 추가.
+  2. `Check for changes` 의 `git add` 라인에 `src/data/bdpUpcoming.json` 을 포함.
+  3. commit 메시지를 `chore(data): weekly auto-refresh of prices, gallery & BDP upcoming [skip ci]` 로 업데이트.
+- **결과**: 사용자가 펀딩제품 페이지 → "예정작" 탭에서 BDP Series 8 파이널리스트 5개를 상태 배지·디자이너·예상 출시일과 함께 확인 가능. 확정 후 2026-06-01 이 지나면 주간 Actions 가 이들을 자동으로 `prices.json` BDP 섹션으로 승격시켜 기존 "발매된 라운드" 탭에도 나타나게 됨 (workflow yaml 수동 반영 후).
 
 ### v0.5.25 — 2026-04-08
 
