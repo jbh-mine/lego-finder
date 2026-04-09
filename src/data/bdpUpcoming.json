@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "description": "LEGO BrickLink Designer Program upcoming rounds (not yet released). Manually curated from LEGO Ideas / BrickLink official announcements and reputable community sources (brickset, jaysbrickblog, bricksfanz, hothbricks, brickfanatics). Each entry is classified by confidence level via `status` ('rumor' | 'reviewing' | 'confirmed'). The weekly GitHub Actions promote-bdp-upcoming.js script migrates `confirmed` entries whose `expectedLaunchDate` has passed into src/data/prices.json.",
+    "statusMeaning": {
+      "confirmed": "Officially announced by LEGO/BrickLink (finalist selected and/or launch date set).",
+      "reviewing": "Entered BDP review phase but not yet confirmed as finalist.",
+      "rumor": "Community speculation or leaks; not officially confirmed."
+    },
+    "lastUpdated": "2026-04-09"
+  },
+  "upcoming": [
+    {
+      "id": "bdp-s8-01",
+      "nameEn": "Brick Railroad: Diesel-Electric Locomotive (A-Unit)",
+      "nameKo": "브릭 레일로드: 디젤-전기 기관차 (A-유닛)",
+      "designer": "ThomasRoeder",
+      "round": "Series 8",
+      "status": "confirmed",
+      "expectedLaunchDate": "2026-06-01",
+      "imageUrl": "",
+      "ideasProjectUrl": "https://www.bricklink.com/v3/designer-program/series-8/main.page",
+      "estimatedUsd": null,
+      "estimatedParts": 1428,
+      "notes": "1950년대 미국 디젤-전기 기관차 (1970년대 도장 버전). BDP Series 8 5인 파이널리스트 확정."
+    },
+    {
+      "id": "bdp-s8-02",
+      "nameEn": "The University of Science",
+      "nameKo": "사이언스 대학교",
+      "designer": "KingCreations",
+      "round": "Series 8",
+      "status": "confirmed",
+      "expectedLaunchDate": "2026-06-01",
+      "imageUrl": "",
+      "ideasProjectUrl": "https://www.bricklink.com/v3/designer-program/series-8/main.page",
+      "estimatedUsd": null,
+      "estimatedParts": null,
+      "notes": "다양한 성·아카데미·건축물에서 영감을 받은 대학 캠퍼스. BDP Series 8 파이널리스트 확정."
+    },
+    {
+      "id": "bdp-s8-03",
+      "nameEn": "Dustmark Keep",
+      "nameKo": "더스트마크 요새",
+      "designer": "brickhucker",
+      "round": "Series 8",
+      "status": "confirmed",
+      "expectedLaunchDate": "2026-06-01",
+      "imageUrl": "",
+      "ideasProjectUrl": "https://www.bricklink.com/v3/designer-program/series-8/main.page",
+      "estimatedUsd": null,
+      "estimatedParts": null,
+      "notes": "펼치고 접을 수 있는 사막 요새. 캐슬 라인 팬을 위한 BDP Series 8 파이널리스트 확정."
+    },
+    {
+      "id": "bdp-s8-04",
+      "nameEn": "Coconut Cape",
+      "nameKo": "코코넛 케이프",
+      "designer": "BallisticBricks",
+      "round": "Series 8",
+      "status": "confirmed",
+      "expectedLaunchDate": "2026-06-01",
+      "imageUrl": "",
+      "ideasProjectUrl": "https://www.bricklink.com/v3/designer-program/series-8/main.page",
+      "estimatedUsd": null,
+      "estimatedParts": 2425,
+      "notes": "LEGO 파이렛츠 창작. 스티커 0개 사용. BDP Series 8 파이널리스트 확정."
+    },
+    {
+      "id": "bdp-s8-05",
+      "nameEn": "Hot Air Balloon",
+      "nameKo": "열기구",
+      "designer": "ExeSandbox",
+      "round": "Series 8",
+      "status": "confirmed",
+      "expectedLaunchDate": "2026-06-01",
+      "imageUrl": "",
+      "ideasProjectUrl": "https://www.bricklink.com/v3/designer-program/series-8/main.page",
+      "estimatedUsd": null,
+      "estimatedParts": null,
+      "notes": "BDP Series 8 5번째 파이널리스트 확정."
+    }
+  ]
+}
