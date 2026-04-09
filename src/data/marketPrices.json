@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "description": "KREAM trading prices for discontinued popular LEGO collector sets. Used by ScarcityPage to prefer KREAM over BrickEconomy estimates. All values are KRW and represent the most recent KREAM 거래가 snapshot at the time of collection.",
+    "source": "kream.co.kr",
+    "currency": "KRW",
+    "lastUpdated": "2026-04-09",
+    "notes": "Each entry is hand-curated from KREAM product pages. Run ScarcityPage → 시세 자동 새로고침 or update this file manually. When a set is not present, the scarcity analyzer falls back to BrickEconomy via allorigins CORS proxy."
+  },
+  "prices": {
+    "21322": {
+      "nameEn": "Pirates of Barracuda Bay",
+      "nameKo": "바라쿠다 해적들",
+      "kreamKrw": 411000,
+      "collectedAt": "2026-04-09",
+      "productUrl": "https://kream.co.kr/products/39083"
+    },
+    "75192": {
+      "nameEn": "Millennium Falcon (UCS 2017)",
+      "nameKo": "UCS 밀레니엄 팔콘",
+      "kreamKrw": 850000,
+      "collectedAt": "2026-04-09",
+      "productUrl": "https://kream.co.kr/products/44999"
+    },
+    "10188": {
+      "nameEn": "Death Star (Original 2008)",
+      "nameKo": "데스 스타 (오리지널)",
+      "kreamKrw": 940000,
+      "collectedAt": "2026-04-09",
+      "productUrl": "https://kream.co.kr/products/42003"
+    },
+    "75159": {
+      "nameEn": "Death Star (2016)",
+      "nameKo": "데스스타 (2016)",
+      "kreamKrw": 1350000,
+      "collectedAt": "2026-04-09",
+      "productUrl": "https://kream.co.kr/products/39053"
+    },
+    "10246": {
+      "nameEn": "Detective's Office",
+      "nameKo": "탐정 사무소",
+      "kreamKrw": 415000,
+      "collectedAt": "2026-04-09",
+      "productUrl": "https://kream.co.kr/products/39085"
+    },
+    "10278": {
+      "nameEn": "Police Station",
+      "nameKo": "경찰서",
+      "kreamKrw": 318000,
+      "collectedAt": "2026-04-09",
+      "productUrl": "https://kream.co.kr/products/41092"
+    }
+  }
+}
