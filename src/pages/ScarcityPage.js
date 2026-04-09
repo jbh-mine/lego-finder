@@ -9,6 +9,7 @@ import { computeScarcityScore } from '../utils/scarcityScore';
 import { classifyTheme, getThemeReturn, SUPPORTED_PERIODS } from '../data/themeReturns';
 import { getKrwPrice, getLegoKrProductUrl } from '../utils/price';
 import priceData from '../data/prices.json';
+import marketPrices from '../data/marketPrices.json';
 
 var PROXY = 'https://api.allorigins.win/raw?url=';
 var USD_TO_KRW_FALLBACK = 1400;
@@ -55,7 +56,28 @@ function lookupMsrp(setNum) {
   return null;
 }
 
+// Local KREAM trading-price lookup. Returns { value, source, kream, collectedAt, productUrl }
+// if the set_num is present in marketPrices.json, otherwise null.
+function lookupKreamMarket(setNum) {
+  var n = stripVariant(setNum);
+  var entry = marketPrices && marketPrices.prices ? marketPrices.prices[n] : null;
+  if (entry && typeof entry.kreamKrw === 'number' && entry.kreamKrw > 0) {
+    return {
+      value: entry.kreamKrw,
+      source: 'KREAM \uAC70\uB798\uAC00 (' + (entry.collectedAt || '') + ')',
+      kream: true,
+      collectedAt: entry.collectedAt || null,
+      productUrl: entry.productUrl || null
+    };
+  }
+  return null;
+}
+
 async function fetchMarketPrice(setNum) {
+  // Prefer locally-curated KREAM trading price (v0.5.27).
+  var kream = lookupKreamMarket(setNum);
+  if (kream) return kream;
+
   var url = 'https://www.brickeconomy.com/set/' + ensureVariant(setNum);
   try {
     var res = await fetch(PROXY + encodeURIComponent(url), { method: 'GET' });
@@ -210,6 +232,9 @@ function ScarcityPage() {
 
       pushStatus(t('scarcityStatusFetchingMarket'));
       var market = await fetchMarketPrice(setNum);
+      if (market && market.kream) {
+        pushStatus(t('scarcityStatusMarketKream'));
+      }
       if (!market) {
         var ageYears = (detail && detail.year) ? Math.max(0.5, new Date().getFullYear() - detail.year) : 1;
         var simGrowth = (themeInfo.avgReturnPct / 100) * ageYears;
@@ -541,8 +566,21 @@ function ScarcityPage() {
         ),
         React.createElement('div', { style: { flex: '1 1 140px' } },
           React.createElement('div', { style: labelStyle }, t('scarcityMarket')),
-          React.createElement('div', { style: valueStyle }, fmtKRW(result.market.value)),
-          React.createElement('div', { style: { fontSize: '0.7rem', color: 'var(--color-text-muted, #999)' } }, result.market.source)
+          React.createElement('div', { style: Object.assign({}, valueStyle, { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }) },
+            fmtKRW(result.market.value),
+            result.market.kream ? React.createElement('span', {
+              className: 'brick-status confirmed',
+              title: result.market.collectedAt ? (t('scarcityMarketSourceKream') + ' \u00B7 ' + result.market.collectedAt) : t('scarcityMarketSourceKream'),
+              style: { fontSize: '0.6rem', padding: '2px 6px', letterSpacing: 0.3 }
+            }, 'KREAM') : null
+          ),
+          React.createElement('div', { style: { fontSize: '0.7rem', color: result.market.kream ? '#3ec47a' : 'var(--color-text-muted, #999)' } },
+            (result.market.kream ? '\u2713 ' : '') + result.market.source),
+          result.market.kream && result.market.productUrl ? React.createElement('a', {
+            href: result.market.productUrl,
+            target: '_blank', rel: 'noopener noreferrer',
+            style: { fontSize: '0.7rem', color: '#4a9eff', textDecoration: 'none' }
+          }, '\u2192 KREAM') : null
         ),
         React.createElement('div', { style: { flex: '1 1 140px' } },
           React.createElement('div', { style: labelStyle }, t('scarcityReturn')),
