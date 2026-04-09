@@ -4,13 +4,21 @@ import { getCachedTranslation, translateName } from '../utils/translate';
 import { useLanguage } from '../contexts/LanguageContext';
 import SetCard from '../components/SetCard';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
+import bdpUpcomingData from '../data/bdpUpcoming.json';
 
 var PAGE_SIZE = 40;
+
+// Status display order for upcoming cards (confirmed first, rumors last)
+var STATUS_ORDER = { confirmed: 0, reviewing: 1, rumor: 2 };
 
 function FundingPage() {
   var lc = useLanguage();
   var t = lc.t;
   var lang = lc.lang;
+
+  // NEW: top-level segment — 'released' (existing BDP library) or 'upcoming' (curated JSON)
+  var segState = useState('released');
+  var segment = segState[0]; var setSegment = segState[1];
 
   var s1 = useState(null); var bdpParentId = s1[0]; var setBdpParentId = s1[1];
   var s2 = useState([]); var bdpSeries = s2[0]; var setBdpSeries = s2[1];
@@ -25,7 +33,7 @@ function FundingPage() {
   var s11 = useState({}); var themeMap = s11[0]; var setThemeMap = s11[1];
   var s12 = useState({}); var themeNames = s12[0]; var setThemeNames = s12[1];
 
-  // NEW: year filter and name search
+  // year filter and name search (released tab only)
   var s13 = useState('all'); var selYear = s13[0]; var setSelYear = s13[1];
   var s14 = useState(''); var searchName = s14[0]; var setSearchName = s14[1];
 
@@ -135,8 +143,9 @@ function FundingPage() {
     }
   }, [t]);
 
-  // Load sets when bdpParentId is found or series changes
+  // Load sets when bdpParentId is found or series changes (released segment only)
   useEffect(function() {
+    if (segment !== 'released') return;
     if (!bdpParentId) return;
     currentSeriesRef.current = selSeries;
     setAllResults([]);
@@ -147,10 +156,11 @@ function FundingPage() {
     setSearchName('');
     var themeId = selSeries === 'all' ? bdpParentId : selSeries;
     doFetch(themeId, 1, false);
-  }, [bdpParentId, selSeries]);
+  }, [bdpParentId, selSeries, segment]);
 
-  // Infinite scroll
+  // Infinite scroll (released segment only)
   useEffect(function() {
+    if (segment !== 'released') return;
     if (!sentinelRef.current) return;
     var obs = new IntersectionObserver(function(entries) {
       if (entries[0].isIntersecting && hasMore && !loading && loaded) {
@@ -232,17 +242,57 @@ function FundingPage() {
     setSearchName('');
   };
 
+  // ---- Upcoming list (sorted by status then by expectedLaunchDate asc) ----
+  var upcomingItems = useMemo(function() {
+    var list = (bdpUpcomingData && bdpUpcomingData.upcoming) ? bdpUpcomingData.upcoming.slice() : [];
+    list.sort(function(a, b) {
+      var sa = STATUS_ORDER[a.status] != null ? STATUS_ORDER[a.status] : 9;
+      var sb = STATUS_ORDER[b.status] != null ? STATUS_ORDER[b.status] : 9;
+      if (sa !== sb) return sa - sb;
+      var da = a.expectedLaunchDate || '9999-12-31';
+      var db = b.expectedLaunchDate || '9999-12-31';
+      return da.localeCompare(db);
+    });
+    return list;
+  }, []);
+
+  var statusLabel = function(status) {
+    if (status === 'confirmed') return t('bdpUpcomingStatusConfirmed');
+    if (status === 'reviewing') return t('bdpUpcomingStatusReviewing');
+    if (status === 'rumor') return t('bdpUpcomingStatusRumor');
+    return status;
+  };
+
+  // Segment tabs (Released / Upcoming)
+  var segmentTabs = React.createElement('div', { className: 'bdp-segment-tabs', role: 'tablist' },
+    React.createElement('button', {
+      className: 'bdp-segment-tab' + (segment === 'released' ? ' active' : ''),
+      role: 'tab',
+      'aria-selected': segment === 'released',
+      onClick: function() { setSegment('released'); },
+    }, t('bdpTabReleased')),
+    React.createElement('button', {
+      className: 'bdp-segment-tab' + (segment === 'upcoming' ? ' active' : ''),
+      role: 'tab',
+      'aria-selected': segment === 'upcoming',
+      onClick: function() { setSegment('upcoming'); },
+    }, t('bdpTabUpcoming'))
+  );
+
   // Header section
   var headerSection = React.createElement('div', { className: 'search-section' },
     React.createElement('div', { className: 'new-products-header' },
       React.createElement('h2', null, t('fundingProducts')),
-      React.createElement('p', { className: 'new-products-desc' }, t('fundingDesc'))
+      React.createElement('p', { className: 'new-products-desc' },
+        segment === 'upcoming' ? t('bdpUpcomingDesc') : t('fundingDesc')
+      )
     ),
-    React.createElement('div', { className: 'funding-info-notice' },
+    segmentTabs,
+    segment === 'released' ? React.createElement('div', { className: 'funding-info-notice' },
       React.createElement('span', { className: 'funding-info-icon' }, '\u2139\uFE0F'),
       React.createElement('span', null, t('fundingNotice'))
-    ),
-    bdpSeries.length > 0 ? React.createElement('div', { className: 'funding-series-tabs' },
+    ) : null,
+    segment === 'released' && bdpSeries.length > 0 ? React.createElement('div', { className: 'funding-series-tabs' },
       React.createElement('button', {
         className: 'funding-series-tab' + (selSeries === 'all' ? ' active' : ''),
         onClick: function() { setSelSeries('all'); },
@@ -255,8 +305,8 @@ function FundingPage() {
         }, getSeriesName(series));
       })
     ) : null,
-    // Filter row: year select + name search
-    loaded && allResults.length > 0 ? React.createElement('div', { className: 'funding-filter-row' },
+    // Filter row: year select + name search (released only)
+    segment === 'released' && loaded && allResults.length > 0 ? React.createElement('div', { className: 'funding-filter-row' },
       React.createElement('div', { className: 'funding-filter-year' },
         React.createElement('select', {
           className: 'funding-year-select',
@@ -289,9 +339,9 @@ function FundingPage() {
     ) : null
   );
 
-  // Results count (show filtered count)
+  // Results count (released)
   var resultsSection = null;
-  if (displayGroups.length > 0) {
+  if (segment === 'released' && displayGroups.length > 0) {
     var displayCount = filteredResults.length;
     var summaryText = t('total') + ' ' + displayCount + t('count') + ' ' + t('fundingProductsFound');
     if ((selYear !== 'all' || searchName.trim()) && displayCount !== totalCount) {
@@ -315,32 +365,118 @@ function FundingPage() {
     resultsSection = React.createElement(React.Fragment, null, summary, sections);
   }
 
+  // Upcoming grid (placeholder SVG + cards)
+  var upcomingSection = null;
+  if (segment === 'upcoming') {
+    if (upcomingItems.length === 0) {
+      upcomingSection = React.createElement(EmptyState, {
+        title: t('noResults'),
+        message: t('bdpUpcomingEmpty')
+      });
+    } else {
+      var placeholderSvg = React.createElement('svg', {
+        className: 'bdp-upcoming-placeholder',
+        viewBox: '0 0 64 64',
+        xmlns: 'http://www.w3.org/2000/svg',
+        'aria-hidden': 'true'
+      },
+        React.createElement('rect', { x: 8, y: 20, width: 48, height: 36, rx: 3, fill: 'currentColor', opacity: 0.6 }),
+        React.createElement('circle', { cx: 20, cy: 16, r: 4, fill: 'currentColor' }),
+        React.createElement('circle', { cx: 32, cy: 16, r: 4, fill: 'currentColor' }),
+        React.createElement('circle', { cx: 44, cy: 16, r: 4, fill: 'currentColor' })
+      );
+
+      var cards = upcomingItems.map(function(item) {
+        var name = (lang === 'ko' && item.nameKo) ? item.nameKo : item.nameEn;
+        var imageEl = item.imageUrl
+          ? React.createElement('img', { className: 'bdp-upcoming-img', src: item.imageUrl, alt: name, loading: 'lazy' })
+          : placeholderSvg;
+
+        var linkProps = {
+          className: 'bdp-upcoming-link',
+          href: item.ideasProjectUrl || '#',
+          target: '_blank',
+          rel: 'noopener noreferrer'
+        };
+        if (!item.ideasProjectUrl) {
+          linkProps['aria-disabled'] = 'true';
+          linkProps.onClick = function(e) { e.preventDefault(); };
+        }
+
+        var metaItems = [];
+        metaItems.push(React.createElement('span', { key: 'round' },
+          React.createElement('strong', null, t('bdpUpcomingRound') + ': '), item.round));
+        if (item.designer) {
+          metaItems.push(React.createElement('span', { key: 'designer' },
+            React.createElement('strong', null, t('bdpUpcomingDesigner') + ': '), item.designer));
+        }
+        if (item.expectedLaunchDate) {
+          metaItems.push(React.createElement('span', { key: 'date' },
+            React.createElement('strong', null, t('bdpUpcomingExpected') + ': '), item.expectedLaunchDate));
+        }
+        if (item.estimatedParts) {
+          metaItems.push(React.createElement('span', { key: 'parts' },
+            React.createElement('strong', null, t('bdpUpcomingEstimatedParts') + ': '), item.estimatedParts));
+        }
+        if (item.estimatedUsd) {
+          metaItems.push(React.createElement('span', { key: 'usd' },
+            React.createElement('strong', null, t('bdpUpcomingEstimatedUsd') + ': '), '$' + item.estimatedUsd));
+        }
+
+        return React.createElement('div', {
+          key: item.id,
+          className: 'bdp-upcoming-card',
+          'data-status': item.status
+        },
+          React.createElement('div', { className: 'bdp-upcoming-img-wrap' }, imageEl),
+          React.createElement('div', { className: 'bdp-upcoming-header-row' },
+            React.createElement('div', null,
+              React.createElement('div', { className: 'bdp-upcoming-name' }, name),
+              item.designer ? React.createElement('div', { className: 'bdp-upcoming-designer' }, '@' + item.designer) : null
+            ),
+            React.createElement('span', {
+              className: 'brick-status ' + item.status
+            }, statusLabel(item.status))
+          ),
+          React.createElement('div', { className: 'bdp-upcoming-meta-row' }, metaItems),
+          item.notes ? React.createElement('div', { className: 'bdp-upcoming-notes' }, item.notes) : null,
+          React.createElement('a', linkProps,
+            item.ideasProjectUrl ? t('bdpUpcomingViewOnIdeas') : t('bdpUpcomingNoLink')
+          )
+        );
+      });
+
+      upcomingSection = React.createElement('div', { className: 'bdp-upcoming-grid' }, cards);
+    }
+  }
+
   // No filter results message
-  var noFilterResults = !loading && !error && loaded && filteredResults.length === 0 && allResults.length > 0 ?
+  var noFilterResults = segment === 'released' && !loading && !error && loaded && filteredResults.length === 0 && allResults.length > 0 ?
     React.createElement(EmptyState, {
       title: t('noResults'),
       message: t('noFundingMatch')
     }) : null;
 
-  var loadingMore = loading && allResults.length > 0 ? React.createElement(Loading, null) : null;
-  var initialLoading = loading && allResults.length === 0 && !error ? React.createElement(Loading, null) : null;
-  var emptyResults = !loading && !error && loaded && allResults.length === 0 ?
+  var loadingMore = segment === 'released' && loading && allResults.length > 0 ? React.createElement(Loading, null) : null;
+  var initialLoading = segment === 'released' && loading && allResults.length === 0 && !error ? React.createElement(Loading, null) : null;
+  var emptyResults = segment === 'released' && !loading && !error && loaded && allResults.length === 0 ?
     React.createElement(EmptyState, { title: t('noResults'), message: t('noFundingProducts') }) : null;
 
   return React.createElement('div', null,
     headerSection,
     initialLoading,
-    error ? React.createElement(ErrorMessage, { message: error, onRetry: function() {
+    segment === 'released' && error ? React.createElement(ErrorMessage, { message: error, onRetry: function() {
       if (bdpParentId) {
         var themeId = selSeries === 'all' ? bdpParentId : selSeries;
         doFetch(themeId, 1, false);
       }
     }}) : null,
     resultsSection,
+    upcomingSection,
     noFilterResults,
     loadingMore,
     emptyResults,
-    React.createElement('div', { ref: sentinelRef, style: { height: 1, marginBottom: 40 } })
+    segment === 'released' ? React.createElement('div', { ref: sentinelRef, style: { height: 1, marginBottom: 40 } }) : null
   );
 }
 
