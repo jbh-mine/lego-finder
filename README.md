@@ -17,6 +17,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [갤러리 이미지 수집](#갤러리-이미지-수집)
 - [자동 업데이트 (GitHub Actions)](#자동-업데이트-github-actions)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.5.27 — 2026-04-09](#v0527--2026-04-09)
   - [v0.5.26 — 2026-04-09](#v0526--2026-04-09)
   - [v0.5.25 — 2026-04-08](#v0525--2026-04-08)
   - [v0.5.24 — 2026-04-08](#v0524--2026-04-08)
@@ -62,7 +63,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **한국어 자연어 검색** — "모듈러", "스타워즈", "경찰서", "용마성", "블랙펄", "탐정사무소", "아캄", "고담", "헤르미온느", "보바펫", "바라쿠다" 등 한국어 키워드/별명/캐릭터명으로 검색 가능 (600+ 키워드 매핑)
 - **IP 프랜차이즈 우산 키워드 검색** — "마블", "어벤져스", "디씨", "스타워즈", "해리포터", "디즈니", "쥬라기월드" 등을 입력하면 Spider-Man / Iron Man / Hulk / Avengers / Arkham 등 실제 세트명 키워드로 자동 분기 검색하여 결과 병합
 - **세트 검색 다축 필터 + URL 공유** — 부품 수 / 출시 연도 / 가격(KRW) 범위, 단종 여부, 보유·위시리스트 상태로 검색 결과를 다중 필터링하고 URL 쿼리스트링과 동기화하여 공유 가능
-- **희소 가치 점수 (Scarcity Score)** — 헤더 메뉴 → "희소가치"에서 한글/영문 제품명 또는 제품번호로 검색하면 결과 목록이 나오고, 항목을 클릭하면 MSRP·현재 시세·테마 평균 수익률(3/5/10/20/30년 선택)·독점 구성 여부를 종합해 0~100점/S~D 등급을 계산하고 Recharts로 과거/예상 가격 곡선 시각화. 점수는 적층형 LEGO 브릭 게이지로 시각화됨
+- **희소 가치 점수 (Scarcity Score)** — 헤더 메뉴 → "희소가치"에서 한글/영문 제품명 또는 제품번호로 검색하면 결과 목록이 나오고, 항목을 클릭하면 MSRP·현재 시세(KREAM 거래가 우선)·테마 평균 수익률(3/5/10/20/30년 선택)·독점 구성 여부를 종합해 0~100점/S~D 등급을 계산하고 Recharts로 과거/예상 가격 곡선 시각화. 점수는 적층형 LEGO 브릭 게이지로 시각화됨
 - **부품 단가 (PPP) 가성비 분석** — 헤더 메뉴 → "가성비"에서 KRW/부품 기준으로 베스트 세트 목록 확인. 한국 공식 시리즈 분류(스타워즈/해리포터/아이콘스/테크닉/마블 등) 테마 필터 + Top N 선택기 + 단종 제품 옵션 토글(과거 정가 기준 PPP) + 단종/테마 배지 강조
 - **다크 모드** — 헤더 토글로 라이트/다크 테마 전환. CSS 변수 기반 토큰으로 모든 카드/입력/차트가 일관되게 전환되며 localStorage 에 사용자 선택 저장
 - **PWA (홈화면 추가 + 오프라인 캐시)** — 모바일 사파리/크롬에서 "홈 화면에 추가" 시 standalone 앱처럼 실행. 정적 에셋 cache-first + JSON 데이터 stale-while-revalidate + 앱 셸 network-first 의 3-tier 캐시 전략
@@ -74,7 +75,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **부품 검색** — 부품 이름/번호로 검색, 카테고리 필터, 카테고리별 그룹화, 색상 정보 확인
 - **부품 카테고리 한국어 번역** — 한국어 선택 시 부품 카테고리명 자동 번역
 - **신제품 탭** — 최신 레고 신제품 연도별 조회
-- **펀딩제품(BDP) 탭** — BrickLink Designer Program 제품 시리즈별 조회, 연도 필터, 이름 검색
+- **펀딩제품(BDP) 탭** — BrickLink Designer Program 제품 시리즈별 조회, 연도 필터, 이름 검색, "다음 펀딩 예정작" 세그먼트 탭
 - **MOC 검색 탭** — Rebrickable MOC 작품 검색 (정렬: 최신/인기/좋아요/부품수)
 - **이미지 갤러리 + 라이트박스** — 제품 상세에서 Rebrickable 멀티 이미지(BDP + 일반 제품 모두), 터치 스와이프, 썸네일 스트립, 클릭하여 확대 라이트박스(팝업 안에서도 썸네일 네비 + 페이드 인 애니메이션)
 - **무한 스크롤** — 검색/부품/둘러보기 모두 스크롤 시 데이터 자동 로드
@@ -97,7 +98,8 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **Rebrickable API v3** — 세트 검색, 부품 검색, 미니피규어 데이터
 - **BrickLink CDN** — 제품 대체 이미지 (SN/ON)
 - **MyMemory Translation API** — 제품명/테마명/카테고리명 한국어 번역 (localStorage 캐싱)
-- **allorigins.win CORS Proxy** — 희소 가치 점수 페이지의 시세 조회 (BrickEconomy)
+- **KREAM 거래가 (수작업 큐레이션)** — 희소 가치 점수 페이지의 현재 시세 소스 (`src/data/marketPrices.json`)
+- **allorigins.win CORS Proxy** — KREAM 데이터가 없을 때의 BrickEconomy 시세 폴백
 - **PWA** — `manifest.json` + `sw.js` (3-tier 캐시 전략) + `serviceWorkerRegistration.js`
 - **GitHub Pages** (gh-pages) 배포
 - **GitHub Actions** — 주간 데이터 자동 수집 + 자동 배포 파이프라인
@@ -123,6 +125,8 @@ src/
 │   └── ThemeContext.js
 ├── data/
 │   ├── prices.json         # schemaVersion 2 — 한국 시리즈 themes 맵 + 단종 제품 과거 정가
+│   ├── marketPrices.json   # KREAM 거래가 큐레이션 (희소가치 현재 시세 소스)
+│   ├── bdpUpcoming.json    # BDP 다음 펀딩 예정작 큐레이션
 │   ├── priceHistoryIndex.json
 │   ├── prices-history/
 │   ├── themeReturns.js
@@ -130,13 +134,13 @@ src/
 │   └── legoImages.json
 ├── pages/
 │   ├── SearchPage.js
-│   ├── ScarcityPage.js     # 적층형 LEGO 브릭 게이지 + Recharts 차트 + 기간 선택
+│   ├── ScarcityPage.js     # KREAM 우선 fetchMarketPrice + 적층형 LEGO 브릭 게이지 + Recharts 차트
 │   ├── PppPage.js          # 부품 단가 (PPP) 가성비 분석 (한국 시리즈 테마 + 단종 옵션)
 │   ├── PartsSearchPage.js
 │   ├── PartDetailPage.js
 │   ├── BrowsePage.js
 │   ├── SetDetailPage.js
-│   ├── FundingPage.js
+│   ├── FundingPage.js      # 발매된 라운드 / 예정작 세그먼트 탭
 │   ├── MocsPage.js
 │   └── CollectionPage.js
 ├── styles/
@@ -163,7 +167,8 @@ public/
 
 scripts/
 ├── fetch-prices.js
-└── fetch-images.js
+├── fetch-images.js
+└── promote-bdp-upcoming.js # BDP 예정작 → prices.json 자동 승격
 
 .github/workflows/
 └── auto-update-images.yml
@@ -211,7 +216,28 @@ npm run fetch-images -- --refresh
 
 ## 변경 이력 (Changelog)
 
-> 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
+> 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 ��� 섹션 상단에 새 버전 항목이 추가됩니다.
+
+### v0.5.27 — 2026-04-09
+
+#### `NEW` feat(scarcity): KREAM 거래가 기반 현재 시세 우선 적용 + KREAM 배지
+
+- **요구사항**: "희소가치에 나오는 현시세정보는 kream 에 보면은 현재 거래되고 있는 가격이 있다. 이걸 기반으로 현재 시세를 작성해줘. 21322 제품으로 예를 들면 발매가 259,900원 거래가 418,000원."
+- **`src/data/marketPrices.json` 신규 (1.9KB)** — KREAM 에서 수집한 단종 인기 컬렉터스 거래가 큐레이션 JSON. 스키마: `{ schemaVersion: 1, meta: { description, source, currency, lastUpdated, notes }, prices: { [setNum]: { nameEn, nameKo, kreamKrw, collectedAt, productUrl } } }`. 2026-04-09 기준 초기 6개 엔트리:
+  - **21322** Pirates of Barracuda Bay — ₩411,000 (kream.co.kr/products/39083)
+  - **75192** Millennium Falcon UCS — ₩850,000 (kream.co.kr/products/44999)
+  - **10188** Death Star (Original, 2008) — ₩940,000 (kream.co.kr/products/42003)
+  - **75159** Death Star (2016) — ₩1,350,000 (kream.co.kr/products/39053)
+  - **10246** Detective's Office — ₩415,000 (kream.co.kr/products/39085)
+  - **10278** Police Station — ₩318,000 (kream.co.kr/products/41092)
+- **`src/pages/ScarcityPage.js` KREAM 우선 fetch 로직**:
+  - `lookupKreamMarket(setNum)` 헬퍼 신규 — `marketPrices.prices[stripVariant(setNum)]` 조회 후 `{ value, source: 'KREAM 거래가 (collectedAt)', kream: true, collectedAt, productUrl }` 를 반환. 엔트리가 없으면 null.
+  - `fetchMarketPrice(setNum)` 가 BrickEconomy(allorigins 프록시) 호출 전에 `lookupKreamMarket` 을 먼저 시도. KREAM 데이터가 있으면 즉시 반환하고 네트워크 호출 0회. 없으면 기존 BrickEconomy 크롤링으로 폴백.
+  - `analyze()` 의 상태 로그에 KREAM 적중 시 `t('scarcityStatusMarketKream')` 추가 표시.
+  - `statsEl` 의 "현재 시세" 컬럼을 확장: (1) 값 옆에 `.brick-status.confirmed` 초록 LEGO 배지로 "KREAM" 라벨 표시 + `title` 속성에 `collectedAt` 노출, (2) 소스 텍스트 앞에 `✓` 체크마크 + 초록색(`#3ec47a`), (3) `→ KREAM` 외부 링크로 해당 제품의 KREAM 상세 페이지로 직접 이동.
+- **`src/utils/i18n.js` 활성화**: v0.5.26 에서 선행 추가했던 `scarcityStatusMarketKream` / `scarcityMarketSourceKream` 한/영 키를 본 릴리즈에서 실제 렌더 경로에 연결.
+- **의도적 미포함**: 10182 Cafe Corner / 10179 Original UCS Millennium Falcon / 10260 Downtown Diner 는 이번 세션의 WebSearch 로 한국 KREAM 거래가가 직접 확인되지 않아 `marketPrices.json` 에 포함하지 않음. v0.5.22~24 부터 이어져 온 no-fabrication 원칙(검색/공식 출처에서 KRW 수치가 직접 언급된 경우만 데이터에 반영) 유지. 다음 라운드에서 직접 확인되는 대로 추가 예정.
+- **결과**: 21322 Pirates of Barracuda Bay 의 희소가치 분석이 BrickEconomy 기반 USD 환산 추정 대신 KREAM 의 실제 원화 거래가 ₩411,000 을 사용해 계산됨. 발매가 ₩259,900 대비 +58% 의 국내 2차 시장 프리미엄이 곧바로 점수·차트·테이블에 반영. 6개 엔트리 모두 KREAM 배지로 신뢰 가능한 소스임을 사용자에게 명확히 표시하고, 클릭 한 번으로 KREAM 원본 페이지로 이동 가능.
 
 ### v0.5.26 — 2026-04-09
 
