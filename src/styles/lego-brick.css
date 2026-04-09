@@ -338,10 +338,6 @@ body {
 
 /* ============================================================
  * Status pill: green brick = New, gray brick = Retired
- * Extended with BDP upcoming status variants:
- *   .confirmed = green  (officially announced finalist)
- *   .reviewing = blue   (under BDP review but not yet confirmed)
- *   .rumor     = orange (community speculation / leak)
  * ============================================================ */
 
 .brick-status {
@@ -355,150 +351,315 @@ body {
   color: #fff;
   box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
 }
-.brick-status.new       { background: #5ac35a; }
-.brick-status.retired   { background: #8a91a0; }
-.brick-status.coming    { background: #4a9eff; }
+.brick-status.new      { background: #5ac35a; }
+.brick-status.retired  { background: #8a91a0; }
+.brick-status.coming   { background: #4a9eff; }
 .brick-status.confirmed { background: #5ac35a; }
 .brick-status.reviewing { background: #4a9eff; }
 .brick-status.rumor     { background: #ff8a3d; }
 
 /* ============================================================
- * BDP upcoming card grid (FundingPage "예정작" tab)
+ * BDP Segment Tabs (Released / Upcoming toggle)
  * ============================================================ */
-
-.bdp-upcoming-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
-  margin: 16px 0;
-}
-
-.bdp-upcoming-card {
-  position: relative;
-  background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e0e0e0);
-  border-radius: var(--brick-radius);
-  box-shadow: var(--brick-shadow);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.bdp-upcoming-card[data-status="rumor"] {
-  opacity: 0.7;
-}
-
-.bdp-upcoming-card:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 4px 0 rgba(0, 0, 0, 0.14),
-    0 8px 20px rgba(0, 0, 0, 0.12);
-}
-
-.bdp-upcoming-img-wrap {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  background: var(--color-surface-soft, #f5f5f5);
-  border-radius: var(--brick-radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.bdp-upcoming-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.bdp-upcoming-placeholder {
-  width: 60%;
-  height: 60%;
-  color: var(--brick-accent);
-  opacity: 0.35;
-}
-
-.bdp-upcoming-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.bdp-upcoming-name {
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--color-text, #222);
-  line-height: 1.3;
-}
-
-.bdp-upcoming-designer {
-  font-size: 0.82rem;
-  color: var(--color-text-muted, #666);
-}
-
-.bdp-upcoming-meta-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 12px;
-  font-size: 0.78rem;
-  color: var(--color-text-muted, #666);
-}
-
-.bdp-upcoming-meta-row strong {
-  color: var(--color-text, #222);
-  font-weight: 600;
-}
-
-.bdp-upcoming-notes {
-  font-size: 0.82rem;
-  color: var(--color-text, #222);
-  line-height: 1.4;
-  margin-top: 2px;
-}
-
-.bdp-upcoming-link {
-  display: inline-block;
-  font-size: 0.82rem;
-  color: var(--brick-accent);
-  text-decoration: none;
-  margin-top: auto;
-  font-weight: 600;
-}
-.bdp-upcoming-link[aria-disabled="true"] {
-  color: var(--color-text-muted, #999);
-  pointer-events: none;
-  cursor: default;
-}
-
 .bdp-segment-tabs {
-  display: inline-flex;
-  gap: 4px;
-  margin: 8px 0 12px 0;
-  padding: 4px;
-  background: var(--color-surface-soft, #f0f0f0);
-  border-radius: var(--brick-radius);
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 12px;
 }
 
 .bdp-segment-tab {
-  padding: 8px 16px;
-  border: none;
-  background: transparent;
-  color: var(--color-text, #222);
-  font-size: 0.88rem;
+  padding: 8px 20px;
+  border: 2px solid var(--color-border, #ddd);
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #333);
   font-weight: 600;
+  font-size: 0.92rem;
   border-radius: var(--brick-radius-sm);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
+
+.bdp-segment-tab:hover {
+  border-color: var(--brick-accent);
+  color: var(--brick-accent);
+}
+
 .bdp-segment-tab.active {
   background: var(--brick-accent);
+  border-color: var(--brick-accent);
   color: #fff;
-  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
 }
-.bdp-segment-tab:hover:not(.active) {
-  background: rgba(0, 0, 0, 0.06);
+
+/* ============================================================
+ * BDP Detail Cards — BrickLink-style product pages
+ * ============================================================ */
+.bdp-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-top: 16px;
+}
+
+.bdp-detail-card {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 28px;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: var(--brick-radius);
+  padding: 24px;
+  box-shadow: var(--brick-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.bdp-detail-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(180deg, var(--brick-accent) 0%, var(--brick-accent) 60%, rgba(0,0,0,0.18) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Gallery section */
+.bdp-detail-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bdp-detail-main-img-wrap {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--color-surface-soft, #f8f8f8);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: var(--brick-radius-sm);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bdp-detail-main-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: opacity 0.2s ease;
+}
+
+.bdp-detail-thumbs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.bdp-detail-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border: 2px solid var(--color-border, #ddd);
+  border-radius: var(--brick-radius-sm);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.bdp-detail-thumb:hover {
+  opacity: 1;
+  border-color: var(--brick-accent);
+}
+
+.bdp-detail-thumb.active {
+  opacity: 1;
+  border-color: var(--brick-accent);
+  box-shadow: 0 0 0 2px var(--brick-accent-soft);
+}
+
+/* Info section */
+.bdp-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bdp-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bdp-detail-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--color-text, #222);
+}
+
+.bdp-detail-designer-line {
+  font-size: 0.92rem;
+  color: var(--color-text-secondary, #666);
+}
+
+.bdp-detail-location {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, #888);
+}
+
+.bdp-detail-sub {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, #888);
+}
+
+/* Spec table */
+.bdp-detail-spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.bdp-detail-spec-table th {
+  text-align: left;
+  padding: 8px 12px 8px 0;
+  color: var(--color-text-secondary, #666);
+  font-weight: 600;
+  white-space: nowrap;
+  width: 140px;
+  border-bottom: 1px solid var(--color-border, #eee);
+}
+
+.bdp-detail-spec-table td {
+  padding: 8px 0;
+  color: var(--color-text, #333);
+  border-bottom: 1px solid var(--color-border, #eee);
+}
+
+.bdp-detail-date-highlight {
+  display: inline-block;
+  background: #fff3cd;
+  color: #856404;
+  padding: 2px 10px;
+  border-radius: var(--brick-radius-sm);
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+[data-theme="dark"] .bdp-detail-date-highlight {
+  background: rgba(255, 193, 7, 0.18);
+  color: #ffc107;
+}
+
+/* Description */
+.bdp-detail-desc {
+  margin-top: 4px;
+}
+
+.bdp-detail-desc h4 {
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--color-text, #333);
+}
+
+.bdp-detail-desc p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+  color: var(--color-text-secondary, #555);
+}
+
+/* Notes */
+.bdp-detail-notes {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary, #888);
+  font-style: italic;
+  padding: 8px 12px;
+  background: var(--color-surface-soft, #f5f5f5);
+  border-radius: var(--brick-radius-sm);
+}
+
+/* Action buttons */
+.bdp-detail-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.bdp-detail-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: var(--brick-radius-sm);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 2px solid var(--color-border, #ddd);
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #333);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.bdp-detail-btn:hover {
+  border-color: var(--brick-accent);
+  color: var(--brick-accent);
+  transform: translateY(-1px);
+}
+
+.bdp-detail-btn.primary {
+  background: var(--brick-accent);
+  border-color: var(--brick-accent);
+  color: #fff;
+}
+
+.bdp-detail-btn.primary:hover {
+  opacity: 0.9;
+  color: #fff;
+}
+
+/* Responsive: stack gallery + info vertically on smaller screens */
+@media (max-width: 800px) {
+  .bdp-detail-card {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 16px;
+  }
+
+  .bdp-detail-main-img-wrap {
+    max-height: 320px;
+  }
+
+  .bdp-detail-name {
+    font-size: 1.2rem;
+  }
+
+  .bdp-detail-spec-table th {
+    width: 110px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bdp-detail-card {
+    padding: 12px;
+  }
+
+  .bdp-detail-thumb {
+    width: 48px;
+    height: 48px;
+  }
+
+  .bdp-detail-actions {
+    flex-direction: column;
+  }
+
+  .bdp-detail-btn {
+    justify-content: center;
+  }
 }
