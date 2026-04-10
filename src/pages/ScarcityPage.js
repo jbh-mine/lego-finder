@@ -40,17 +40,17 @@ function lookupMsrp(setNum) {
   try {
     var krw = getKrwPrice(n);
     if (krw && krw.price > 0) {
-      return { value: krw.price, source: 'LEGO Korea \uC815\uAC00 (prices.json)', official: true };
+      return { value: krw.price, source: 'LEGO Korea 정가 (prices.json)', official: true };
     }
   } catch (e) {}
   // 2) Raw entry (covers USD-only BDP items)
   var entry = priceData.prices[n];
   if (entry) {
     if (typeof entry.price === 'number' && entry.price > 0) {
-      return { value: entry.price, source: 'LEGO Korea \uC815\uAC00 (prices.json)', official: true };
+      return { value: entry.price, source: 'LEGO Korea 정가 (prices.json)', official: true };
     }
     if (typeof entry.usd === 'number' && entry.usd > 0) {
-      return { value: Math.round(entry.usd * USD_TO_KRW_FALLBACK), source: 'BDP USD x ' + USD_TO_KRW_FALLBACK + ' (\uD658\uC0B0)', official: false };
+      return { value: Math.round(entry.usd * USD_TO_KRW_FALLBACK), source: 'BDP USD x ' + USD_TO_KRW_FALLBACK + ' (환산)', official: false };
     }
   }
   return null;
@@ -64,7 +64,7 @@ function lookupKreamMarket(setNum) {
   if (entry && typeof entry.kreamKrw === 'number' && entry.kreamKrw > 0) {
     return {
       value: entry.kreamKrw,
-      source: 'KREAM \uAC70\uB798\uAC00 (' + (entry.collectedAt || '') + ')',
+      source: 'KREAM 거래가 (' + (entry.collectedAt || '') + ')',
       kream: true,
       collectedAt: entry.collectedAt || null,
       productUrl: entry.productUrl || null
@@ -83,9 +83,9 @@ async function fetchMarketPrice(setNum) {
     var res = await fetch(PROXY + encodeURIComponent(url), { method: 'GET' });
     if (!res.ok) return null;
     var html = await res.text();
-    var m = html.match(/Current Value[\s\S]{0,200}?\$([\d,]+(?:\.\d{1,2})?)/i);
+    var m = html.match(/Current Value[\s\S]{0,200}?\$([0-9,]+(?:\.\d{1,2})?)/i);
     if (!m) {
-      m = html.match(/Value[\s\S]{0,80}?\$([\d,]+(?:\.\d{1,2})?)/i);
+      m = html.match(/Value[\s\S]{0,80}?\$([0-9,]+(?:\.\d{1,2})?)/i);
     }
     if (m) {
       var usd = parseFloat(m[1].replace(/,/g, ''));
@@ -214,7 +214,7 @@ function ScarcityPage() {
         if (detail && detail.num_parts > 0) {
           msrp = {
             value: detail.num_parts * 155,
-            source: t('scarcityMsrpEstimated') + ' (' + detail.num_parts + ' x \u20A9155)',
+            source: t('scarcityMsrpEstimated') + ' (' + detail.num_parts + ' x 155)',
             official: false,
             estimated: true
           };
@@ -465,13 +465,13 @@ function ScarcityPage() {
               style: { fontSize: '0.95rem', fontWeight: 600, color: 'var(--color-text, #222)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
             }, set.name),
             React.createElement('div', { style: { fontSize: '0.75rem', color: 'var(--color-text-secondary, #666)' } },
-              (set.year ? set.year + t('yearSuffix') + ' \u00B7 ' : '') +
+              (set.year ? set.year + t('yearSuffix') + ' \\u00B7 ' : '') +
               (set.num_parts ? set.num_parts.toLocaleString() + t('partsCount') : '')
             )
           ),
           React.createElement('div', {
             style: { fontSize: '0.8rem', color: '#4a9eff', whiteSpace: 'nowrap', fontWeight: 600 }
-          }, t('scarcityClickToAnalyze') + ' \u2192')
+          }, t('scarcityClickToAnalyze') + ' \\u2192')
         );
       });
       searchListEl = React.createElement('div', { style: cardStyle }, hint, listItems);
@@ -516,14 +516,14 @@ function ScarcityPage() {
         React.createElement('div', { style: { fontSize: '0.75rem', color: 'var(--color-text-muted, #888)' } }, result.setNum),
         React.createElement('div', { style: { fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text, #222)', margin: '2px 0' } }, result.name),
         React.createElement('div', { style: { fontSize: '0.85rem', color: 'var(--color-text-secondary, #666)' } },
-          (result.year ? result.year + t('yearSuffix') + ' \u00B7 ' : '') +
-          (result.numParts ? result.numParts.toLocaleString() + t('partsCount') + ' \u00B7 ' : '') +
+          (result.year ? result.year + t('yearSuffix') + ' \\u00B7 ' : '') +
+          (result.numParts ? result.numParts.toLocaleString() + t('partsCount') + ' \\u00B7 ' : '') +
           t('themePrefix') + ': ' + result.theme
         ),
         React.createElement(Link, {
           to: '/set/' + result.setNum,
           style: { fontSize: '0.8rem', color: '#4a9eff', textDecoration: 'none' }
-        }, '\u2192 ' + t('detailPage'))
+        }, '\\u2192 ' + t('detailPage'))
       )
     );
 
@@ -536,14 +536,14 @@ function ScarcityPage() {
         padding: '8px 12px', borderRadius: 6, marginBottom: 12, fontSize: '0.82rem'
       }
     },
-      '\u26A0\uFE0F ' + (result.msrp.estimated
-        ? '\uC774 \uC81C\uD488\uC740 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uC5D0 \uC815\uAC00 \uC815\uBCF4\uAC00 \uC5C6\uC5B4 \uBD80\uD488 \uC218 \uAE30\uBC18\uC73C\uB85C \uCD94\uC815\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uC2E4\uC81C \uC815\uAC00\uC640 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.'
-        : '\uC774 \uC81C\uD488\uC740 \uD658\uC735 \uD658\uC0B0\uAC12\uC774\uBA70 \uC2E4\uC81C \uD55C\uAD6D \uC815\uAC00\uC640 \uB2E4\uB97C \uC218 \uC788\uC2B5\uB2C8\uB2E4.') + ' ',
+      '\\u26A0\\uFE0F ' + (result.msrp.estimated
+        ? '이 제품은 데이터베이스에 정가 정보가 없어 부분 수 기준으로 추정되었습니다. 실제 정가와 다를 수 있습니다.'
+        : '이 제품은 환율 환산값이며 실제 한국 정가와 다를 수 있습니다.') + ' ',
       React.createElement('a', {
         href: getLegoKrProductUrl(result.setNum),
         target: '_blank', rel: 'noopener noreferrer',
         style: { color: '#4a9eff', fontWeight: 600 }
-      }, '\u2192 \uB808\uACE0 \uACF5\uC2DD \uD55C\uAD6D \uC0AC\uC774\uD2B8\uC5D0\uC11C \uC815\uAC00 \uD655\uC778')
+      }, '\\u2192 레고 공식 한국 사이트에서 정가 확인')
     ) : null;
 
     // Banner shown when chosen period exceeds the actual age of the theme
@@ -562,7 +562,7 @@ function ScarcityPage() {
           React.createElement('div', { style: labelStyle }, t('scarcityMsrp')),
           React.createElement('div', { style: valueStyle }, fmtKRW(result.msrp.value)),
           React.createElement('div', { style: { fontSize: '0.7rem', color: result.msrp.official ? '#3ec47a' : '#ffb84d' } },
-            (result.msrp.official ? '\u2713 ' : '\u26A0 ') + result.msrp.source)
+            (result.msrp.official ? '\\u2713 ' : '\\u26A0 ') + result.msrp.source)
         ),
         React.createElement('div', { style: { flex: '1 1 140px' } },
           React.createElement('div', { style: labelStyle }, t('scarcityMarket')),
@@ -570,17 +570,17 @@ function ScarcityPage() {
             fmtKRW(result.market.value),
             result.market.kream ? React.createElement('span', {
               className: 'brick-status confirmed',
-              title: result.market.collectedAt ? (t('scarcityMarketSourceKream') + ' \u00B7 ' + result.market.collectedAt) : t('scarcityMarketSourceKream'),
+              title: result.market.collectedAt ? (t('scarcityMarketSourceKream') + ' \\u00B7 ' + result.market.collectedAt) : t('scarcityMarketSourceKream'),
               style: { fontSize: '0.6rem', padding: '2px 6px', letterSpacing: 0.3 }
             }, 'KREAM') : null
           ),
           React.createElement('div', { style: { fontSize: '0.7rem', color: result.market.kream ? '#3ec47a' : 'var(--color-text-muted, #999)' } },
-            (result.market.kream ? '\u2713 ' : '') + result.market.source),
+            (result.market.kream ? '\\u2713 ' : '') + result.market.source),
           result.market.kream && result.market.productUrl ? React.createElement('a', {
             href: result.market.productUrl,
             target: '_blank', rel: 'noopener noreferrer',
             style: { fontSize: '0.7rem', color: '#4a9eff', textDecoration: 'none' }
-          }, '\u2192 KREAM') : null
+          }, '\\u2192 KREAM') : null
         ),
         React.createElement('div', { style: { flex: '1 1 140px' } },
           React.createElement('div', { style: labelStyle }, t('scarcityReturn')),
