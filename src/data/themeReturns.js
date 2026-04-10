@@ -17,7 +17,7 @@
 //   - Per-year averages naturally compress over longer windows because the
 //     CAGR smooths out hot recent years.
 
-var SUPPORTED_PERIODS = [3, 5, 10, 20, 30];
+var SUPPORTED_PERIODS = [3, 5];
 
 var THEME_RETURNS = {
   'Star Wars':         { periods: { 3: 12.5, 5: 11.4, 10: 10.2, 20: 9.1,  30: 8.4 }, sample: 47, since: 1999 },
