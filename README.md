@@ -17,6 +17,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - [갤러리 이미지 수집](#갤러리-이미지-수집)
 - [자동 업데이트 (GitHub Actions)](#자동-업데이트-github-actions)
 - [변경 이력 (Changelog)](#변경-이력-changelog)
+  - [v0.5.30 — 2026-04-10](#v0530--2026-04-10)
   - [v0.5.29 — 2026-04-09](#v0529--2026-04-09)
   - [v0.5.28 — 2026-04-09](#v0528--2026-04-09)
   - [v0.5.27 — 2026-04-09](#v0527--2026-04-09)
@@ -220,6 +221,30 @@ npm run fetch-images -- --refresh
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
 
+### v0.5.30 — 2026-04-10
+
+#### `FIX` feat(scarcity): 현재 시세 소스 우선순위 변경 + 수익률 기간을 앞으로 3년/5년 전환
+
+- **요구사항**: "희소가치 메뉴에서 해당 제품을 분석할 때 현재 시세는 1순위 레고정식, 2순위 크림에서 가격정보를 가져온뒤, 수익률 기간은 현재 시세기준으로 앞으로 3년,5년 이러한 형태로 기능을 다시 수정하고 싶은데"
+- **`src/pages/ScarcityPage.js` 시세 소스 우선순위 변경**:
+  - `lookupOfficialCurrentPrice(setNum)` 신규 — LEGO 공식 한국 정가(prices.json)에서 비단종(active) 제품의 현재가를 조회.
+  - `fetchMarketPrice()` 우선순위: ① LEGO 공식 한국 정가 → ② KREAM 거래가 → ③ BrickEconomy 크롤링. 기존 KREAM 1순위에서 LEGO 공식 1순위로 변경.
+  - `analyze()` 상태 로그에 `scarcityStatusMarketOfficial` 메시지 추가.
+- **`src/pages/ScarcityPage.js` 수익률 기간 → 미래 투영 전환**:
+  - `recomputeForPeriod()` 전면 리팩터: `period` 가 과거 lookback이 아닌 **앞으로 3년/5년 전방 투영** 기간으로 변경.
+  - `pastSeries`: 고정 12개월 참고용 과거 추이 (테마 평균 기반).
+  - `projSeries`: 선택 기간 × 12개월 전방 투영 (3y → 36개월, 5y → 60개월). 3y는 3개월 간격, 5y는 6개월 간격 포인트.
+  - 전방 투영 차트가 메인 분석 차트로 격상.
+- **`src/data/themeReturns.js`**: `SUPPORTED_PERIODS` 를 `[3, 5, 10, 20, 30]` → `[3, 5]` 로 축소. 과거 lookback 10/20/30년 옵션 제거.
+- **`src/utils/i18n.js` 라벨 업데이트 (한/영)**:
+  - `scarcityStatusMarketOfficial` 신규: 'LEGO 공식 한국 정가 사용' / 'Using LEGO official Korean price'.
+  - `scarcityPeriodLabel`: '수익률 기간' → '예상 수익률 기간' / 'Return period' → 'Projection period'.
+  - `scarcityChartPastTitle`: '최근 12개월 테마 평균 추이 (참고용)' / 'Recent 12-Month Theme Avg Trend (reference)'.
+  - `scarcityChartProjTitle`: '향후 {years}년 예상 가격 곡선' / 'Projected {years}-Year Price Curve'. `{years}` 동적 치환.
+  - `scarcityChartProjNote`: 현재 시세 기준 전방 투영 설명으로 변경.
+  - `scarcityPeriod10y/20y/30y` 키 제거.
+- **결과**: 희소가치 분석이 "현재 시세(LEGO 공식 우선) 기준으로 앞으로 3년/5년 예상 수익률" 모델로 전환. 사용자가 직관적으로 투자 전망을 확인 가능.
+
 ### v0.5.29 — 2026-04-09
 
 #### `NEW` feat(funding): BDP 예정작 BrickLink 스타일 상세 카드 + 실제 이미지 + 갤러리
@@ -359,7 +384,7 @@ npm run fetch-images -- --refresh
   - **75181** Y-wing Starfighter UCS (2018) ₩379,900
   - **75192** Millennium Falcon UCS (2017) ₩659,900
   - 기타 2건
-- **검증 실패 항목** (5건 — 한국 정가 직접 출처 없음 → 일단 placeholder 유지, 후속 검증):
+- **검증 실패 항목** (5건 — 한국 정가 직접 출처 없음 → 일단 placeholder 유지, 후속 검증)
   - **75059** Sandcrawler (2014) — USD $499.99 있지만 KRW 직접 기록 없음
   - **75105** Falcon (Force Awakens, 2015) — 한국 미정식발매 가능성
   - 기타 3건
