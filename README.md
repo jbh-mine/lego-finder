@@ -79,7 +79,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **부품 카테고리 한국어 번역** — 한국어 선택 시 부품 카테고리명 자동 번역
 - **신제품 탭** — 최신 레고 신제품 연도별 조회
 - **펀딩제품(BDP) 탭** — BrickLink Designer Program 제품 시리즈별 조회, 연도 필터, 이름 검색, "다음 펀딩 예정작" 세그먼트 탭
-- **MOC 검색 탭** — Rebrickable MOC 작품 검색 (정렬: 최신/인기/좋아요/부품수)
+- **MOC 검색 탭** — Google에 색인된 Rebrickable 작품을 사이트 내부 카드로 검색, MOC Tracker 보관 목록 검색 연결, 공식 블로그 소개 목록 별도 탐색
 - **이미지 갤러리 + 라이트박스** — 제품 상세에서 Rebrickable 멀티 이미지(BDP + 일반 제품 모두), 터치 스와이프, 썸네일 스트립, 클릭하여 확대 라이트박스(팝업 안에서도 썸네일 네비 + 페이드 인 애니메이션)
 - **무한 스크롤** — 검색/부품/둘러보기 모두 스크롤 시 데이터 자동 로드
 - **테마/연도 필터링** — 테마별, 연도별 브라우징 (테마명 한국어 번역 지원)
@@ -220,6 +220,14 @@ npm run fetch-images -- --refresh
 ## 변경 이력 (Changelog)
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
+
+### v0.6.1 — 2026-10-16
+
+- MOC 기본 검색을 저장된 64건에서 Google Programmable Search Element 기반 사이트 내부 카드 검색으로 변경했습니다. 공개 웹 색인 범위이며 Rebrickable의 전체 DB나 최신 작품 모두를 보장하지 않습니다. Google의 검색 결과·예상 건수·출처·페이지 이동을 보존합니다.
+- 사이트 소유자의 검색엔진 `55592c50c117a426a`를 사용합니다. 공개 엔진 ID이며 비밀 API 키가 아닙니다. 빌드 시 `REACT_APP_MOC_SEARCH_ENGINE_ID`로 다른 소유 엔진을 지정할 수 있습니다. 엔진의 검색 범위는 `rebrickable.com/mocs/MOC-*`, 디자인 레이아웃은 **검색결과만**, 썸네일은 사용 설정입니다.
+- MOC Tracker 보관 목록을 같은 검색어로 새 탭에서 열 수 있습니다. 확인 시점의 목록은 181,589건이고, `millennium falcon` 검색은 145건·3페이지를 반환했습니다. 제공자가 서비스 유지·업데이트 중단을 공지했으므로 최신 전체 데이터 공급원으로 표시하지 않습니다. 원본 검색 화면을 연결하며 DB를 복제하지 않습니다.
+- 기존 공식 블로그 소개 64건은 별도 탐색 모드로 유지합니다. 웹 검색 로드·검색 실패 시 다시 시도하거나 Google 원본 검색을 열 수 있습니다.
+- 근거: [공식 Search Element 문서](https://developers.google.com/custom-search/docs/element), [Google 색인 범위 제한](https://developers.google.com/search/docs/monitor-debug/search-operators/all-search-site), [MOC Tracker 공지·목록](https://www.moctracker.com/mocs).
 
 ### v0.6.0 — 2026-10-16
 

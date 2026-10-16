@@ -1,0 +1,45 @@
+.moc-web-search { margin: 1rem 0 1.75rem; }
+.moc-web-scope { color: var(--color-text-secondary, #64748b); font-size: .86rem; line-height: 1.6; }
+.moc-web-status { display: flex; align-items: center; gap: 1rem; padding: .9rem 1rem; margin: 1rem 0; border-radius: 10px; background: var(--color-surface-soft, #f1f5f9); line-height: 1.6; }
+.moc-web-status[role="alert"] { border: 1px solid #d97706; }
+.moc-web-status button { padding: .45rem .8rem; flex-shrink: 0; }
+.moc-web-fallback { margin-top: 1rem; font-size: .9rem; }
+.moc-web-fallback a { color: var(--lego-blue, #2563eb); }
+
+/* The official Search Element retains ownership of its result markup,
+   advertisements, attribution, result estimate, and pagination. Only nodes
+   supplied by its rendered callback receive the card/grid classes below. */
+.moc-web-search .moc-web-result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)); gap: 16px; align-items: stretch; }
+.moc-web-search .moc-web-result-grid > :not(.moc-web-result-card) { grid-column: 1 / -1; }
+.moc-web-search .moc-web-result-card { box-sizing: border-box; min-width: 0; padding: 16px !important; margin: 0 !important; border: 1px solid var(--color-border, #e2e8f0) !important; border-radius: 12px; background: var(--color-surface, #fff) !important; overflow-wrap: anywhere; }
+.moc-web-search .moc-web-result-card:hover { border-color: var(--lego-blue, #2563eb) !important; box-shadow: 0 4px 16px rgb(0 0 0 / 8%); }
+.moc-web-search .moc-web-result-number { display: block; margin-bottom: 10px; color: var(--color-text-secondary, #64748b); font-size: .78rem; font-weight: 700; letter-spacing: .03em; }
+.moc-web-search .moc-web-result-card .gs-title { height: auto !important; line-height: 1.5 !important; }
+.moc-web-search .moc-web-result-card .gs-title, .moc-web-search .moc-web-result-card .gs-title * { font-size: 1rem !important; }
+.moc-web-search .moc-web-result-card .gs-snippet { line-height: 1.6; margin-top: .65rem; color: var(--color-text-secondary, #475569); }
+.moc-web-search .moc-web-result-card .gs-webResult { background: transparent !important; }
+.moc-web-search .moc-web-result-card .gsc-table-result, .moc-web-search .moc-web-result-card .gsc-table-result tbody, .moc-web-search .moc-web-result-card .gsc-table-result tr, .moc-web-search .moc-web-result-card .gsc-table-result td { display: block; width: 100%; box-sizing: border-box; }
+.moc-web-search .moc-web-result-card .gs-image-box { float: none !important; width: 100% !important; padding: 0 0 12px !important; }
+.moc-web-search .moc-web-result-card img.gs-image { display: block; width: 100%; max-width: none !important; height: 150px; max-height: none !important; object-fit: contain; border-radius: 8px; }
+.moc-web-search .gsc-control-cse { padding: 0; border: 0; background: transparent; }
+.moc-web-search .gsc-results { width: 100%; }
+.moc-web-search .gsc-wrapper { width: 100%; max-width: 100%; }
+.moc-web-search .gsc-result-info,
+.moc-web-search .gsc-orderby-label { color: var(--color-text-secondary, #64748b); }
+.moc-web-search .gsc-above-wrapper-area { border-color: var(--color-border, #e2e8f0); }
+.moc-web-search .gsc-selected-option-container,
+.moc-web-search .gsc-option-menu { color: var(--color-text, #1d1d1b); background: var(--color-surface, #fff); border-color: var(--color-border, #e2e8f0); }
+.moc-web-search .moc-web-result-card .gs-visibleUrl,
+.moc-web-search .moc-web-result-card .gs-visibleUrl * { color: #15803d; }
+.moc-web-search .gsc-cursor-box { margin-top: 20px; }
+.moc-web-search .gsc-cursor-page { display: inline-flex !important; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; border-radius: 6px; color: var(--color-text, #1d1d1b); background: var(--color-surface, #fff); border: 1px solid var(--color-border, #e2e8f0); }
+.moc-web-search .gsc-cursor-current-page { font-weight: 800; outline: 2px solid var(--lego-blue, #2563eb); outline-offset: 1px; }
+[data-theme="dark"] .moc-web-search .moc-web-result-card .gs-title,
+[data-theme="dark"] .moc-web-search .moc-web-result-card .gs-title *,
+[data-theme="dark"] .moc-web-fallback a { color: #93c5fd !important; }
+[data-theme="dark"] .moc-web-search .moc-web-result-card .gs-visibleUrl,
+[data-theme="dark"] .moc-web-search .moc-web-result-card .gs-visibleUrl * { color: #86efac; }
+@media (max-width: 540px) {
+  .moc-web-search .moc-web-result-grid { grid-template-columns: 1fr; }
+  .moc-web-status { align-items: flex-start; flex-direction: column; }
+}

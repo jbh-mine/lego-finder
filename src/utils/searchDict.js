@@ -814,13 +814,14 @@ function getIpSearchTerms(query) {
   return null;
 }
 
-function translateSearchQuery(q) {
+function translateSearchQuery(q, options) {
   if (!q) return '';
+  options = options || {};
 
   var trimmed = q.trim();
 
   // 1. Check SET_NUM_MAP exact match first (nickname -> set number)
-  if (SET_NUM_MAP[trimmed]) {
+  if (!options.skipSetNumbers && SET_NUM_MAP[trimmed]) {
     return SET_NUM_MAP[trimmed];
   }
 
@@ -868,14 +869,26 @@ function translateSearchQuery(q) {
   }
 
   // 5. SET_NUM_MAP prefix matching (LAST, strict: query must cover >= 60% of key)
-  var setKeys = Object.keys(SET_NUM_MAP);
-  for (var sk = 0; sk < setKeys.length; sk++) {
-    if (setKeys[sk].indexOf(trimmed) === 0 && trimmed.length >= 2 && trimmed.length >= setKeys[sk].length * 0.6) {
-      return SET_NUM_MAP[setKeys[sk]];
+  if (!options.skipSetNumbers) {
+    var setKeys = Object.keys(SET_NUM_MAP);
+    for (var sk = 0; sk < setKeys.length; sk++) {
+      if (setKeys[sk].indexOf(trimmed) === 0 && trimmed.length >= 2 && trimmed.length >= setKeys[sk].length * 0.6) {
+        return SET_NUM_MAP[setKeys[sk]];
+      }
     }
   }
 
   return trimmed;
 }
 
-export { translateSearchQuery, SET_NUM_MAP, getIpSearchTerms };
+// MOC keywords describe creations, not LEGO retail set identifiers. In
+// particular, "Titanic" must never turn into the unrelated MOC-10294.
+function translateMocSearchQuery(q) {
+  var keywords = { '타이타닉': 'Titanic', '해적선': 'Pirate Ship' };
+  var words = String(q || '').trim().split(/\s+/).map(function(word) {
+    return keywords[word] || word;
+  });
+  return translateSearchQuery(words.join(' '), { skipSetNumbers: true });
+}
+
+export { translateSearchQuery, translateMocSearchQuery, SET_NUM_MAP, getIpSearchTerms };
