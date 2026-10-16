@@ -5,7 +5,7 @@
  *  - JSON data: stale-while-revalidate
  */
 
-const VERSION = 'v0.5.16';
+const VERSION = 'v0.6.0';
 const STATIC_CACHE = 'lego-static-' + VERSION;
 const DATA_CACHE = 'lego-data-' + VERSION;
 const SHELL_CACHE = 'lego-shell-' + VERSION;
@@ -29,7 +29,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((k) => ![STATIC_CACHE, DATA_CACHE, SHELL_CACHE].includes(k))
+          .filter((k) => k.startsWith('lego-') && ![STATIC_CACHE, DATA_CACHE, SHELL_CACHE].includes(k))
           .map((k) => caches.delete(k))
       )
     )
@@ -79,6 +79,7 @@ self.addEventListener('fetch', (event) => {
             if (res && res.ok) cache.put(req, res.clone());
             return res;
           }).catch(() => cached);
+          event.waitUntil(fetchPromise.then(() => {}));
           return cached || fetchPromise;
         })
       )
