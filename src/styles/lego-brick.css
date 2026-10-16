@@ -432,6 +432,14 @@ body {
   gap: 10px;
 }
 
+.funding-image-unavailable {
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted, #777);
+}
+.funding-image-unavailable svg { width: 55%; height: 55%; }
+.bdp-detail-image-source { font-size: 12px; line-height: 1.4; color: var(--color-text-muted, #777); }
+
 .bdp-detail-main-img-wrap {
   width: 100%;
   aspect-ratio: 1 / 1;

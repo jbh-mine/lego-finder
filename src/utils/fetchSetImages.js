@@ -3,7 +3,7 @@
 // Strategy:
 //   1. Build-time static JSON (legoImages.json + bdpImages.json) — always reliable.
 //      Updated by `npm run fetch-images` and the GitHub Action `update-images.yml`.
-//   2. localStorage cache (lego_set_images_cache_v2) — for sets fetched at runtime.
+//   2. localStorage cache (lego_set_images_cache_v3) — for sets fetched at runtime.
 //   3. Runtime fetch via public CORS proxy chain — best-effort live update for sets
 //      not yet in the static JSON. (Most public proxies are unreliable from
 //      GitHub Pages, so the static JSON is the primary trustworthy source.)
@@ -21,8 +21,8 @@ export function getStaticImageIds(setNum) {
   return null;
 }
 
-var CACHE_KEY = 'lego_set_images_cache_v2';
-var LEGACY_CACHE_KEY = 'lego_set_images_cache';
+var CACHE_KEY = 'lego_set_images_cache_v3';
+var LEGACY_CACHE_KEYS = ['lego_set_images_cache', 'lego_set_images_cache_v2'];
 var CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 // Public proxies are optional enrichment. A gallery already backed by the
 // checked-in image catalog must not start a long, failing proxy chain.
@@ -34,10 +34,11 @@ var FETCH_TIMEOUT_MS = 5000;
 
 var pending = {};
 
-// One-shot cleanup of legacy cache (which may have empty arrays poisoning lookups)
+// Older gallery caches contain removed images, including known CDN 404s.
+// Invalidate only these image caches; collections and wishlists are unrelated.
 try {
-  if (typeof localStorage !== 'undefined' && localStorage.getItem(LEGACY_CACHE_KEY)) {
-    localStorage.removeItem(LEGACY_CACHE_KEY);
+  if (typeof localStorage !== 'undefined') {
+    LEGACY_CACHE_KEYS.forEach(function(key) { localStorage.removeItem(key); });
   }
 } catch (e) {}
 

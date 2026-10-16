@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "retrievedAt": "2026-10-16T05:14:16.679Z",
+    "source": "Official BrickLink Designer Program project galleries",
+    "note": "Images refreshed separately from the dated announcement text. Original project URLs and image URLs are retained for attribution."
+  },
+  "projects": {
+    "bdp-s8-01": {
+      "brickLinkUrl": "https://www.bricklink.com/v3/designer-program/series-8/2739/Brick-Railroad-Locomotive",
+      "nameEn": "Brick Railroad Locomotive",
+      "images": [
+        {
+          "path": "images/funding/bdp-s8-01-01.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4188/4188027.605D7A6A7461A836.jpeg",
+          "mimeType": "image/jpeg",
+          "bytes": 362942,
+          "sha256": "77b5bf49535ea8bfbad052451f9ecce0e9f8f79b24aff2162dcbc6e03f6235f7"
+        },
+        {
+          "path": "images/funding/bdp-s8-01-02.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4186/4186524.C614FBA6F3091003.png",
+          "mimeType": "image/jpeg",
+          "bytes": 398100,
+          "sha256": "d2ec01ea6da6c2388fd9dc6058c97805089f66ec3b1368eddd59e8cec95a0c42"
+        },
+        {
+          "path": "images/funding/bdp-s8-01-03.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4187/4187928.902BC4B0F8216728.jpeg",
+          "mimeType": "image/jpeg",
+          "bytes": 261054,
+          "sha256": "de3aa79b9a8e62834b327a813839228fa3da6f977bc24ed44aedff20f31757d7"
+        },
+        {
+          "path": "images/funding/bdp-s8-01-04.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4186/4186534.6EC95C1D6552B37F.png",
+          "mimeType": "image/jpeg",
+          "bytes": 405651,
+          "sha256": "a4c29f6aebf1a7af386a882c299b364847a96b6f59032385a47f3e4c90fd81ba"
+        },
+        {
+          "path": "images/funding/bdp-s8-01-05.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4186/4186527.E98897CE9E5D9781.png",
+          "mimeType": "image/jpeg",
+          "bytes": 372406,
+          "sha256": "12c1c7ee15924cfaa410624c971b01e155048dc7c729f65aea5c31ba3a8a0aa3"
+        }
+      ]
+    },
+    "bdp-s8-02": {
+      "brickLinkUrl": "https://www.bricklink.com/v3/designer-program/series-8/2917/Coconut-Cape",
+      "nameEn": "Coconut Cape",
+      "images": [
+        {
+          "path": "images/funding/bdp-s8-02-01.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4188/4188022.C6C8D81B0B50D54A.jpeg",
+          "mimeType": "image/jpeg",
+          "bytes": 309291,
+          "sha256": "59f5c9c4f8a1b34f6128c2de97a42dc10e0caad1a1c717e11ca3b53d31dc17bd"
+        },
+        {
+          "path": "images/funding/bdp-s8-02-02.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4186/4186506.9210C0A9F7902FAE.png",
+          "mimeType": "image/jpeg",
+          "bytes": 375362,
+          "sha256": "066c5a32bd618bf369f8479bbca96ed2f5aba9711cae94bc4131c9eec05188a9"
+        },
+        {
+          "path": "images/funding/bdp-s8-02-03.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4187/4187921.B37FD83C512BB1EB.jpeg",
+          "mimeType": "image/jpeg",
+          "bytes": 604400,
+          "sha256": "ecddfe77388fb8dbef82530f9fd868f7def7b868f83a6446b4693cf470507bd3"
+        },
+        {
+          "path": "images/funding/bdp-s8-02-04.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4186/4186510.E271847EB5D8DEF2.png",
+          "mimeType": "image/jpeg",
+          "bytes": 324212,
+          "sha256": "7f0ead79ca898b8d48dab76e994576110d59e73bcdb77e1050b2a79c8ccb0140"
+        },
+        {
+          "path": "images/funding/bdp-s8-02-05.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4187/4187923.5590CF835BD726D3.jpeg",
+          "mimeType": "image/jpeg",
+          "bytes": 842024,
+          "sha256": "c71761b9ccaa41dbd22234eb5e522a99bf175d93a49ee9de7654237ab37b4873"
+        }
+      ]
+    },
+    "bdp-s8-03": {
+      "brickLinkUrl": "https://www.bricklink.com/v3/designer-program/series-8/2777/Dustmark-Keep",
+      "nameEn": "Dustmark Keep",
+      "images": [
+        {
+          "path": "images/funding/bdp-s8-03-01.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4188/4188013.B53A1CDCF9AFBC53.jpeg",
+          "mimeType": "image/jpeg",
+          "bytes": 447896,
+          "sha256": "d114d600790bbf988c61065cfd83e54ba3ff00205e52a8b0df4bf964545ed2bd"
+        },
+        {
+          "path": "images/funding/bdp-s8-03-02.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4186/4186577.16A945CFB4991A49.png",
+          "mimeType": "image/jpeg",
+          "bytes": 418660,
+          "sha256": "3eec085faed8e50d2f14c9b8550f0c5366818e54e23654896fa5b0b207b39317"
+        },
+        {
+          "path": "images/funding/bdp-s8-03-03.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4187/4187892.8697E5C44BA26575.jpeg",
+          "mimeType": "image/jpeg",
+          "bytes": 462299,
+          "sha256": "e5bb635e3a647a03cb3e980eaaddae911c126f8259d077afe3cfd47cf973b714"
+        },
+        {
+          "path": "images/funding/bdp-s8-03-04.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4186/4186579.59403320E281E1FB.png",
+          "mimeType": "image/jpeg",
+          "bytes": 440082,
+          "sha256": "0ddd6dca7c8e11500b494a7138d4f33ea439c0cfabdc0f615ec6203e90ff79a9"
+        },
+        {
+          "path": "images/funding/bdp-s8-03-05.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4186/4186581.891F495F8882A1D2.png",
+          "mimeType": "image/jpeg",
+          "bytes": 358029,
+          "sha256": "e7485057b80177bd3bafe2aba85465a5a972c61d71ef799f5a2d3887d2b47bee"
+        }
+      ]
+    },
+    "bdp-s8-04": {
+      "brickLinkUrl": "https://www.bricklink.com/v3/designer-program/series-8/2698/University-of-Science",
+      "nameEn": "University of Science",
+      "images": [
+        {
+          "path": "images/funding/bdp-s8-04-01.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4188/4188018.29F098E8E7E44284.jpeg",
+          "mimeType": "image/jpeg",
+          "bytes": 460938,
+          "sha256": "eaaef7417f8919efed172b5bd693d835711e76671a1270e0b1630bced33ae9ae"
+        },
+        {
+          "path": "images/funding/bdp-s8-04-02.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4186/4186591.E293A5AF71451662.png",
+          "mimeType": "image/jpeg",
+          "bytes": 456268,
+          "sha256": "742664bdb41490b5d1f44278a9ddacf37fde6776c42bc82f35588eae82d29591"
+        },
+        {
+          "path": "images/funding/bdp-s8-04-03.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4186/4186594.B7966176773B7A4D.png",
+          "mimeType": "image/jpeg",
+          "bytes": 388154,
+          "sha256": "efa4f438150da48c653bb0fc52ab61705d8b61fadb9f3b4f7cc913faac82148f"
+        },
+        {
+          "path": "images/funding/bdp-s8-04-04.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4187/4187896.71A40DC4D8F1EF35.jpeg",
+          "mimeType": "image/jpeg",
+          "bytes": 561348,
+          "sha256": "5eed36e8236fe46a6078521bb546ce2dd13da3a6299cdac8f459c797bf503ef7"
+        },
+        {
+          "path": "images/funding/bdp-s8-04-05.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4187/4187898.EA7B96FA4BBA5659.jpeg",
+          "mimeType": "image/jpeg",
+          "bytes": 533556,
+          "sha256": "8e417e32479ab1376c5fed6ff4b819d0949d5b9eec773bd181237a115a96decb"
+        }
+      ]
+    },
+    "bdp-s8-05": {
+      "brickLinkUrl": "https://www.bricklink.com/v3/designer-program/series-8/2894/Hot-Air-Balloon",
+      "nameEn": "Hot Air Balloon",
+      "images": [
+        {
+          "path": "images/funding/bdp-s8-05-01.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4188/4188020.F55D7E4552A66908.jpeg",
+          "mimeType": "image/jpeg",
+          "bytes": 4207879,
+          "sha256": "840dc1365ff67502dab86455d5c5ab25c1c82398fd754d03ae3b12975f719f70"
+        },
+        {
+          "path": "images/funding/bdp-s8-05-02.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4186/4186529.7D9EBC76BCE0E078.png",
+          "mimeType": "image/jpeg",
+          "bytes": 253108,
+          "sha256": "66174b09b84ead1d8453185718effacd65b7414b2bec1bcdb995bfbc2e035192"
+        },
+        {
+          "path": "images/funding/bdp-s8-05-03.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4186/4186532.CC1854E80A60070D.png",
+          "mimeType": "image/jpeg",
+          "bytes": 248439,
+          "sha256": "04175c28f73f6a78b50f2a24634c6ece9f61fa15dda165cdad753dfd37596493"
+        },
+        {
+          "path": "images/funding/bdp-s8-05-04.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4187/4187911.E6CB20311CB5D1F3.jpeg",
+          "mimeType": "image/jpeg",
+          "bytes": 393745,
+          "sha256": "a68bb67fa29ae58c0c5637f3f39715a386619145ec7ce11fc34381469b244e99"
+        },
+        {
+          "path": "images/funding/bdp-s8-05-05.jpg",
+          "sourceUrl": "https://file.bricklink.info/19/4187/4187913.AE8CEF7C97114E7B.jpeg",
+          "mimeType": "image/jpeg",
+          "bytes": 420792,
+          "sha256": "c49c21921e7d7535a4e2c59803597b0cf61ff6f7827db03f07ad611bdb33a08a"
+        }
+      ]
+    }
+  }
+}

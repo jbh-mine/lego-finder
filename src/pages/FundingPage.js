@@ -5,6 +5,8 @@ import { useLanguage } from '../contexts/LanguageContext';
 import SetCard from '../components/SetCard';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
 import bdpUpcomingData from '../data/bdpUpcoming.json';
+import FundingImage from '../components/FundingImage';
+import { getFundingGallery, getFundingImagesUpdatedAt } from '../utils/fundingImages';
 
 var PAGE_SIZE = 40;
 
@@ -463,39 +465,42 @@ function FundingPage() {
       var cards = upcomingItems.map(function(item) {
         var name = (lang === 'ko' && item.nameKo) ? item.nameKo : item.nameEn;
         var desc = (lang === 'ko' && item.descriptionKo) ? item.descriptionKo : (item.descriptionEn || '');
-        var gallery = item.galleryImages && item.galleryImages.length > 0 ? item.galleryImages : (item.imageUrl ? [item.imageUrl] : []);
+        var gallery = getFundingGallery(item);
         var currentIdx = galleryIndexes[item.id] || 0;
-        var currentImgSrc = gallery[currentIdx] || item.imageUrl || '';
+        var currentImage = gallery[currentIdx] || gallery[0];
 
         // --- Image gallery section ---
-        var mainImageEl = currentImgSrc
-          ? React.createElement('img', {
+        var mainImageEl = currentImage
+          ? React.createElement(FundingImage, {
               className: 'bdp-detail-main-img',
-              src: currentImgSrc,
+              image: currentImage,
               alt: name,
-              loading: 'lazy',
+              unavailableLabel: name + ' · ' + t('fundingImageUnavailable'),
               key: 'gimg-' + item.id + '-' + currentIdx
-            })
+            }, placeholderSvg)
           : placeholderSvg;
 
         var thumbStrip = gallery.length > 1
           ? React.createElement('div', { className: 'bdp-detail-thumbs' },
-              gallery.map(function(src, idx) {
-                return React.createElement('img', {
+              gallery.map(function(image, idx) {
+                return React.createElement(FundingImage, {
                   key: 'thumb-' + idx,
                   className: 'bdp-detail-thumb' + (idx === currentIdx ? ' active' : ''),
-                  src: src,
+                  image: image,
                   alt: name + ' ' + (idx + 1),
-                  loading: 'lazy',
+                  unavailableLabel: name + ' ' + (idx + 1) + ' · ' + t('fundingImageUnavailable'),
                   onClick: function() { setGalleryIdx(item.id, idx); }
-                });
+                }, placeholderSvg);
               })
             )
           : null;
 
         var gallerySection = React.createElement('div', { className: 'bdp-detail-gallery' },
           React.createElement('div', { className: 'bdp-detail-main-img-wrap' }, mainImageEl),
-          thumbStrip
+          thumbStrip,
+          React.createElement('a', {
+            className: 'bdp-detail-image-source', href: item.brickLinkUrl, target: '_blank', rel: 'noopener noreferrer',
+          }, t('fundingImageSource').replace('{date}', getFundingImagesUpdatedAt()))
         );
 
         // --- Spec table ---
