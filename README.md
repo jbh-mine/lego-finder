@@ -62,15 +62,15 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 
 ## 주요 기능
 
-- **제품번호/이름 검색** — Rebrickable API를 통한 실시간 레고 세트 검색
+- **제품번호/이름 검색** — Rebrickable 공식 카탈로그의 저장본을 검색하며 데이터 기준일을 표시
 - **한국어 자연어 검색** — "모듈러", "스타워즈", "경찰서", "용마성", "블랙펄", "탐정사무소", "아캄", "고담", "헤르미온느", "보바펫", "바라쿠다" 등 한국어 키워드/별명/캐릭터명으로 검색 가능 (600+ 키워드 매핑)
 - **IP 프랜차이즈 우산 키워드 검색** — "마블", "어벤져스", "디씨", "스타워즈", "해리포터", "디즈니", "쥬라기월드" 등을 입력하면 Spider-Man / Iron Man / Hulk / Avengers / Arkham 등 실제 세트명 키워드로 자동 분기 검색하여 결과 병합
 - **세트 검색 다축 필터 + URL 공유** — 부품 수 / 출시 연도 / 가격(KRW) 범위, 단종 여부, 보유·위시리스트 상태로 검색 결과를 다중 필터링하고 URL 쿼리스트링과 동기화하여 공유 가능
-- **희소 가치 점수 (Scarcity Score)** — 헤더 메뉴 → "희소가치"에서 한글/영문 제품명 또는 제품번호로 검색하면 결과 목록이 나오고, 항목을 클릭하면 MSRP·현재 시세(KREAM 거래가 우선)·테마 평균 수익률(3/5/10/20/30년 선택)·독점 구성 여부를 종합해 0~100점/S~D 등급을 계산하고 Recharts로 과거/예상 가격 곡선 시각화. 점수는 적층형 LEGO 브릭 게이지로 시각화됨
+- **희소가치 · 시세 검증** — 제품 번호·이름으로 검색해 확인된 KREAM 공개 거래의 중앙값·최신 체결가·판매 호가·조회 시점을 구분해 표시. 검증된 원화 발매가가 있을 때만 가격 프리미엄을 계산하며 계산식을 화면에 공개합니다. 실제 이력이 부족하면 자동 추정은 제공하지 않고, 별도의 3/5년 사용자 가정 시나리오를 제공합니다.
 - **부품 단가 (PPP) 가성비 분석** — 헤더 메뉴 → "가성비"에서 KRW/부품 기준으로 베스트 세트 목록 확인. 한국 공식 시리즈 분류(스타워즈/해리포터/아이콘스/테크닉/마블 등) 테마 필터 + Top N 선택기 + 단종 제품 옵션 토글(과거 정가 기준 PPP) + 단종/테마 배지 강조
 - **다크 모드** — 헤더 토글로 라이트/다크 테마 전환. CSS 변수 기반 토큰으로 모든 카드/입력/차트가 일관되게 전환되며 localStorage 에 사용자 선택 저장
 - **PWA (홈화면 추가 + 오프라인 캐시)** — 모바일 사파리/크롬에서 "홈 화면에 추가" 시 standalone 앱처럼 실행. 정적 에셋 cache-first + JSON 데이터 stale-while-revalidate + 앱 셸 network-first 의 3-tier 캐시 전략
-- **일별 가격 스냅샷 + 변동 차트** — 매일 수집된 KRW 가격을 `priceHistoryIndex.json` 에 누적하고 제품 상세 페이지에서 SVG 라인 차트로 표시
+- **저장 정가 스냅샷 + 차트** — `priceHistoryIndex.json`의 정가 기록을 제품 상세에 표시. 리셀 실거래 이력과 다르며, 희소가치의 거래 추세에는 사용하지 않습니다.
 - **한국어 별명 → 제품번호 직접 매핑** — "용마성"→6082, "블랙펄"→10365, "박쥐성"→6097, "탐정사무소"→10246, "바라쿠다"→21322 등 즉시 검색
 - **모듈러 빌딩 전체 키워드** — 카페코너, 그린그로서, 소방대, 펫샵, 타운홀, 팰리스시네마, 탐정사무소, 브릭뱅크, 다운타운다이너, 서점, 재즈클럽, 자연사박물관 등
 - **검색 결과 테마별 그룹화** — 검색 결과를 테마별로 분리하여 표시 (테마명 한국어 번역 지원)
@@ -96,13 +96,12 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 ## 기술 스택
 
 - **React 19** + React Router (HashRouter, useSearchParams)
-- **Recharts** — 희소 가치 점수 페이지의 과거/예상 가격 곡선 시각화
+- **Recharts** — 날짜가 확인된 거래 관측점과 조건을 충족하는 경우의 추세 모형 표시
 - **Axios** + API 캐싱
 - **Rebrickable API v3** — 세트 검색, 부품 검색, 미니피규어 데이터
 - **BrickLink CDN** — 제품 대체 이미지 (SN/ON)
 - **MyMemory Translation API** — 제품명/테마명/카테고리명 한국어 번역 (localStorage 캐싱)
-- **KREAM 거래가 (수작업 큐레이션)** — 희소 가치 점수 페이지의 현재 시세 소스 (`src/data/marketPrices.json`)
-- **allorigins.win CORS Proxy** — KREAM 데이터가 없을 때의 BrickEconomy 시세 폴백
+- **KREAM 공개 체결 관측** — 제품 모델 번호와 실제 공개 거래를 대조한 날짜 있는 스냅샷 (`src/data/marketObservations.json`). 실시간 자동 갱신 아님
 - **PWA** — `manifest.json` + `sw.js` (3-tier 캐시 전략) + `serviceWorkerRegistration.js`
 - **GitHub Pages** (gh-pages) 배포
 - **GitHub Actions** — 주간 데이터 자동 수집 + 자동 배포 파이프라인
@@ -128,7 +127,8 @@ src/
 │   └── ThemeContext.js
 ├── data/
 │   ├── prices.json         # schemaVersion 2 — 한국 시리즈 themes 맵 + 단종 제품 과거 정가
-│   ├── marketPrices.json   # KREAM 거래가 큐레이션 (희소가치 현재 시세 소스)
+│   ├── marketObservations.json # 모델 번호·체결일·출처를 확인한 KREAM 공개 거래 스냅샷
+│   ├── marketPrices.json   # 이전 미검증 기록, 현재 분석에는 사용하지 않음
 │   ├── bdpUpcoming.json    # BDP 다음 펀딩 예정작 큐레이션
 │   ├── priceHistoryIndex.json
 │   ├── prices-history/
@@ -137,7 +137,7 @@ src/
 │   └── legoImages.json
 ├── pages/
 │   ├── SearchPage.js
-│   ├── ScarcityPage.js     # KREAM 우선 fetchMarketPrice + 적층형 LEGO 브릭 게이지 + Recharts 차트
+│   ├── ScarcityPage.js     # 실거래 관측·공식 설명·데이터 부족 안내·사용자 가정 계산
 │   ├── PppPage.js          # 부품 단가 (PPP) 가성비 분석 (한국 시리즈 테마 + 단종 옵션)
 │   ├── PartsSearchPage.js
 │   ├── PartDetailPage.js
@@ -157,6 +157,8 @@ src/
     ├── mocApi.js
     ├── searchDict.js
     ├── scarcityScore.js
+    ├── scarcityData.js
+    ├── scarcityProjection.js
     ├── priceHistory.js
     ├── translate.js
     ├── price.js
@@ -220,6 +222,15 @@ npm run fetch-images -- --refresh
 ## 변경 이력 (Changelog)
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
+
+### v0.6.3 — 2026-10-16
+
+- MOC 사진 누락을 수정했습니다. Google 검색 결과의 구조화 이미지와 정확한 작품 번호의 공식 CDN 대표 사진을 순서대로 사용합니다. 실제 콜백의 Google 추적 링크에서 엄격하게 작품 URL을 확인하며, 기존 결과·광고·브랜딩은 유지합니다. 모든 사진이 실패하면 다른 작품으로 대체하지 않고 실패 사유를 표시합니다.
+- 희소가치 분석에서 정가·부품 수·예시 테마 수익률로 만든 합성 시세, 역산 과거 그래프, 임의의 독점 구성 가산점을 제거했습니다. 예전 KREAM 기록의 75192 상품 연결은 실제 10179였으므로 계산 근거로 재사용하지 않습니다.
+- KREAM 공개 화면에서 모델 번호를 확인한 7개 제품의 35개 체결 관측을 새로 기록했습니다. 확인 완료 시각은 2026-10-16 14:47 KST이며 각 제품의 실제 조회 시각·체결일·호가·출처를 보존합니다. 75159처럼 최근 공개 거래가 수개월 전인 제품은 현재 거래 가능 가격으로 단정하지 않습니다.
+- 관측 시세는 최근 공개 거래 최대 5건의 중앙값입니다. 가격 차이(%)는 `(관측 시세 / 확인된 원화 발매가 - 1) * 100`, 참고지수는 `min(100, max(0, 50 + 가격 차이(%) / 2))`입니다. 참고지수는 생산량이나 매물 수를 측정한 희소성 등급이 아닙니다. USD 발매가의 현재 원화 환산값과 출처가 확인되지 않은 저장 정가는 비교 계산에서 제외합니다.
+- 자동 추정은 동일 상태의 날짜 있는 실측 6건·180일 이상 등의 앱 기준을 충족할 때만 로그 가격 추세와 오차범위를 계산합니다. 현재 공개 자료는 이 조건을 충족하지 않으므로 근거 없는 예측액을 표시하지 않습니다. 사용자가 입력하는 연성장률·수수료·고정비 시나리오는 별도 가정 계산이며 기본 성장률은 0%입니다.
+- 키 없이 안정적으로 사용할 수 있는 자동 시세 제공 경로는 확인하지 못했습니다. KREAM 원문 링크로 최신 값을 확인할 수 있으며, 정기 자동 갱신은 인증된 제공 경로와 배포 허용 범위를 확인한 후 연결해야 합니다. 참고: [BrickLink Price Guide](https://static.bricklink.com/alpha/default/api_wiki.html), [BrickEconomy API](https://www.brickeconomy.com/api-reference), [Google Search Element](https://developers.google.com/custom-search/docs/element).
 
 ### v0.6.2 — 2026-10-16
 

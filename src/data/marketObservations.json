@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "capturedAt": "2026-10-16T05:47:10.197Z",
+    "source": "KREAM public product pages",
+    "automaticRefresh": false,
+    "notes": "2026-10-16 공개 상품 화면에서 모델번호를 확인하고 각 상품에 표시된 체결 거래 5건만 기록했습니다. 관측 시각과 거래일은 다르며, 상대 날짜는 정확한 일자로 환산하지 않았습니다. 호가와 전체 거래 수는 표본 체결가와 구분합니다. 배송비·수수료·세금 및 개별 상품 상태는 이 체결 가격에 포함된 것으로 확인되지 않았습니다. USD 발매가의 플랫폼 원화 환산 참고값은 한국 원화 출시가로 사용하지 않습니다. 오래된 거래를 현재 실거래로 간주하지 않으며 자동 갱신하지 않습니다."
+  },
+  "sets": {
+    "10188": {
+      "modelNumber": "10188",
+      "productId": 42003,
+      "productName": "레고 스타워즈 데스스타",
+      "source": "KREAM",
+      "sourceUrl": "https://kream.co.kr/products/42003",
+      "observedAt": "2026-10-16T05:46:07.389Z",
+      "currency": "KRW",
+      "condition": "platform-standard-unspecified",
+      "conditionLabel": "KREAM 공개 체결 거래 · 개별 상태 미제공",
+      "retailPriceKrw": null,
+      "retailPriceUsd": 400,
+      "retailConvertedKrw": 539400,
+      "retailPriceSource": "KREAM 페이지에 표시된 USD 발매가",
+      "retailConvertedSource": "KREAM 페이지에 표시된 USD 발매가의 원화 환산 참고값 · 한국 원화 출시가 아님",
+      "askingPriceKrw": 989000,
+      "totalTradeCount": 359,
+      "trades": [
+        {
+          "price": 903000,
+          "date": "2026-10-11",
+          "dateLabel": "26/10/11",
+          "datePrecision": "day"
+        },
+        {
+          "price": 920000,
+          "date": "2026-09-09",
+          "dateLabel": "26/09/09",
+          "datePrecision": "day"
+        },
+        {
+          "price": 1100000,
+          "date": "2026-08-05",
+          "dateLabel": "26/08/05",
+          "datePrecision": "day"
+        },
+        {
+          "price": 930000,
+          "date": "2026-07-11",
+          "dateLabel": "26/07/11",
+          "datePrecision": "day"
+        },
+        {
+          "price": 903000,
+          "date": "2026-05-12",
+          "dateLabel": "26/05/12",
+          "datePrecision": "day"
+        }
+      ]
+    },
+    "10246": {
+      "modelNumber": "10246",
+      "productId": 39085,
+      "productName": "레고 탐정 사무소",
+      "source": "KREAM",
+      "sourceUrl": "https://kream.co.kr/products/39085",
+      "observedAt": "2026-10-16T05:46:57.727Z",
+      "currency": "KRW",
+      "condition": "platform-standard-unspecified",
+      "conditionLabel": "KREAM 공개 체결 거래 · 개별 상태 미제공",
+      "retailPriceKrw": null,
+      "retailPriceUsd": 160,
+      "retailConvertedKrw": 215700,
+      "retailPriceSource": "KREAM 페이지에 표시된 USD 발매가",
+      "retailConvertedSource": "KREAM 페이지에 표시된 USD 발매가의 원화 환산 참고값 · 한국 원화 출시가 아님",
+      "askingPriceKrw": 415000,
+      "totalTradeCount": 656,
+      "trades": [
+        {
+          "price": 400000,
+          "date": "2026-10-02",
+          "dateLabel": "26/10/02",
+          "datePrecision": "day"
+        },
+        {
+          "price": 419000,
+          "date": "2026-09-14",
+          "dateLabel": "26/09/14",
+          "datePrecision": "day"
+        },
+        {
+          "price": 386000,
+          "date": "2026-09-10",
+          "dateLabel": "26/09/10",
+          "datePrecision": "day"
+        },
+        {
+          "price": 386000,
+          "date": "2026-09-08",
+          "dateLabel": "26/09/08",
+          "datePrecision": "day"
+        },
+        {
+          "price": 417000,
+          "date": "2026-09-07",
+          "dateLabel": "26/09/07",
+          "datePrecision": "day"
+        }
+      ]
+    },
+    "10278": {
+      "modelNumber": "10278",
+      "productId": 41092,
+      "productName": "레고 경찰서",
+      "source": "KREAM",
+      "sourceUrl": "https://kream.co.kr/products/41092",
+      "observedAt": "2026-10-16T05:47:10.197Z",
+      "currency": "KRW",
+      "condition": "platform-standard-unspecified",
+      "conditionLabel": "KREAM 공개 체결 거래 · 개별 상태 미제공",
+      "retailPriceKrw": null,
+      "retailPriceUsd": 199,
+      "retailConvertedKrw": 268300,
+      "retailPriceSource": "KREAM 페이지에 표시된 USD 발매가",
+      "retailConvertedSource": "KREAM 페이지에 표시된 USD 발매가의 원화 환산 참고값 · 한국 원화 출시가 아님",
+      "askingPriceKrw": 375000,
+      "totalTradeCount": 725,
+      "trades": [
+        {
+          "price": 389000,
+          "date": "2026-10-14",
+          "dateLabel": "26/10/14",
+          "datePrecision": "day"
+        },
+        {
+          "price": 366000,
+          "date": "2026-10-06",
+          "dateLabel": "26/10/06",
+          "datePrecision": "day"
+        },
+        {
+          "price": 395000,
+          "date": "2026-10-05",
+          "dateLabel": "26/10/05",
+          "datePrecision": "day"
+        },
+        {
+          "price": 365000,
+          "date": "2026-10-03",
+          "dateLabel": "26/10/03",
+          "datePrecision": "day"
+        },
+        {
+          "price": 395000,
+          "date": "2026-09-26",
+          "dateLabel": "26/09/26",
+          "datePrecision": "day"
+        }
+      ]
+    },
+    "10305": {
+      "modelNumber": "10305",
+      "productId": 72708,
+      "productName": "레고 사자 기사의 성",
+      "source": "KREAM",
+      "sourceUrl": "https://kream.co.kr/products/72708",
+      "observedAt": "2026-10-16T05:44:26.387Z",
+      "currency": "KRW",
+      "condition": "platform-standard-unspecified",
+      "conditionLabel": "KREAM 공개 체결 거래 · 개별 상태 미제공",
+      "retailPriceKrw": 519900,
+      "retailPriceUsd": null,
+      "retailConvertedKrw": null,
+      "retailPriceSource": "KREAM 페이지에 표시된 발매가",
+      "askingPriceKrw": 565000,
+      "totalTradeCount": 897,
+      "trades": [
+        {
+          "price": 535000,
+          "date": null,
+          "dateLabel": "19시간 전",
+          "datePrecision": "relative"
+        },
+        {
+          "price": 564000,
+          "date": "2026-10-14",
+          "dateLabel": "26/10/14",
+          "datePrecision": "day"
+        },
+        {
+          "price": 564000,
+          "date": "2026-10-13",
+          "dateLabel": "26/10/13",
+          "datePrecision": "day"
+        },
+        {
+          "price": 541000,
+          "date": "2026-10-13",
+          "dateLabel": "26/10/13",
+          "datePrecision": "day"
+        },
+        {
+          "price": 550000,
+          "date": "2026-10-12",
+          "dateLabel": "26/10/12",
+          "datePrecision": "day"
+        }
+      ]
+    },
+    "21322": {
+      "modelNumber": "21322",
+      "productId": 39083,
+      "productName": "레고 바라쿠다 해적들",
+      "source": "KREAM",
+      "sourceUrl": "https://kream.co.kr/products/39083",
+      "observedAt": "2026-10-16T05:45:42.157Z",
+      "currency": "KRW",
+      "condition": "platform-standard-unspecified",
+      "conditionLabel": "KREAM 공개 체결 거래 · 개별 상태 미제공",
+      "retailPriceKrw": 259900,
+      "retailPriceUsd": null,
+      "retailConvertedKrw": null,
+      "retailPriceSource": "KREAM 페이지에 표시된 발매가",
+      "askingPriceKrw": 393000,
+      "totalTradeCount": 661,
+      "trades": [
+        {
+          "price": 370000,
+          "date": "2026-10-15",
+          "dateLabel": "26/10/15",
+          "datePrecision": "day"
+        },
+        {
+          "price": 380000,
+          "date": "2026-10-15",
+          "dateLabel": "26/10/15",
+          "datePrecision": "day"
+        },
+        {
+          "price": 393000,
+          "date": "2026-10-12",
+          "dateLabel": "26/10/12",
+          "datePrecision": "day"
+        },
+        {
+          "price": 390000,
+          "date": "2026-10-10",
+          "dateLabel": "26/10/10",
+          "datePrecision": "day"
+        },
+        {
+          "price": 392000,
+          "date": "2026-10-09",
+          "dateLabel": "26/10/09",
+          "datePrecision": "day"
+        }
+      ]
+    },
+    "75159": {
+      "modelNumber": "75159",
+      "productId": 39053,
+      "productName": "레고 스타워즈 데스스타",
+      "source": "KREAM",
+      "sourceUrl": "https://kream.co.kr/products/39053",
+      "observedAt": "2026-10-16T05:46:17.809Z",
+      "currency": "KRW",
+      "condition": "platform-standard-unspecified",
+      "conditionLabel": "KREAM 공개 체결 거래 · 개별 상태 미제공",
+      "retailPriceKrw": null,
+      "retailPriceUsd": 500,
+      "retailConvertedKrw": 674200,
+      "retailPriceSource": "KREAM 페이지에 표시된 USD 발매가",
+      "retailConvertedSource": "KREAM 페이지에 표시된 USD 발매가의 원화 환산 참고값 · 한국 원화 출시가 아님",
+      "askingPriceKrw": null,
+      "totalTradeCount": 24,
+      "trades": [
+        {
+          "price": 1265000,
+          "date": "2026-06-19",
+          "dateLabel": "26/06/19",
+          "datePrecision": "day"
+        },
+        {
+          "price": 1450000,
+          "date": "2026-05-13",
+          "dateLabel": "26/05/13",
+          "datePrecision": "day"
+        },
+        {
+          "price": 1300000,
+          "date": "2026-04-16",
+          "dateLabel": "26/04/16",
+          "datePrecision": "day"
+        },
+        {
+          "price": 1490000,
+          "date": "2025-12-16",
+          "dateLabel": "25/12/16",
+          "datePrecision": "day"
+        },
+        {
+          "price": 1350000,
+          "date": "2025-10-14",
+          "dateLabel": "25/10/14",
+          "datePrecision": "day"
+        }
+      ]
+    },
+    "75192": {
+      "modelNumber": "75192",
+      "productId": 39097,
+      "productName": "레고 스타워즈 밀레니엄 팔콘",
+      "source": "KREAM",
+      "sourceUrl": "https://kream.co.kr/products/39097",
+      "observedAt": "2026-10-16T05:45:52.244Z",
+      "currency": "KRW",
+      "condition": "platform-standard-unspecified",
+      "conditionLabel": "KREAM 공개 체결 거래 · 개별 상태 미제공",
+      "retailPriceKrw": 1100000,
+      "retailPriceUsd": null,
+      "retailConvertedKrw": null,
+      "retailPriceSource": "KREAM 페이지에 표시된 발매가",
+      "askingPriceKrw": 841000,
+      "totalTradeCount": 288,
+      "trades": [
+        {
+          "price": 820000,
+          "date": null,
+          "dateLabel": "14시간 전",
+          "datePrecision": "relative"
+        },
+        {
+          "price": 847000,
+          "date": "2026-10-15",
+          "dateLabel": "26/10/15",
+          "datePrecision": "day"
+        },
+        {
+          "price": 847000,
+          "date": "2026-10-08",
+          "dateLabel": "26/10/08",
+          "datePrecision": "day"
+        },
+        {
+          "price": 816000,
+          "date": "2026-10-03",
+          "dateLabel": "26/10/03",
+          "datePrecision": "day"
+        },
+        {
+          "price": 815000,
+          "date": "2026-09-28",
+          "dateLabel": "26/09/28",
+          "datePrecision": "day"
+        }
+      ]
+    }
+  }
+}

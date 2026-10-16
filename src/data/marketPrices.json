@@ -1,11 +1,14 @@
 {
   "schemaVersion": 1,
   "meta": {
-    "description": "KREAM trading prices for discontinued popular LEGO collector sets. Used by ScarcityPage to prefer KREAM over BrickEconomy estimates. All values are KRW and represent the most recent KREAM 거래가 snapshot at the time of collection.",
+    "description": "Archived, unverified legacy price records. Excluded from current market-price and scarcity calculations. Use marketObservations.json for dated, model-verified observations.",
+    "archived": true,
+    "validationStatus": "unverified-excluded",
+    "auditedAt": "2026-10-16",
     "source": "kream.co.kr",
     "currency": "KRW",
     "lastUpdated": "2026-04-09",
-    "notes": "Each entry is hand-curated from KREAM product pages. Run ScarcityPage → 시세 자동 새로고침 or update this file manually. When a set is not present, the scarcity analyzer falls back to BrickEconomy via allorigins CORS proxy."
+    "notes": "Original values and dates are retained as a legacy record, not validated trade evidence. Trade dates and individual condition were not recorded. The 75192 product URL actually refers to model 10179, so its price must not be reused for 75192. There is no automatic market refresh or BrickEconomy proxy fallback in the current analyzer."
   },
   "prices": {
     "21322": {

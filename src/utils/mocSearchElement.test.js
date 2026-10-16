@@ -81,3 +81,14 @@ test('card styling uses official callback nodes and keeps unrelated branding and
   expect(promotion).not.toHaveClass('moc-web-result-card');
   expect(title.href).toBe('https://rebrickable.com/mocs/MOC-206123/');
 });
+
+test('live Google redirect results receive the correct MOC badge without replacing tracked title links', function() {
+  const element = document.createElement('div');
+  const url = 'https://www.google.com/url?client=internal-element-cse&q=' + encodeURIComponent('https://rebrickable.com/mocs/MOC-271961/Konor_142/rms-titanic-1900/');
+  element.innerHTML = '<div class="gs-webResult"><div class="gsc-thumbnail-inside"><a class="gs-title">RMS Titanic 1:900</a></div></div>';
+  element.querySelector('a').href = url;
+  styleMocSearchCards([element], [{ url, richSnippet: { metatags: { ogImage: 'https://cdn.rebrickable.com/media/thumbs/mocs/moc-271961.jpg/1000x800.jpg' } } }]);
+  expect(element.querySelector('.moc-web-result-number')).toHaveTextContent('MOC-271961');
+  expect(element.querySelector('.moc-web-result-image').src).toBe('https://cdn.rebrickable.com/media/thumbs/mocs/moc-271961.jpg/1000x800.jpg');
+  expect(element.querySelector('a').href).toBe(url);
+});

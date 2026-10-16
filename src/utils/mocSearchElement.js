@@ -1,4 +1,5 @@
 import { isMocSearchEngineId } from './mocWebQuery';
+import { enhanceMocResultImage, getMocResultNumber } from './mocSearchImages';
 
 // Only documented Search Element APIs/callbacks are used here:
 // https://developers.google.com/custom-search/docs/element
@@ -84,22 +85,22 @@ export function createMocSearchRuntime(options = {}) {
 
 // These DOM nodes come directly from Google's documented rendered callback.
 // No search HTML is downloaded, parsed, or republished by the application.
-export function styleMocSearchCards(resultElements, resultData = []) {
+export function styleMocSearchCards(resultElements, resultData = [], imageLabels = {}) {
   (resultElements || []).forEach(function(element, index) {
     if (!element || !element.classList) return;
     element.classList.add('moc-web-result-card');
     if (element.parentElement) element.parentElement.classList.add('moc-web-result-grid');
     const result = resultData[index];
-    if (!result || !result.url || element.querySelector('.moc-web-result-number')) return;
-    try {
-      const url = new URL(result.url);
-      const match = url.pathname.match(/^\/mocs\/(MOC-\d+)(?:\/|$)/i);
-      if (url.hostname !== 'rebrickable.com' || !match) return;
-      const number = element.ownerDocument.createElement('span');
+    const mocNumber = getMocResultNumber(result);
+    if (!mocNumber) return;
+    let number = element.querySelector('.moc-web-result-number');
+    if (!number) {
+      number = element.ownerDocument.createElement('span');
       number.className = 'moc-web-result-number';
-      number.textContent = match[1].toUpperCase();
       element.prepend(number);
-    } catch (e) { /* A missing/invalid result URL needs no number badge. */ }
+    }
+    number.textContent = mocNumber;
+    enhanceMocResultImage(element, result, imageLabels);
   });
 }
 

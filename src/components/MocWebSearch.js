@@ -15,6 +15,9 @@ const COPY = {
     mocWebEmpty: '이 검색 페이지에 일치하는 MOC가 없습니다. 검색어를 바꾸거나 Google에서 확인하세요.',
     mocWebGoogleFallback: 'Google에서 같은 MOC 검색 열기',
     mocWebScope: 'Google에 색인된 Rebrickable MOC를 검색합니다. 표시된 결과 수는 Google의 추정치이며 전체 작품 수가 아닙니다.',
+    mocWebImageAlt: '{moc} 작품 사진',
+    mocWebImageMissing: '검색 결과에 사진 정보가 없고, 작품의 공식 사진도 불러올 수 없습니다.',
+    mocWebImageFailed: '이 작품의 사진을 불러오지 못했습니다.',
     searchBtn: '검색', retry: '다시 시도',
   },
   en: {
@@ -26,6 +29,9 @@ const COPY = {
     mocWebEmpty: 'No matching MOC on this search page. Change the query or check Google.',
     mocWebGoogleFallback: 'Open the same MOC search on Google',
     mocWebScope: 'Search Google-indexed Rebrickable MOCs. Result counts are Google estimates, not the total number of creations.',
+    mocWebImageAlt: 'Photo of {moc}',
+    mocWebImageMissing: 'No photo was provided in the search result, and the official creation photo could not be loaded.',
+    mocWebImageFailed: 'The photo for this creation could not be loaded.',
     searchBtn: 'Search', retry: 'Retry',
   },
 };
@@ -54,8 +60,10 @@ function MocWebSearch(props) {
   const executeRef = useRef(null);
   const hostRef = useRef(null);
   const noResultsRef = useRef(copy('mocWebEmpty'));
+  const imageCopyRef = useRef({});
 
   noResultsRef.current = copy('mocWebEmpty');
+  imageCopyRef.current = { alt: copy('mocWebImageAlt'), missing: copy('mocWebImageMissing'), failed: copy('mocWebImageFailed') };
   queryRef.current = search.query;
   useEffect(function() {
     if (typeof props.query === 'string') setDraft(props.query);
@@ -92,7 +100,7 @@ function MocWebSearch(props) {
       rendered: function(name, query, promotions, elements) {
         if (!alive || buildMocWebQuery(query) !== activeQueryRef.current) return;
         clearTimeout(searchTimerRef.current);
-        styleMocSearchCards(elements, resultsRef.current);
+        styleMocSearchCards(elements, resultsRef.current, imageCopyRef.current);
         setStatus(resultsRef.current.length ? 'results' : 'empty');
       },
     });
