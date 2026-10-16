@@ -1,0 +1,58 @@
+services:
+  api:
+    build: ../../server/market-api
+    restart: unless-stopped
+    init: true
+    environment:
+      PORT: '8080'
+      DB_PATH: /data/market.sqlite
+      ALLOW_ORIGINS: https://jbh-mine.github.io
+      TRUST_PROXY: '1'
+      BRICKLINK_CONSUMER_KEY_FILE: /run/secrets/consumer_key
+      BRICKLINK_CONSUMER_SECRET_FILE: /run/secrets/consumer_secret
+      BRICKLINK_TOKEN_VALUE_FILE: /run/secrets/token_value
+      BRICKLINK_TOKEN_SECRET_FILE: /run/secrets/token_secret
+      ADMIN_TOKEN_FILE: /run/secrets/admin_token
+      CACHE_TTL_SECONDS: '21600'
+      DAILY_PROVIDER_BUDGET: '4500'
+      OBSERVATION_RETENTION_DAYS: '730'
+    volumes:
+      - market-data:/data
+    secrets:
+      - consumer_key
+      - consumer_secret
+      - token_value
+      - token_secret
+      - admin_token
+    expose:
+      - '8080'
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?Set API_DOMAIN in .env}
+      TLS_EMAIL: ${TLS_EMAIL:?Set TLS_EMAIL in .env}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - api
+secrets:
+  consumer_key:
+    file: ./secrets/consumer_key
+  consumer_secret:
+    file: ./secrets/consumer_secret
+  token_value:
+    file: ./secrets/token_value
+  token_secret:
+    file: ./secrets/token_secret
+  admin_token:
+    file: ./secrets/admin_token
+volumes:
+  market-data:
+  caddy-data:
+  caddy-config:

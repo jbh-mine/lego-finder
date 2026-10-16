@@ -19,8 +19,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
+      - name: Market API tests (SQLite and official response contract)
+        working-directory: server/market-api
+        run: npm test
       - run: npm ci --legacy-peer-deps
       - name: Regression tests
         run: npm test -- --watchAll=false --runInBand
@@ -30,6 +33,7 @@ jobs:
         run: npm run build
         env:
           CI: false
+          REACT_APP_MARKET_API_URL: ${{ vars.MARKET_API_URL }}
       - name: Publish GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:

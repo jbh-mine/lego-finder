@@ -84,3 +84,48 @@ test('scenario is a user-controlled calculation, with zero growth default and ex
   expect(computePriceScenario(100000, 3, { annualRatePct: -100 }).available).toBe(false);
   expect(computePriceScenario(100000, 3, { feePct: 101 }).available).toBe(false);
 });
+
+const apiMarket = { ...market, source: 'BrickLink', provider: 'bricklink', condition: 'N', country: 'GLOBAL',
+  evidenceKind: 'daily-market-observations', basis: 'recent-30d-median', status: 'fresh', expiresAt: '2026-10-16T06:40:00Z', quality: { historyKind: 'daily-market-observations' } };
+function observation(date, price, overrides = {}) {
+  return { date, price, observedAt: date + 'T05:00:00Z', source: 'BrickLink', currency: 'KRW', condition: 'N', country: 'GLOBAL', basis: 'recent-30d-median', sampleCount: 5, ...overrides };
+}
+const observations = [observation('2026-01-01', 79000), observation('2026-03-01', 84000), observation('2026-05-01', 82000),
+  observation('2026-07-01', 90000), observation('2026-09-01', 91000), observation('2026-10-15', 97000)];
+test.each([3, 5])('API %i-year forecast uses six calendar-month medians of daily observations, not order rows', period => {
+  const result = projectObservedHistory({ market: apiMarket, marketHistory: observations }, period, now);
+  expect(result).toMatchObject({ available: true, kind: 'monthly-market-observations', count: 6, monthCount: 6, spanDays: 287 });
+  expect(result.model.count).toBe(6);
+  expect(result.series[0].projected).toBe(100000);
+  expect(result.series[result.series.length - 1].years).toBe(period);
+  expect(result.series[result.series.length - 1].range[0]).toBeLessThan(result.series[result.series.length - 1].projected);
+});
+test('same-day refreshes collapse before monthly medians, while mismatched, future and invalid dates are excluded', () => {
+  const result = projectObservedHistory({ market: apiMarket, marketHistory: [
+    ...observations, observation('2026-01-01', 81000, { observedAt: '2026-01-01T06:00:00Z' }), observation('2026-01-02', 83000),
+    observation('2026-02-01', 1, { country: 'KR' }), observation('2026-02-01', 2, { condition: 'U' }),
+    observation('2026-02-01', 3, { currency: 'USD' }), observation('2026-02-01', 4, { source: 'KREAM' }),
+    observation('2026-02-01', 5, { basis: 'six-month-average' }), observation('2026-10-17', 6),
+    observation('2026-02-30', 7), observation('2026-02-01', 8, { observedAt: '2026-02-02T00:00:00Z' }),
+  ] }, 3, now);
+  expect(result.count).toBe(7);
+  expect(result.monthCount).toBe(6);
+  expect(result.monthlyHistory[0].price).toBe(82000);
+  expect(result.model.count).toBe(6);
+});
+test('many daily refreshes in fewer than six months cannot produce a forecast, even with old order dates', () => {
+  const result = projectObservedHistory({ market: apiMarket, marketHistory: [
+    ...Array.from({ length: 15 }, (_, i) => observation('2026-10-' + String(i + 1).padStart(2, '0'), 90000 + i * 100)),
+    point('2025-01-01', 79000),
+  ] }, 3, now);
+  expect(result).toMatchObject({ available: false, count: 15, monthCount: 1, spanDays: 14 });
+  expect(result.reasons).toEqual(['insufficient-months', 'short-span']);
+});
+test('stale current values, expired TTL, future capture or old daily history block the API model', () => {
+  for (const changes of [{ status: 'stale' }, { expiresAt: '2026-10-16T05:59:00Z' }, { observedAt: '2026-10-17T00:00:00Z' }]) {
+    expect(projectObservedHistory({ market: { ...apiMarket, ...changes }, marketHistory: observations }, 3, now).available).toBe(false);
+  }
+  const result = projectObservedHistory({ market: apiMarket, marketHistory: observations.slice(0, -1) }, 3, now);
+  expect(result.reasons).toContain('stale-market');
+  expect(projectObservedHistory({ market: { ...apiMarket, condition: 'U' }, marketHistory: observations.map(p => ({ ...p, condition: 'U' })) }, 3, now).available).toBe(true);
+});

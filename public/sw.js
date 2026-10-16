@@ -5,7 +5,7 @@
  *  - JSON data: stale-while-revalidate
  */
 
-const VERSION = 'v0.6.0';
+const VERSION = 'v0.6.4';
 const STATIC_CACHE = 'lego-static-' + VERSION;
 const DATA_CACHE = 'lego-data-' + VERSION;
 const SHELL_CACHE = 'lego-shell-' + VERSION;

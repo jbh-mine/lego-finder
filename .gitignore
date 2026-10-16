@@ -23,3 +23,13 @@ yarn-error.log*
 # Download source cache (generated catalog is committed)
 /.catalog-cache
 /.jest-cache-*/
+
+# Server credentials and persistent market database
+/server/market-api/.env
+/server/market-api/data/
+/deploy/market-api/.env
+/deploy/market-api/secrets/
+/deploy/market-api/backups/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

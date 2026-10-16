@@ -1,4 +1,5 @@
 import { computeScarcityScore } from './scarcityScore';
+import { median } from './scarcityData';
 
 export const SUPPORTED_PERIODS = [3, 5];
 export const FORECAST_MIN_OBSERVATIONS = 6;
@@ -19,7 +20,62 @@ function eligibleHistory(raw) {
   }).sort((a, b) => a.date.localeCompare(b.date));
 }
 
+export function dailyObservationHistory(raw, now = Date.now()) {
+  const market = raw.market || {};
+  const daily = new Map();
+  (Array.isArray(raw.marketHistory) ? raw.marketHistory : []).forEach(point => {
+    if (!point || typeof point !== 'object') return;
+    const date = Date.parse(point.date);
+    const observedAt = Date.parse(point.observedAt);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(point.date || '') || !Number.isFinite(date) ||
+        new Date(date).toISOString().slice(0, 10) !== point.date || !Number.isFinite(observedAt) ||
+        observedAt > now || date > now || new Date(observedAt).toISOString().slice(0, 10) !== point.date ||
+        !Number.isFinite(point.price) || point.price <= 0 || point.basis !== 'recent-30d-median' ||
+        point.source !== 'BrickLink' || point.currency !== market.currency || point.condition !== market.condition ||
+        point.country !== market.country || !Number.isInteger(point.sampleCount) || point.sampleCount < 1) return;
+    const existing = daily.get(point.date);
+    if (!existing || observedAt > Date.parse(existing.observedAt)) daily.set(point.date, { ...point });
+  });
+  return [...daily.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function projectDailyObservations(raw, period, now) {
+  const market = raw.market || {};
+  const history = dailyObservationHistory(raw, now);
+  const months = new Map();
+  history.forEach(point => {
+    const month = point.date.slice(0, 7);
+    if (!months.has(month)) months.set(month, []);
+    months.get(month).push(point);
+  });
+  const monthlyHistory = [...months.entries()].map(([month, points]) => ({
+    // The 15th is a calendar-month regression coordinate, not a trade date.
+    date: month + '-15', month, price: median(points.map(point => point.price)), observations: points.length,
+  }));
+  const spanDays = history.length > 1 ? Math.floor((Date.parse(history[history.length - 1].date) - Date.parse(history[0].date)) / DAY_MS) : 0;
+  const capturedAt = Date.parse(market.observedAt);
+  const expiresAt = Date.parse(market.expiresAt);
+  const latestAt = history.length ? Date.parse(history[history.length - 1].observedAt) : NaN;
+  const reasons = [];
+  if (!Number.isFinite(market.value) || market.value <= 0) reasons.push('missing-market');
+  if (monthlyHistory.length < 6) reasons.push('insufficient-months');
+  if (spanDays < FORECAST_MIN_SPAN_DAYS) reasons.push('short-span');
+  if (market.provider !== 'bricklink' || market.currency !== 'KRW' || !['N', 'U'].includes(market.condition) ||
+      !['GLOBAL', 'KR'].includes(market.country) || market.basis !== 'recent-30d-median' ||
+      !market.quality || market.quality.historyKind !== 'daily-market-observations') reasons.push('invalid-observation-scope');
+  if (!Number.isFinite(capturedAt) || capturedAt > now || !Number.isFinite(expiresAt)) reasons.push('missing-observation-time');
+  if (market.status !== 'fresh' || market.stale || expiresAt <= now || now - capturedAt > 30 * DAY_MS ||
+      (Number.isFinite(latestAt) && now - latestAt > 30 * DAY_MS)) reasons.push('stale-market');
+  const result = { available: false, kind: 'monthly-market-observations', history, monthlyHistory,
+    count: history.length, monthCount: monthlyHistory.length, spanDays, reasons,
+    from: history.length ? history[0].date : null, to: history.length ? history[history.length - 1].date : null,
+    series: [], annualRatePct: null };
+  if (reasons.length) return result;
+  return fitHistory(result, monthlyHistory, market, period);
+}
+
 export function projectObservedHistory(raw, period, now = Date.now()) {
+  if (raw.evidenceKind === 'daily-market-observations' || (raw.market && raw.market.evidenceKind === 'daily-market-observations')) return projectDailyObservations(raw, period, now);
   const history = eligibleHistory(raw);
   const spanDays = history.length > 1 ? (Date.parse(history[history.length - 1].date) - Date.parse(history[0].date)) / DAY_MS : 0;
   const market = raw.market;
@@ -39,7 +95,10 @@ export function projectObservedHistory(raw, period, now = Date.now()) {
     from: history.length ? history[0].date : null, to: history.length ? history[history.length - 1].date : null,
     series: [], annualRatePct: null };
   if (reasons.length) return result;
+  return fitHistory(result, history, market, period);
+}
 
+function fitHistory(result, history, market, period) {
   const origin = Date.parse(history[0].date);
   const xs = history.map(point => (Date.parse(point.date) - origin) / (DAY_MS * 365.25));
   const ys = history.map(point => Math.log(point.price));

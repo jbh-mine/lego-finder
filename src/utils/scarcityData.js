@@ -27,6 +27,12 @@ export function lookupObservedMarket(setNum, dataset = marketObservations, now =
 }
 
 export function lookupReferencePrice(setNum, market, dataset = priceData) {
+  // Converted international price-guide samples do not establish a comparable
+  // Korean release-price / product-condition scope for the premium index.
+  if (market && market.provider === 'bricklink') {
+    const reference = lookupReferencePrice(setNum, null, dataset);
+    return reference ? { ...reference, comparisonEligible: false } : null;
+  }
   if (market && positive(market.retailPriceKrw)) {
     return { value: market.retailPriceKrw, kind: 'platform-release', comparisonEligible: true,
       source: market.retailPriceSource, sourceUrl: market.sourceUrl, observedAt: market.observedAt };
@@ -52,6 +58,7 @@ export function observedExamples(dataset = marketObservations) {
 
 export function marketHistory(market) {
   if (!market) return [];
+  if (market.evidenceKind === 'daily-market-observations') return market.observationHistory || [];
   return (market.historicalTrades || market.trades).map(trade => ({ ...trade, currency: market.currency,
     condition: market.condition, source: market.source }));
 }

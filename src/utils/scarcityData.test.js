@@ -39,3 +39,13 @@ test('unverified historic MSRP and USD conversions never become confirmed Korean
   expect(lookupReferencePrice('910008-1', null, prices)).toMatchObject({ value: 258400, kind: 'converted-reference', comparisonEligible: false });
   expect(lookupReferencePrice('99999-1', null, prices)).toBeNull();
 });
+test('international BrickLink evidence cannot acquire a comparable Korean release price from another scope', () => {
+  const prices = { meta: {}, prices: { '10305': { price: 519900 } } };
+  expect(lookupReferencePrice('10305-1', { provider: 'bricklink', retailPriceKrw: 519900 }, prices))
+    .toMatchObject({ kind: 'unverified-reference', comparisonEligible: false });
+});
+test('API forecast history uses accumulated daily observations exclusively, never anonymous order rows', () => {
+  const observations = [{ date: '2026-10-16', price: 100000, basis: 'recent-30d-median' }];
+  expect(marketHistory({ evidenceKind: 'daily-market-observations', observationHistory: observations,
+    trades: [{ date: '2025-01-01', price: 90000 }] })).toBe(observations);
+});
