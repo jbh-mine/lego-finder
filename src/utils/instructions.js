@@ -7,6 +7,14 @@ var CORS_PROXIES = [
 var insCache = {};
 var pendingFetches = {};
 
+async function boundedFetch(url, options) {
+  var controller = new AbortController();
+  var timer = setTimeout(function() { controller.abort(); }, 6000);
+  try {
+    return await fetch(url, Object.assign({}, options, { signal: controller.signal }));
+  } finally { clearTimeout(timer); }
+}
+
 // Generate LEGO official building instructions URL
 export function getLegoPageUrl(setNum, legoNum) {
   var num = legoNum || (setNum ? setNum.replace(/-.*$/, '') : '');
@@ -170,7 +178,7 @@ async function tryFetch(proxyPrefix, productNumber) {
   var url = proxyPrefix + LEGO_API;
   var body = buildQuery(productNumber);
 
-  var res = await fetch(url, {
+  var res = await boundedFetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -213,7 +221,7 @@ export async function fetchInstructions(setNum) {
 // Fetch PDF file size via HEAD request
 export async function fetchPdfSize(url) {
   try {
-    var res = await fetch(url, { method: 'HEAD' });
+    var res = await boundedFetch(url, { method: 'HEAD' });
     if (res.ok) {
       var len = res.headers.get('content-length');
       if (len) return parseInt(len, 10);
@@ -221,7 +229,7 @@ export async function fetchPdfSize(url) {
   } catch(e) {
     // Try with CORS proxy
     try {
-      var res2 = await fetch('https://corsproxy.io/?' + encodeURIComponent(url), { method: 'HEAD' });
+      var res2 = await boundedFetch('https://corsproxy.io/?' + encodeURIComponent(url), { method: 'HEAD' });
       if (res2.ok) {
         var len2 = res2.headers.get('content-length');
         if (len2) return parseInt(len2, 10);

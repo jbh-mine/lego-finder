@@ -17,7 +17,7 @@ function LanguageProvider(props) {
   }, []);
 
   var t = useCallback(function(key) {
-    return (translations[lang] && translations[lang][key]) || (translations['ko'] && translations['ko'][key]) || key;
+    return translations[lang]?.[key] ?? translations.ko?.[key] ?? key;
   }, [lang]);
 
   return React.createElement(

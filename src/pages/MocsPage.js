@@ -1,16 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { searchMocs } from '../utils/mocApi';
+import { searchMocs, getMocSearchUrl, getMocCatalogInfo } from '../utils/mocApi';
 import { translateSearchQuery } from '../utils/searchDict';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Loading, ErrorMessage, EmptyState } from '../components/Loading';
 
-// Note: The empty-string sort ('') maps to rebrickable's /mocs/ landing page
-// which only returns ~4 featured cards (not a real paginated listing). To
-// guarantee a full grid on first entry we default the sort to '-published'
-// (newest), which is a real listing endpoint that returns 30+ results per
-// page. The "hottest" pill is still selectable but will not be used as the
-// initial state.
+// Directory installations use publication order; saved blog introductions
+// use their own explicit review-date order below.
 var DEFAULT_SORT = '-published';
 
 var SORT_OPTIONS = [
@@ -23,87 +19,103 @@ var SORT_OPTIONS = [
 function MocsPage() {
   var lc = useLanguage();
   var t = lc.t;
+  var catalogInfo = getMocCatalogInfo();
+  var reviewCatalog = catalogInfo.scope === 'official-blog-reviews';
+  var initialSort = reviewCatalog ? '-reviewed' : DEFAULT_SORT;
+  var sortOptions = reviewCatalog ? [{ key: 'reviewed', value: '-reviewed' }] : SORT_OPTIONS;
 
   var s1 = useState(''); var query = s1[0]; var setQuery = s1[1];
   var s2 = useState(''); var qInput = s2[0]; var setQInput = s2[1];
   var s3 = useState(''); var theme = s3[0]; var setTheme = s3[1];
-  var s4 = useState(DEFAULT_SORT); var sort = s4[0]; var setSort = s4[1];
+  var s4 = useState(initialSort); var sort = s4[0]; var setSort = s4[1];
   var s5 = useState([]); var results = s5[0]; var setResults = s5[1];
   var s6 = useState([]); var themes = s6[0]; var setThemes = s6[1];
   var s7 = useState(0); var total = s7[0]; var setTotal = s7[1];
   var s8 = useState(false); var loading = s8[0]; var setLoading = s8[1];
   var s9 = useState(null); var error = s9[0]; var setError = s9[1];
   var s10 = useState(false); var loaded = s10[0]; var setLoaded = s10[1];
-  var s11 = useState(1); var page = s11[0]; var setPage = s11[1];
   var s12 = useState(false); var hasMore = s12[0]; var setHasMore = s12[1];
+  var sourceState = useState(''); var source = sourceState[0]; var setSource = sourceState[1];
 
   var sentinelRef = useRef(null);
-  var stateRef = useRef({ query: '', theme: '', sort: DEFAULT_SORT, page: 1 });
+  var stateRef = useRef({ query: '', theme: '', sort: initialSort, page: 1 });
+  var requestRef = useRef(0);
+  var loadingRef = useRef(false);
 
   var doFetch = useCallback(async function(opts, append) {
+    var requestId = ++requestRef.current;
+    loadingRef.current = true;
     setLoading(true);
     setError(null);
+    if (!append) {
+      setResults([]);
+      setHasMore(false);
+      setSource('');
+    }
     try {
       var data = await searchMocs(opts);
+      if (requestId !== requestRef.current) return;
       if (append) {
-        setResults(function(prev) { return prev.concat(data.results); });
+        setResults(function(prev) {
+          var existing = new Set(prev.map(function(moc) { return moc.mocNum; }));
+          return prev.concat(data.results.filter(function(moc) { return !existing.has(moc.mocNum); }));
+        });
       } else {
         setResults(data.results);
       }
       setTotal(data.total);
+      setSource(data.source || '');
       if (data.themes && data.themes.length > 0) setThemes(data.themes);
-      // hasMore: rebrickable serves ~30 cards per listing page; if we got
-      // fewer than 25 we treat that as the last page (the featured/landing
-      // view returns ~4 which would otherwise wrongly trigger infinite scroll)
-      setHasMore(data.results.length >= 25);
+      stateRef.current.page = opts.page || 1;
+      setHasMore(!!data.hasMore);
       setLoaded(true);
     } catch (e) {
-      setError(t('apiError'));
+      if (requestId !== requestRef.current) return;
+      setError(t('mocUnavailable'));
+      setHasMore(false);
+      setLoaded(true);
     } finally {
-      setLoading(false);
+      if (requestId === requestRef.current) {
+        loadingRef.current = false;
+        setLoading(false);
+      }
     }
   }, [t]);
 
-  // Initial load — always use the newest-sort listing endpoint so the
-  // first paint shows a full grid instead of the 4-card featured page.
+  // The official-review catalog is ordered by blog introduction date.
   useEffect(function() {
-    stateRef.current = { query: '', theme: '', sort: DEFAULT_SORT, page: 1 };
-    doFetch({ sort: DEFAULT_SORT, page: 1 }, false);
+    stateRef.current = { query: '', theme: '', sort: initialSort, page: 1 };
+    doFetch({ sort: initialSort, page: 1 }, false);
   }, []); // eslint-disable-line
 
   var applySearch = function(e) {
     if (e) e.preventDefault();
     var translated = translateSearchQuery(qInput.trim());
     setQuery(translated);
-    setPage(1);
     stateRef.current = { query: translated, theme: theme, sort: sort, page: 1 };
     doFetch({ q: translated, theme: theme, sort: sort, page: 1 }, false);
   };
 
   var changeTheme = function(v) {
     setTheme(v);
-    setPage(1);
     stateRef.current = { query: query, theme: v, sort: sort, page: 1 };
     doFetch({ q: query, theme: v, sort: sort, page: 1 }, false);
   };
 
   var changeSort = function(v) {
     setSort(v);
-    setPage(1);
     stateRef.current = { query: query, theme: theme, sort: v, page: 1 };
     doFetch({ q: query, theme: theme, sort: v, page: 1 }, false);
   };
 
   // Infinite scroll
   useEffect(function() {
-    if (!sentinelRef.current) return;
+    if (!sentinelRef.current || typeof IntersectionObserver === 'undefined') return;
     var obs = new IntersectionObserver(function(entries) {
-      if (entries[0].isIntersecting && hasMore && !loading && loaded) {
+      if (entries[0].isIntersecting && hasMore && !loadingRef.current && loaded) {
         var st = stateRef.current;
         var nextPage = st.page + 1;
-        st.page = nextPage;
         doFetch({ q: st.query, theme: st.theme, sort: st.sort, page: nextPage }, true);
-        setPage(nextPage);
       }
     }, { rootMargin: '300px' });
     obs.observe(sentinelRef.current);
@@ -113,17 +125,17 @@ function MocsPage() {
   var headerSection = React.createElement('div', { className: 'search-section' },
     React.createElement('div', { className: 'new-products-header' },
       React.createElement('h2', null, t('mocsTitle')),
-      React.createElement('p', { className: 'new-products-desc' }, t('mocsDesc')),
+      React.createElement('p', { className: 'new-products-desc' }, t(reviewCatalog ? 'mocReviewsDesc' : 'mocsDesc')),
       React.createElement('div', { className: 'new-products-source-notice' },
         React.createElement('span', { className: 'new-products-source-icon' }, '\u2139\uFE0F'),
         React.createElement('span', { className: 'new-products-source-text' },
           t('mocSourceNotice'),
           React.createElement('a', {
-            href: 'https://rebrickable.com/mocs/',
+            href: reviewCatalog ? catalogInfo.sourceUrl : 'https://rebrickable.com/mocs/',
             target: '_blank',
             rel: 'noopener noreferrer',
             className: 'new-products-source-link'
-          }, 'rebrickable.com/mocs'),
+          }, reviewCatalog ? t('mocOfficialBlog') : 'rebrickable.com/mocs'),
           t('mocSourceNoticeSuffix')
         )
       )
@@ -132,6 +144,7 @@ function MocsPage() {
       React.createElement('div', { className: 'search-input-wrapper' },
         React.createElement('input', {
           type: 'text',
+          'aria-label': t('mocSearchPlaceholder'),
           placeholder: t('mocSearchPlaceholder'),
           value: qInput,
           onChange: function(e) { setQInput(e.target.value); }
@@ -139,14 +152,16 @@ function MocsPage() {
         qInput ? React.createElement('button', {
           type: 'button',
           className: 'search-clear-btn',
+          'aria-label': t('clearSearch'),
           onClick: function() { setQInput(''); }
         }, '\u00D7') : null
       ),
       React.createElement('button', { type: 'submit' }, t('searchBtn'))
     ),
-    React.createElement('div', { className: 'moc-filter-row' },
+    !reviewCatalog ? React.createElement('div', { className: 'moc-filter-row' },
       React.createElement('select', {
         className: 'funding-year-select',
+        'aria-label': t('mocAllThemes'),
         value: theme,
         onChange: function(e) { changeTheme(e.target.value); }
       },
@@ -155,9 +170,9 @@ function MocsPage() {
           return React.createElement('option', { key: th.value, value: th.value }, th.name);
         })
       )
-    ),
+    ) : null,
     React.createElement('div', { className: 'moc-sort-tabs' },
-      SORT_OPTIONS.map(function(opt) {
+      sortOptions.map(function(opt) {
         return React.createElement('button', {
           key: opt.key,
           type: 'button',
@@ -187,14 +202,7 @@ function MocsPage() {
                 alt: moc.name,
                 loading: 'lazy',
                 onError: function(e) {
-                  // If the lazy-load extraction failed, fall back to the
-                  // primary CDN guess via the canonical MOC page route.
-                  if (e.target.dataset.fallbackTried) {
-                    e.target.style.opacity = '0.3';
-                    return;
-                  }
-                  e.target.dataset.fallbackTried = '1';
-                  e.target.src = 'https://cdn.rebrickable.com/media/thumbs/mocs/' + moc.mocNum + '/' + (moc.variant || '1') + '.jpg/300x300p.jpg';
+                  e.target.style.opacity = '0.3';
                 }
               })
             : React.createElement('div', {
@@ -212,10 +220,11 @@ function MocsPage() {
             React.createElement('div', { className: 'set-card-num' }, moc.mocNum),
             React.createElement('div', { className: 'set-card-name' }, moc.name),
             moc.designer ? React.createElement('div', { className: 'moc-designer' },
-              '\uC9C0\uC740\uC774: ' + moc.designer) : null,
+              t('mocDesigner') + ': ' + moc.designer) : null,
             React.createElement('div', { className: 'set-card-meta' },
               React.createElement('span', null, moc.parts ? (moc.parts + ' ' + t('numParts')) : ''),
-              React.createElement('span', null, moc.year || '')
+              React.createElement('span', null, moc.year || ''),
+              moc.reviewedAt ? React.createElement('span', null, t('mocReviewedAt') + ': ' + moc.reviewedAt.slice(0, 10)) : null
             ),
             moc.likes > 0 ? React.createElement('div', { className: 'moc-likes' },
               '\u2665 ' + moc.likes) : null
@@ -229,7 +238,7 @@ function MocsPage() {
   var initialLoading = (loading && results.length === 0) ? React.createElement(Loading, null) : null;
   var loadingMore = (loading && results.length > 0) ? React.createElement(Loading, null) : null;
   var emptyResults = (!loading && !error && loaded && results.length === 0)
-    ? React.createElement(EmptyState, { title: t('noResults'), message: t('mocNoResults') })
+    ? React.createElement(EmptyState, { title: t('noResults'), message: t(reviewCatalog ? 'mocReviewNoResults' : 'mocNoResults') })
     : null;
 
   return React.createElement('div', null,
@@ -237,11 +246,29 @@ function MocsPage() {
     initialLoading,
     error ? React.createElement(ErrorMessage, {
       message: error,
-      onRetry: function() { doFetch({ q: query, theme: theme, sort: sort, page: 1 }, false); }
+      onRetry: function() {
+        stateRef.current.page = 1;
+        doFetch({ q: query, theme: theme, sort: sort, page: 1 }, false);
+      }
     }) : null,
+    source === 'snapshot' ? React.createElement('p', { className: 'new-products-desc', role: 'status' }, t(reviewCatalog ? 'mocReviewSnapshotNotice' : 'mocSnapshotNotice')) : null,
+    React.createElement('p', null, React.createElement('a', {
+      href: getMocSearchUrl({ q: query, theme: theme, sort: sort }),
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      className: 'new-products-source-link'
+    }, t('mocSearchOriginal'))),
     resultsSection,
     loadingMore,
     emptyResults,
+    hasMore && !loading ? React.createElement('button', {
+      type: 'button',
+      onClick: function() {
+        if (loadingRef.current) return;
+        var st = stateRef.current;
+        doFetch({ q: st.query, theme: st.theme, sort: st.sort, page: st.page + 1 }, true);
+      }
+    }, t('mocLoadMore')) : null,
     React.createElement('div', { ref: sentinelRef, style: { height: 1, marginBottom: 40 } })
   );
 }

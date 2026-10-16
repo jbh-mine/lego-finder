@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { searchSets, getThemes, filterSets } from '../utils/api';
-import { translateSearchQuery, SET_NUM_MAP, getIpSearchTerms } from '../utils/searchDict';
+import { getThemes } from '../utils/api';
+import { collectSetSearch } from '../utils/setSearch';
 import { getCachedTranslation, translateName } from '../utils/translate';
 import { getKrwPrice } from '../utils/price';
+import priceData from '../data/prices.json';
 import { getCollection, getWishlist } from '../utils/collection';
 import { useLanguage } from '../contexts/LanguageContext';
 import SetCard from '../components/SetCard';
@@ -90,10 +91,19 @@ function SearchPage() {
   var curQueryRef = useRef('');
   var matchedThemeRef = useRef(null);
   var didInitFromUrlRef = useRef(false);
+  var requestIdRef = useRef(0);
+  var urlQueryRef = useRef(null);
+  var applyingUrlRef = useRef(false);
 
   // Listen for resetSearch event from Header
   useEffect(function() {
     var handleReset = function() {
+      // Invalidate work already in flight so resetting cannot be undone by a
+      // late catalog response.
+      requestIdRef.current++;
+      urlQueryRef.current = '';
+      applyingUrlRef.current = false;
+      setLoading(false);
       setQuery('');
       setAllResults([]);
       setTotalCount(0);
@@ -105,8 +115,11 @@ function SearchPage() {
       setSortOrder('default');
       setMatchedThemeId(null);
       setFilters(DEFAULT_FILTERS);
+      setFilterPanelOpen(false);
+      setShareMsg('');
       curQueryRef.current = '';
       matchedThemeRef.current = null;
+      try { sessionStorage.removeItem(SEARCH_STATE_KEY); } catch(e) {}
       try { setSearchParams({}, { replace: true }); } catch(e) {}
       window.scrollTo(0, 0);
     };
@@ -267,183 +280,66 @@ function SearchPage() {
     return themeMap[themeId] || (t('themePrefix') + ' ' + themeId);
   };
 
-  var findMatchingThemeIds = function(translatedQuery) {
-    var q = translatedQuery.toLowerCase().trim();
-    if (!q || q.length < 2) return [];
-    var matches = [];
-    Object.keys(themeMap).forEach(function(tid) {
-      var name = themeMap[tid].toLowerCase();
-      if (name === q || name.indexOf(q) >= 0 || q.indexOf(name) >= 0) {
-        matches.push(parseInt(tid));
-      }
-    });
-    return matches;
-  };
-
-  var doSearch = useCallback(async function(searchQuery, searchPage, append) {
+  var doSearch = useCallback(async function(searchQuery) {
     if (!searchQuery.trim()) return;
+    var requestId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
     try {
-      var rawQuery = searchQuery.trim();
-      var translatedQuery = translateSearchQuery(rawQuery);
-
-      // If translated query is a set number (from SET_NUM_MAP), search by set number
-      if (/^\d[\d\-]*$/.test(translatedQuery) && translatedQuery !== rawQuery) {
-        var data = await searchSets(translatedQuery, 1, PAGE_SIZE);
-        if (data.results.length > 0) {
-          matchedThemeRef.current = null;
-          setMatchedThemeId(null);
-          setNameExtras([]);
-          setAllResults(data.results);
-          setTotalCount(data.count);
-          setPage(1);
-          setHasMore(data.results.length >= PAGE_SIZE);
-          setSearched(true);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // IP / Franchise umbrella expansion
-      var ipTerms = getIpSearchTerms(rawQuery) || getIpSearchTerms(translatedQuery);
-      if (ipTerms && ipTerms.length > 0 && searchPage === 1) {
-        var ipMatchedThemeIds = findMatchingThemeIds(translatedQuery);
-        var ipPromises = [];
-        if (ipMatchedThemeIds.length > 0) {
-          ipPromises.push(
-            filterSets({ themeId: ipMatchedThemeIds[0], page: 1, pageSize: PAGE_SIZE })
-              .catch(function() { return { results: [], count: 0 }; })
-          );
-        }
-        ipTerms.forEach(function(term) {
-          ipPromises.push(
-            searchSets(term, 1, PAGE_SIZE)
-              .catch(function() { return { results: [], count: 0 }; })
-          );
-        });
-
-        var ipResults = await Promise.all(ipPromises);
-        var seenIp = {};
-        var mergedIp = [];
-        ipResults.forEach(function(r) {
-          (r && r.results ? r.results : []).forEach(function(s) {
-            if (!seenIp[s.set_num]) {
-              seenIp[s.set_num] = true;
-              mergedIp.push(s);
-            }
-          });
-        });
-
-        if (mergedIp.length > 0) {
-          var primaryIpTheme = ipMatchedThemeIds.length > 0 ? ipMatchedThemeIds[0] : null;
-          matchedThemeRef.current = primaryIpTheme;
-          setMatchedThemeId(primaryIpTheme);
-          setNameExtras([]);
-          setAllResults(mergedIp);
-          setTotalCount(mergedIp.length);
-          setPage(1);
-          setHasMore(false);
-          setSearched(true);
-          setLoading(false);
-          return;
-        }
-      }
-
-      var matchedThemeIds = findMatchingThemeIds(translatedQuery);
-
-      if (matchedThemeIds.length > 0) {
-        var primaryThemeId = matchedThemeIds[0];
-        matchedThemeRef.current = primaryThemeId;
-        setMatchedThemeId(primaryThemeId);
-
-        if (searchPage === 1) {
-          var promises = [
-            filterSets({ themeId: primaryThemeId, page: 1, pageSize: PAGE_SIZE }),
-            searchSets(translatedQuery, 1, PAGE_SIZE)
-          ];
-          for (var i = 1; i < matchedThemeIds.length && i < 3; i++) {
-            promises.push(filterSets({ themeId: matchedThemeIds[i], page: 1, pageSize: PAGE_SIZE }));
-          }
-
-          var results = await Promise.all(promises);
-          var themeData = results[0];
-          var nameData = results[1];
-
-          var seen = {};
-          var merged = [];
-          themeData.results.forEach(function(s) {
-            if (!seen[s.set_num]) { seen[s.set_num] = true; merged.push(s); }
-          });
-          for (var j = 2; j < results.length; j++) {
-            results[j].results.forEach(function(s) {
-              if (!seen[s.set_num]) { seen[s.set_num] = true; merged.push(s); }
-            });
-          }
-          var extras = [];
-          nameData.results.forEach(function(s) {
-            if (!seen[s.set_num]) { seen[s.set_num] = true; merged.push(s); extras.push(s); }
-          });
-          setNameExtras(extras);
-
-          setAllResults(merged);
-          setTotalCount(themeData.count + extras.length);
-          setPage(1);
-          setHasMore(themeData.results.length >= PAGE_SIZE);
-          setSearched(true);
-        } else {
-          var themeData2 = await filterSets({ themeId: primaryThemeId, page: searchPage, pageSize: PAGE_SIZE });
-          if (append) {
-            setAllResults(function(prev) {
-              var seen2 = {};
-              prev.forEach(function(s) { seen2[s.set_num] = true; });
-              var newItems = themeData2.results.filter(function(s) { return !seen2[s.set_num]; });
-              return prev.concat(newItems);
-            });
-          }
-          setPage(searchPage);
-          setHasMore(themeData2.results.length >= PAGE_SIZE);
-        }
-      } else {
-        matchedThemeRef.current = null;
-        setMatchedThemeId(null);
-        setNameExtras([]);
-        var data2 = await searchSets(translatedQuery, searchPage, PAGE_SIZE);
-        if (append) {
-          setAllResults(function(prev) { return prev.concat(data2.results); });
-        } else {
-          setAllResults(data2.results);
-        }
-        setTotalCount(data2.count);
-        setPage(searchPage);
-        setHasMore(data2.results.length >= PAGE_SIZE);
-        setSearched(true);
-      }
+      var data = await collectSetSearch(searchQuery, themeMap);
+      if (requestId !== requestIdRef.current) return;
+      matchedThemeRef.current = data.primaryTheme;
+      setMatchedThemeId(data.primaryTheme);
+      setNameExtras([]);
+      setAllResults(data.results);
+      setTotalCount(data.count);
+      setPage(1);
+      setSearched(true);
     } catch (err) {
-      setError(
-        err.response && err.response.status === 404
-          ? t('noSearchResults')
-          : t('apiError')
-      );
+      if (requestId === requestIdRef.current) setError(t('apiError'));
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, [t, themeMap]);
 
   // Auto-trigger search if URL has ?q= and themes are loaded
   useEffect(function() {
     var qParam = searchParams.get('q') || '';
-    if (!qParam) return;
+    if (!qParam) {
+      var previousUrlQuery = urlQueryRef.current;
+      urlQueryRef.current = '';
+      if (previousUrlQuery && searched && curQueryRef.current) {
+        window.dispatchEvent(new Event('resetSearch'));
+      }
+      return;
+    }
     if (Object.keys(themeMap).length === 0) return;
+    var nextSort = searchParams.get('sort') || 'default';
+    var nextFilters = readFiltersFromParams(searchParams);
+    var changedFilters = JSON.stringify(filters) !== JSON.stringify(nextFilters);
+    if (sortOrder !== nextSort || changedFilters) {
+      // Avoid writing the previous state back into a URL being restored by
+      // browser history before React has applied its filters.
+      applyingUrlRef.current = true;
+      setSortOrder(nextSort);
+      if (changedFilters) setFilters(nextFilters);
+    }
+    if (urlQueryRef.current === qParam && curQueryRef.current === qParam) return;
+    urlQueryRef.current = qParam;
     if (searched && curQueryRef.current === qParam) return;
+    setQuery(qParam);
     curQueryRef.current = qParam;
     doSearch(qParam, 1, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [themeMap]);
+  }, [themeMap, searchParams]);
 
   // Sync state -> URL whenever query/sort/filters change after a search
   useEffect(function() {
     if (!searched || !curQueryRef.current) return;
+    if (applyingUrlRef.current) {
+      applyingUrlRef.current = false;
+      return;
+    }
     var next = {};
     next.q = curQueryRef.current;
     if (sortOrder && sortOrder !== 'default') next.sort = sortOrder;
@@ -456,7 +352,7 @@ function SearchPage() {
     if (filters.retiredMode && filters.retiredMode !== 'all') next.rt = filters.retiredMode;
     if (filters.ownedMode && filters.ownedMode !== 'all') next.ow = filters.ownedMode;
     try { setSearchParams(next, { replace: true }); } catch(e) {}
-  }, [searched, sortOrder, filters, setSearchParams]);
+  }, [searched, allResults, sortOrder, filters, setSearchParams]);
 
   // Build owned/wishlist set for filter when needed
   var collectionSet = useMemo(function() {
@@ -499,9 +395,11 @@ function SearchPage() {
       if (needsPrice) {
         var p = getKrwPrice(set.set_num);
         if (prmin !== null || prmax !== null) {
-          if (!p || !p.price) return false;
-          if (prmin !== null && p.price < prmin) return false;
-          if (prmax !== null && p.price > prmax) return false;
+          var entry = priceData.prices[set.set_num.replace(/-\d+$/, '')];
+          var filterPrice = p && p.discontinued ? entry && entry.price : p && p.price;
+          if (!filterPrice) return false;
+          if (prmin !== null && filterPrice < prmin) return false;
+          if (prmax !== null && filterPrice > prmax) return false;
         }
         if (rt === 'only' && (!p || !p.discontinued)) return false;
         if (rt === 'exclude' && p && p.discontinued) return false;
@@ -571,12 +469,18 @@ function SearchPage() {
     } catch (e) {}
   };
 
+  // Filtering and sorting operate on the entire result set; rendering is paged.
+  useEffect(function() { setPage(1); }, [filters, sortOrder]);
+  useEffect(function() {
+    setHasMore(page * PAGE_SIZE < filteredResults.length);
+  }, [page, filteredResults]);
+
   // Infinite scroll
   useEffect(function() {
-    if (!sentinelRef.current) return;
+    if (!sentinelRef.current || typeof IntersectionObserver === 'undefined') return;
     var obs = new IntersectionObserver(function(entries) {
       if (entries[0].isIntersecting && hasMore && !loading && searched) {
-        doSearch(curQueryRef.current, page + 1, true);
+        setPage(function(current) { return current + 1; });
       }
     }, { rootMargin: '300px' });
     obs.observe(sentinelRef.current);
@@ -607,7 +511,7 @@ function SearchPage() {
   var themeGroups = useMemo(function() {
     if (sortOrder !== 'default' || filteredResults.length === 0) return [];
     var groups = {};
-    filteredResults.forEach(function(set) {
+    filteredResults.slice(0, page * PAGE_SIZE).forEach(function(set) {
       var themeId = set.theme_id || 0;
       if (!groups[themeId]) {
         groups[themeId] = {
@@ -632,7 +536,7 @@ function SearchPage() {
       }
       return a.themeName.localeCompare(b.themeName, 'ko');
     });
-  }, [filteredResults, themeMap, themeNames, lang, sortOrder, matchedThemeId]);
+  }, [filteredResults, themeMap, themeNames, lang, sortOrder, matchedThemeId, page]);
 
   var handleSortChange = function(e) {
     setSortOrder(e.target.value);
@@ -905,7 +809,7 @@ function SearchPage() {
       contentSection = themeSections;
     } else {
       contentSection = [React.createElement('div', { key: 'sorted-grid', className: 'set-grid' },
-        sortedResults.map(function(set) {
+        sortedResults.slice(0, page * PAGE_SIZE).map(function(set) {
           return React.createElement(SetCard, { key: set.set_num, set: set });
         })
       )];

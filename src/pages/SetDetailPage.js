@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
 import useTranslatedName from '../hooks/useTranslatedName';
 import useInstructions from '../hooks/useInstructions';
@@ -32,6 +32,9 @@ function SetDetailPage() {
   var s9 = useState(false); var inW = s9[0]; var setInW = s9[1];
   var s10 = useState('parts'); var tab = s10[0]; var setTab = s10[1];
   var s15 = useState(false); var imagePopupOpen = s15[0]; var setImagePopupOpen = s15[1];
+  var [partsError, setPartsError] = useState(false);
+  var [minifigsError, setMinifigsError] = useState(false);
+  var [minifigsLoading, setMinifigsLoading] = useState(false);
 
   // Image gallery states
   var s16 = useState([]); var allImages = s16[0]; var setAllImages = s16[1];
@@ -58,17 +61,30 @@ function SetDetailPage() {
 
   // Load set data
   useEffect(function() {
+    var cancelled = false;
+    setSet(null); setParts(null); setMinifigs(null); setPP(1);
+    setPartsError(false); setMinifigsError(false);
     (async function() {
       setLoading(true); setError(null);
       try {
         var d = await getSetDetail(setNum);
+        if (cancelled) return;
         setSet(d); setInC(isInCollection(setNum)); setInW(isInWishlist(setNum));
-        var r = await Promise.all([getSetParts(setNum, 1, PPS), getSetMinifigs(setNum)]);
-        setParts(r[0]); setMinifigs(r[1]);
+        setLoading(false);
+        setPLoading(true); setMinifigsLoading(true);
+        getSetParts(setNum, 1, PPS)
+          .then(function(data) { if (!cancelled) setParts(data); })
+          .catch(function() { if (!cancelled) setPartsError(true); })
+          .finally(function() { if (!cancelled) setPLoading(false); });
+        getSetMinifigs(setNum)
+          .then(function(data) { if (!cancelled) setMinifigs(data); })
+          .catch(function() { if (!cancelled) setMinifigsError(true); })
+          .finally(function() { if (!cancelled) setMinifigsLoading(false); });
       } catch(e) {
-        setError(e.response && e.response.status === 404 ? '"' + setNum + '"' + t('setNotFound') : t('apiErrorGeneric'));
-      } finally { setLoading(false); }
+        if (!cancelled) setError(e.response && e.response.status === 404 ? '"' + setNum + '"' + t('setNotFound') : t('apiErrorGeneric'));
+      } finally { if (!cancelled) setLoading(false); }
     })();
+    return function() { cancelled = true; };
   }, [setNum, t]);
 
   // Load images from Rebrickable in real-time (API-like).
@@ -121,8 +137,9 @@ function SetDetailPage() {
 
   var loadPP = async function(pg) {
     setPLoading(true);
+    setPartsError(false);
     try { var d = await getSetParts(setNum, pg, PPS); setParts(d); setPP(pg); }
-    catch(e) {} finally { setPLoading(false); }
+    catch(e) { setPartsError(true); } finally { setPLoading(false); }
   };
   var togC = function() { if (inC) { removeFromCollection(setNum); setInC(false); } else { addToCollection(set); setInC(true); } };
   var togW = function() { if (inW) { removeFromWishlist(setNum); setInW(false); } else { addToWishlist(set); setInW(true); } };
@@ -467,6 +484,7 @@ function SetDetailPage() {
       ),
       tab === 'parts' && React.createElement('div', { className: 'parts-section' },
         pLoading ? React.createElement(Loading, { message: t('partsLoading') })
+        : partsError ? React.createElement(ErrorMessage, { message: t('apiErrorGeneric'), onRetry: function() { loadPP(pp); } })
         : parts && parts.results && parts.results.length > 0
           ? React.createElement(React.Fragment, null,
               React.createElement('div', { className: 'parts-grid' },
@@ -493,7 +511,9 @@ function SetDetailPage() {
           : React.createElement('p', { style: { color: '#999', textAlign: 'center', padding: 20 } }, t('noParts'))
       ),
       tab === 'minifigs' && React.createElement('div', { className: 'parts-section' },
-        minifigs && minifigs.results && minifigs.results.length > 0
+        minifigsLoading ? React.createElement(Loading, null)
+        : minifigsError ? React.createElement(ErrorMessage, { message: t('apiErrorGeneric') })
+        : minifigs && minifigs.results && minifigs.results.length > 0
           ? React.createElement('div', { className: 'parts-grid' },
               minifigs.results.map(function(mf, i) {
                 return React.createElement('div', { key: mf.set_num + '-' + i, className: 'part-card' },

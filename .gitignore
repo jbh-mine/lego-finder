@@ -19,3 +19,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Download source cache (generated catalog is committed)
+/.catalog-cache
+/.jest-cache-*/

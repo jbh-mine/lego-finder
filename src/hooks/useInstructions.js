@@ -18,6 +18,7 @@ export default function useInstructions(setNum) {
   useEffect(function() {
     if (!setNum) { setInstructions([]); setLoading(false); setLegoProductNumber(''); return; }
     var cancelled = false;
+    setInstructions([]); setFileSizes({}); setLegoProductNumber('');
     setLoading(true);
     fetchInstructions(setNum).then(function(result) {
       if (!cancelled) {
@@ -49,6 +50,8 @@ export default function useInstructions(setNum) {
           });
         }
       }
+    }).catch(function() {
+      if (!cancelled) { setInstructions([]); setLoading(false); }
     });
     return function() { cancelled = true; };
   }, [setNum]);

@@ -348,7 +348,7 @@ function FundingPage() {
     React.createElement('div', { className: 'new-products-header' },
       React.createElement('h2', null, t('fundingProducts')),
       React.createElement('p', { className: 'new-products-desc' },
-        segment === 'upcoming' ? t('bdpUpcomingDesc') : t('fundingDesc')
+        segment === 'upcoming' ? t('bdpUpcomingDesc').replace('{date}', bdpUpcomingData.meta.lastUpdated) : t('fundingDesc')
       )
     ),
     segmentTabs,

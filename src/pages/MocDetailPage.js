@@ -19,6 +19,7 @@ function MocDetailPage() {
 
   useEffect(function() {
     var alive = true;
+    setDetail(stateMoc);
     setLoading(true);
     setError(null);
     getMocDetail(mocNum).then(function(data) {
@@ -27,18 +28,18 @@ function MocDetailPage() {
         setDetail(function(prev) {
           var base = prev || {};
           return Object.assign({}, base, data, {
-            parts: data.parts || (base.parts || 0),
-            year: data.year || (base.year || 0),
+            parts: data.parts != null ? data.parts : (base.parts != null ? base.parts : null),
+            year: data.year != null ? data.year : (base.year != null ? base.year : null),
             designer: data.designer || (base.designer || ''),
             designerSlug: data.designerSlug || (base.designerSlug || ''),
             image: data.image || (base.img || ''),
           });
         });
-      }
+      } else setError(t('mocDetailUnavailable'));
       setLoading(false);
     }).catch(function() {
       if (!alive) return;
-      setError(t('apiError'));
+      setError(t('mocDetailUnavailable'));
       setLoading(false);
     });
     return function() { alive = false; };
@@ -48,7 +49,14 @@ function MocDetailPage() {
     return React.createElement('div', null, React.createElement(Loading, null));
   }
   if (error && !detail) {
-    return React.createElement(ErrorMessage, { message: error });
+    return React.createElement('div', null,
+      React.createElement(Link, { to: '/mocs', className: 'back-btn' }, t('back')),
+      React.createElement(ErrorMessage, { message: error }),
+      React.createElement('a', {
+        href: 'https://rebrickable.com/mocs/' + encodeURIComponent(mocNum) + '/',
+        target: '_blank', rel: 'noopener noreferrer', className: 'new-products-source-link'
+      }, t('mocViewOnRebrickable'))
+    );
   }
   if (!detail) {
     return React.createElement('div', null, React.createElement(Loading, null));
@@ -56,7 +64,7 @@ function MocDetailPage() {
 
   var displayImage = detail.image || detail.img || '';
   var canonicalUrl = detail.canonicalUrl ||
-    ('https://rebrickable.com/mocs/' + mocNum + '/');
+    (detail.href ? 'https://rebrickable.com' + detail.href : 'https://rebrickable.com/mocs/' + encodeURIComponent(mocNum) + '/');
 
   var backBtn = React.createElement(Link, { to: '/mocs', className: 'back-btn' }, t('back'));
 
@@ -90,6 +98,10 @@ function MocDetailPage() {
           detail.likes ? React.createElement('div', { className: 'detail-meta-item' },
             React.createElement('span', { className: 'label' }, '\u2665 Likes:'),
             React.createElement('span', null, detail.likes)
+          ) : null,
+          detail.reviewedAt ? React.createElement('div', { className: 'detail-meta-item' },
+            React.createElement('span', { className: 'label' }, t('mocReviewedAt') + ':'),
+            React.createElement('span', null, detail.reviewedAt.slice(0, 10))
           ) : null
         ),
         detail.description ? React.createElement('p', { className: 'moc-desc' }, detail.description) : null,
@@ -99,13 +111,20 @@ function MocDetailPage() {
             target: '_blank',
             rel: 'noopener noreferrer',
             className: 'btn-collection moc-rebrickable-btn'
-          }, t('mocViewOnRebrickable'))
+          }, t('mocViewOnRebrickable')),
+          detail.reviewUrl ? React.createElement('a', {
+            href: detail.reviewUrl, target: '_blank', rel: 'noopener noreferrer', className: 'btn-collection'
+          }, t('mocReadReview')) : null
         )
       )
     )
   );
 
-  return React.createElement('div', null, backBtn, detailCard);
+  return React.createElement('div', null, backBtn,
+    error ? React.createElement('p', { role: 'status', className: 'new-products-desc' }, error) : null,
+    detail.source === 'snapshot' ? React.createElement('p', { role: 'status', className: 'new-products-desc' },
+      t(detail.catalog && detail.catalog.scope === 'official-blog-reviews' ? 'mocReviewSnapshotNotice' : 'mocSnapshotNotice')) : null,
+    detailCard);
 }
 
 export default MocDetailPage;

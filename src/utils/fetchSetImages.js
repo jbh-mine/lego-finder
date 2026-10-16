@@ -24,17 +24,13 @@ export function getStaticImageIds(setNum) {
 var CACHE_KEY = 'lego_set_images_cache_v2';
 var LEGACY_CACHE_KEY = 'lego_set_images_cache';
 var CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
-// allorigins serves the full HTML reliably for rebrickable; codetabs truncates
-// long pages (~5KB cap) and is therefore unusable as primary. Reorder so the
-// reliable proxy is tried first, fallbacks after.
+// Public proxies are optional enrichment. A gallery already backed by the
+// checked-in image catalog must not start a long, failing proxy chain.
 var CORS_PROXIES = [
   function(u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
-  function(u) { return 'https://corsproxy.io/?' + encodeURIComponent(u); },
-  function(u) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); },
-  function(u) { return 'https://thingproxy.freeboard.io/fetch/' + u; },
-  function(u) { return 'https://cors.eu.org/' + u; },
+  function(u) { return 'https://corsproxy.io/?url=' + encodeURIComponent(u); },
 ];
-var FETCH_TIMEOUT_MS = 25000;
+var FETCH_TIMEOUT_MS = 5000;
 
 var pending = {};
 
@@ -82,18 +78,24 @@ function extractImageIds(html, setNum) {
 }
 
 function fetchWithTimeout(input, ms) {
-  if (typeof AbortController === 'undefined') return fetch(input);
-  var ctrl = new AbortController();
-  var timer = setTimeout(function() { ctrl.abort(); }, ms);
-  return fetch(input, { method: 'GET', signal: ctrl.signal })
-    .finally(function() { clearTimeout(timer); });
+  return new Promise(function(resolve) {
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = setTimeout(function() {
+      if (ctrl) ctrl.abort();
+      resolve(null);
+    }, ms);
+    Promise.resolve().then(function() {
+      return fetch(input, { method: 'GET', signal: ctrl ? ctrl.signal : undefined });
+    })
+      .then(function(res) { return res.ok ? res.text() : null; })
+      .then(resolve, function() { resolve(null); })
+      .finally(function() { clearTimeout(timer); });
+  });
 }
 
 async function fetchVia(proxyBuilder, url) {
   var proxied = proxyBuilder(url);
-  var res = await fetchWithTimeout(proxied, FETCH_TIMEOUT_MS);
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.text();
+  return fetchWithTimeout(proxied, FETCH_TIMEOUT_MS);
 }
 
 // Make sure the body really came from rebrickable and isn't a truncated
@@ -116,26 +118,24 @@ async function fetchFromProxies(setNum) {
   var workerUrl = proxyHtmlUrl(url);
   if (workerUrl) {
     try {
-      var wres = await fetchWithTimeout(workerUrl, FETCH_TIMEOUT_MS);
-      if (wres.ok) {
-        var whtml = await wres.text();
-        if (isValidRebrickableSetHtml(whtml)) {
-          var wfound = extractImageIds(whtml, setNum);
-          if (wfound.length > 0) return wfound;
-        }
+      var whtml = await fetchWithTimeout(workerUrl, FETCH_TIMEOUT_MS);
+      if (isValidRebrickableSetHtml(whtml)) {
+        var wfound = extractImageIds(whtml, setNum);
+        if (wfound.length > 0) return wfound;
       }
     } catch (e) { /* fall through to public proxies */ }
   }
 
-  for (var i = 0; i < CORS_PROXIES.length; i++) {
+  var responses = await Promise.all(CORS_PROXIES.map(async function(proxy) {
     try {
-      var html = await fetchVia(CORS_PROXIES[i], url);
-      if (!isValidRebrickableSetHtml(html)) continue;
+      var html = await fetchVia(proxy, url);
+      if (!isValidRebrickableSetHtml(html)) return [];
       var found = extractImageIds(html, setNum);
       if (found.length > 0) return found;
-    } catch (e) { /* try next */ }
-  }
-  return [];
+    } catch (e) { /* Retain the set's primary image when enrichment fails. */ }
+    return [];
+  }));
+  return responses.find(function(ids) { return ids.length > 0; }) || [];
 }
 
 function backgroundRefresh(setNum) {
@@ -159,7 +159,7 @@ export async function fetchSetImages(setNum) {
   if (cached && cached.length > 0) {
     // Still try a runtime refresh in the background if no localStorage entry yet
     var lc = loadCache();
-    if (!lc[setNum]) {
+    if (!lc[setNum] && proxyHtmlUrl('https://rebrickable.com/sets/' + setNum + '/')) {
       // best-effort, fire and forget — don't await
       setTimeout(function() { backgroundRefresh(setNum); }, 0);
     }

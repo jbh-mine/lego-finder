@@ -26,7 +26,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "fetch-catalog": "node scripts/fetch-catalog.js",
+    "fetch-moc-reviews": "node scripts/fetch-moc-reviews.js"
   },
   "eslintConfig": {
     "extends": [
@@ -45,5 +47,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1"
   }
 }

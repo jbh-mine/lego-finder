@@ -194,12 +194,23 @@ async function main() {
     if (!existing.views) existing.views = {};
   }
 
+  const hadLiveSnapshot = existing.meta && existing.meta.scope !== 'official-blog-reviews' &&
+    Object.values(existing.views).some(view => view && Array.isArray(view.results) && view.results.length > 0);
+
+  // Review RSS is a distinct, limited collection. Do not mix it into live
+  // popularity/part-count views if the HTML index becomes available again.
+  if (existing.meta && existing.meta.scope === 'official-blog-reviews') {
+    existing = { meta: {}, views: {}, themes: [] };
+  }
+
   let aggregateThemes = existing.themes || [];
+  let refreshed = 0;
 
   for (let i = 0; i < VIEWS.length; i++) {
     const view = VIEWS[i];
     const data = await fetchView(view);
     if (data && data.results.length > 0) {
+      refreshed++;
       existing.views[view.key] = {
         results: data.results,
         total: data.total,
@@ -213,6 +224,14 @@ async function main() {
     if (i < VIEWS.length - 1) await delay(RATE_LIMIT_MS);
   }
 
+  if (refreshed === 0) {
+    if (hadLiveSnapshot) {
+      throw new Error('No MOC views refreshed; preserving the previous MOC catalog rather than replacing it with a smaller review collection');
+    }
+    console.log('MOC HTML listing unavailable; reading the official blog-review RSS collection.');
+    await require('./fetch-moc-reviews').main({ cached: false });
+    return;
+  }
   existing.themes = aggregateThemes;
   existing.meta = {
     lastUpdated: new Date().toISOString(),

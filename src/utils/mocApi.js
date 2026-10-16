@@ -1,34 +1,35 @@
-// Rebrickable MOC scraper. There is no public MOC API, so we scrape
-// rebrickable.com/mocs/ HTML via a chain of CORS proxies and parse the
-// `.set-tn` cards. Results are cached in localStorage for a short window.
+// MOC browsing primarily uses the checked-in official Rebrickable blog-review
+// catalog. Its dates describe blog introductions, not MOC publication dates.
+// HTML scraping is retained only for installations without this catalog.
 //
-// Stability strategy (3 layers):
-//   1. Static snapshot   (mocsStatic.json, refreshed daily by CI)
-//        - Used instantly for the 4 default views (hottest/newest/mostLiked/mostParts)
-//   2. localStorage cache (30-min fresh, served-stale on fetch failure)
-//   3. Runtime CORS-proxy fetch (last resort, with timeout + validation)
-//      If REBRICKABLE_PROXY is configured, the Worker is tried first as a
-//      reliable HTML fetcher; the public proxies remain as fallbacks.
+// The official review scope is served entirely from the saved catalog.
+// Installations with an older directory snapshot can also use cached HTML
+// search results and an optional Worker/public proxy fallback.
 import mocsStatic from '../data/mocsStatic.json';
 import { proxyHtmlUrl } from '../config/proxyConfig';
 
-// v2: bumped after fixing the lazy-load image extraction so previously cached
-// search results (which had empty img fields) are invalidated.
-var CACHE_KEY = 'lego_moc_cache_v2';
+// v3 invalidates old entries that treated a failed scrape as zero matches.
+var CACHE_KEY = 'lego_moc_cache_v3';
 var CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
 var DETAIL_CACHE_KEY = 'lego_moc_detail_cache';
 var DETAIL_CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 1 day
 
-// allorigins serves the full HTML reliably; codetabs truncates rebrickable's
-// MOCs page (~5KB cap) and is therefore unusable as primary for MOC scraping.
+// Public proxies are best-effort only. Keep the wait bounded when they are
+// unavailable; a failed fetch must never masquerade as an empty search.
 var CORS_PROXIES = [
   function(u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
-  function(u) { return 'https://corsproxy.io/?' + encodeURIComponent(u); },
-  function(u) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); },
-  function(u) { return 'https://thingproxy.freeboard.io/fetch/' + u; },
-  function(u) { return 'https://cors.eu.org/' + u; },
+  function(u) { return 'https://corsproxy.io/?url=' + encodeURIComponent(u); },
 ];
-var FETCH_TIMEOUT_MS = 25000;
+var FETCH_TIMEOUT_MS = 5000;
+var PAGE_SIZE = 30;
+
+export function getMocCatalogInfo() {
+  return (mocsStatic && mocsStatic.meta) || {};
+}
+
+function isReviewCatalog() {
+  return getMocCatalogInfo().scope === 'official-blog-reviews';
+}
 
 function loadCache(key) {
   try { return JSON.parse(localStorage.getItem(key) || '{}'); }
@@ -39,11 +40,19 @@ function saveCache(key, c) {
 }
 
 function fetchWithTimeout(url, ms) {
-  if (typeof AbortController === 'undefined') return fetch(url);
-  var ctrl = new AbortController();
-  var timer = setTimeout(function() { ctrl.abort(); }, ms);
-  return fetch(url, { method: 'GET', signal: ctrl.signal })
-    .finally(function() { clearTimeout(timer); });
+  return new Promise(function(resolve) {
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = setTimeout(function() {
+      if (ctrl) ctrl.abort();
+      resolve(null);
+    }, ms);
+    Promise.resolve().then(function() {
+      return fetch(url, { method: 'GET', signal: ctrl ? ctrl.signal : undefined });
+    })
+      .then(function(res) { return res.ok ? res.text() : null; })
+      .then(resolve, function() { resolve(null); })
+      .finally(function() { clearTimeout(timer); });
+  });
 }
 
 // Validate that the HTML actually came from rebrickable and contains the
@@ -66,22 +75,18 @@ async function fetchHtml(url) {
   var workerUrl = proxyHtmlUrl(url);
   if (workerUrl) {
     try {
-      var wres = await fetchWithTimeout(workerUrl, FETCH_TIMEOUT_MS);
-      if (wres.ok) {
-        var wtext = await wres.text();
-        if (isValidRebrickableHtml(wtext)) return wtext;
-      }
+      var wtext = await fetchWithTimeout(workerUrl, FETCH_TIMEOUT_MS);
+      if (isValidRebrickableHtml(wtext)) return wtext;
     } catch (e) { /* fall through to public proxies */ }
   }
-  for (var i = 0; i < CORS_PROXIES.length; i++) {
+  var responses = await Promise.all(CORS_PROXIES.map(async function(proxy) {
     try {
-      var res = await fetchWithTimeout(CORS_PROXIES[i](url), FETCH_TIMEOUT_MS);
-      if (!res.ok) continue;
-      var text = await res.text();
+      var text = await fetchWithTimeout(proxy(url), FETCH_TIMEOUT_MS);
       if (isValidRebrickableHtml(text)) return text;
-    } catch (e) { /* try next */ }
-  }
-  return null;
+    } catch (e) { /* A connection error is not a zero-result search. */ }
+    return null;
+  }));
+  return responses.find(function(html) { return !!html; }) || null;
 }
 
 // Normalize a user-entered MOC query so that "256600", "moc 256600",
@@ -116,7 +121,6 @@ function decodeHtml(s) {
 function parseMocCards(html) {
   var cards = [];
   // Each MOC card is a div with class set-tn
-  var blockRe = /<div[^>]*class="[^"]*\bset-tn\b[^"]*"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/g;
   // Use a simpler approach: find each set-tn opening and grab a chunk after it
   var openRe = /<div[^>]*class="[^"]*\bset-tn\b[^"]*"[^>]*>/g;
   var matches = [];
@@ -227,15 +231,15 @@ function parseMocCards(html) {
 
 // Extract total result count and pagination from listing HTML
 function parseTotalCount(html) {
-  // Pattern: "1234 MOCs found" or similar
-  var m = html.match(/(\d[\d,]*)\s*MOCs?/i);
+  // Current listings say "Showing 50 of 1,000 unique MOCs".
+  var m = html.match(/(?:of\s+)?(\d[\d,]*)\s+(?:unique\s+)?MOCs?\b/i);
   if (m) return parseInt(m[1].replace(/,/g, ''), 10);
   return 0;
 }
 
 function parseThemes(html) {
   // <select name="top_theme">...<option value="X">Name</option>...</select>
-  var sel = html.match(/<select[^>]+name="top_theme"[^>]*>([\s\S]*?)<\/select>/);
+  var sel = html.match(/<select[^>]+name="(?:top_theme|theme)"[^>]*>([\s\S]*?)<\/select>/);
   if (!sel) return [];
   var themes = [];
   var optRe = /<option[^>]+value="([^"]*)"[^>]*>([^<]+)<\/option>/g;
@@ -269,27 +273,95 @@ function getStaticView(key) {
   if (!v || !v.results || v.results.length === 0) return null;
   return {
     results: v.results,
-    total: v.total || v.results.length,
+    total: v.results.length,
     themes: mocsStatic.themes || [],
+    source: 'snapshot',
+    hasMore: false,
   };
+}
+
+// A snapshot is a finite saved catalog, not the whole Rebrickable database.
+// Search/filter/page within it and label that scope explicitly in the UI.
+function searchSnapshot(opts) {
+  if (!mocsStatic || !mocsStatic.views) return null;
+  var views = mocsStatic.views;
+  var preferred = staticViewKeyFor({ sort: opts.sort });
+  var keys = Object.keys(views);
+  if (preferred) keys = [preferred].concat(keys.filter(function(key) { return key !== preferred; }));
+  var seen = {};
+  var catalog = [];
+  keys.forEach(function(key) {
+    ((views[key] && views[key].results) || []).forEach(function(moc) {
+      if (moc && moc.mocNum && !seen[moc.mocNum]) {
+        seen[moc.mocNum] = true;
+        catalog.push(moc);
+      }
+    });
+  });
+  if (!catalog.length) return null;
+  if (isReviewCatalog() && opts.sort && !['-reviewed', '-published'].includes(opts.sort)) {
+    throw new Error('MOC_SORT_UNAVAILABLE');
+  }
+  var q = normalizeMocQuery(opts.q).toLowerCase();
+  var selectedTheme = (mocsStatic.themes || []).find(function(theme) {
+    return String(theme.value) === String(opts.theme);
+  });
+  catalog = catalog.filter(function(moc) {
+    var text = [moc.mocNum, moc.name, moc.designer, moc.theme, moc.description].join(' ').toLowerCase();
+    var queryMatches = !q || (/^moc-\d+$/.test(q) ? moc.mocNum.toLowerCase() === q : text.indexOf(q) !== -1);
+    var themeMatches = !opts.theme || String(moc.themeId || '') === String(opts.theme) ||
+      (selectedTheme && (moc.theme || '').toLowerCase().split(' > ')[0] === selectedTheme.name.toLowerCase());
+    var knownYear = (!opts.minYear && !opts.maxYear) || (typeof moc.year === 'number' && moc.year > 0);
+    var knownParts = (!opts.minParts && !opts.maxParts) || (typeof moc.parts === 'number' && moc.parts > 0);
+    return queryMatches && themeMatches && knownYear && knownParts &&
+      (!opts.minYear || moc.year >= Number(opts.minYear)) &&
+      (!opts.maxYear || moc.year <= Number(opts.maxYear)) &&
+      (!opts.minParts || moc.parts >= Number(opts.minParts)) &&
+      (!opts.maxParts || moc.parts <= Number(opts.maxParts));
+  });
+  if (opts.sort === '-likes') catalog.sort(function(a, b) { return (b.likes || 0) - (a.likes || 0); });
+  if (opts.sort === '-num_parts') catalog.sort(function(a, b) { return (b.parts || 0) - (a.parts || 0); });
+  if (isReviewCatalog()) catalog.sort(function(a, b) {
+    return String(b.reviewedAt || '').localeCompare(String(a.reviewedAt || ''));
+  });
+  var offset = (Math.max(1, Number(opts.page) || 1) - 1) * PAGE_SIZE;
+  return {
+    results: catalog.slice(offset, offset + PAGE_SIZE),
+    total: catalog.length,
+    themes: mocsStatic.themes || [],
+    source: 'snapshot',
+    catalog: getMocCatalogInfo(),
+    hasMore: offset + PAGE_SIZE < catalog.length,
+  };
+}
+
+export function getMocSearchUrl(opts) {
+  opts = opts || {};
+  var params = new URLSearchParams();
+  var q = normalizeMocQuery(opts.q);
+  if (q) params.set('q', q);
+  if (opts.theme) params.set('theme', opts.theme);
+  // Rebrickable's full MOC directory has no blog-review-date sort.
+  if (opts.sort && opts.sort !== '-reviewed') params.set('sort', opts.sort);
+  if (opts.minYear) params.set('min_year', opts.minYear);
+  if (opts.maxYear) params.set('max_year', opts.maxYear);
+  if (opts.minParts) params.set('min_parts', opts.minParts);
+  if (opts.maxParts) params.set('max_parts', opts.maxParts);
+  if (opts.page && opts.page > 1) params.set('page', opts.page);
+  return 'https://rebrickable.com/mocs/' + (params.toString() ? '?' + params.toString() : '');
 }
 
 export async function searchMocs(opts) {
   opts = opts || {};
-  var normalizedQ = normalizeMocQuery(opts.q);
-  var params = [];
-  if (normalizedQ) params.push('q=' + encodeURIComponent(normalizedQ));
-  if (opts.theme) params.push('top_theme=' + encodeURIComponent(opts.theme));
-  if (opts.sort) params.push('sort=' + encodeURIComponent(opts.sort));
-  if (opts.minYear) params.push('min_year=' + opts.minYear);
-  if (opts.maxYear) params.push('max_year=' + opts.maxYear);
-  if (opts.minParts) params.push('min_parts=' + opts.minParts);
-  if (opts.maxParts) params.push('max_parts=' + opts.maxParts);
-  if (opts.page && opts.page > 1) params.push('page=' + opts.page);
-  params.push('get_drill_downs=1');
-
-  var qs = params.join('&');
-  var url = 'https://rebrickable.com/mocs/?' + qs;
+  // Keep the advertised scope consistent and avoid stale live/empty caches
+  // obscuring the finite official-review catalog.
+  if (isReviewCatalog()) {
+    var reviewed = searchSnapshot(opts);
+    if (reviewed) return reviewed;
+    throw new Error('MOC_SOURCE_UNAVAILABLE');
+  }
+  var url = getMocSearchUrl(opts);
+  var qs = url;
 
   // Layer 2: localStorage cache check (fresh window).
   var cache = loadCache(CACHE_KEY);
@@ -310,18 +382,35 @@ export async function searchMocs(opts) {
     return staticData;
   }
 
+  var snapshot = searchSnapshot(opts);
+  if (snapshot && !proxyHtmlUrl(url)) return snapshot;
+
   // Layer 3: runtime fetch via CORS-proxy chain.
   var html = await fetchHtml(url);
   if (!html) {
     // Stale-while-revalidate: if the runtime fetch failed but we have a
     // (now-expired) cached entry, serve it instead of returning empty.
     if (entry && entry.data) return entry.data;
-    return { results: [], total: 0, themes: (mocsStatic && mocsStatic.themes) || [] };
+    if (snapshot) return snapshot;
+    throw new Error('MOC_SOURCE_UNAVAILABLE');
   }
   var results = parseMocCards(html);
   var total = parseTotalCount(html);
   var themes = parseThemes(html);
-  var data = { results: results, total: total, themes: themes };
+  // HTML can be a challenge/login page or an unsupported layout even with
+  // HTTP 200. Only an explicit zero count is evidence of an empty search.
+  if (!results.length && !/\b0\s+(?:unique\s+)?MOCs?\b/i.test(html)) {
+    if (entry && entry.data) return entry.data;
+    if (snapshot) return snapshot;
+    throw new Error('MOC_SOURCE_UNAVAILABLE');
+  }
+  var data = {
+    results: results,
+    total: total || results.length,
+    themes: themes.length ? themes : ((mocsStatic && mocsStatic.themes) || []),
+    source: 'live',
+    hasMore: /rel=["']next["']/i.test(html) || (results.length >= PAGE_SIZE && total > (Number(opts.page) || 1) * results.length),
+  };
 
   cache[qs] = { t: Date.now(), data: data };
   saveCache(CACHE_KEY, cache);
@@ -330,6 +419,19 @@ export async function searchMocs(opts) {
 
 export async function getMocDetail(mocNum) {
   if (!mocNum) return null;
+  mocNum = normalizeMocQuery(mocNum);
+  if (!/^MOC-\d+$/.test(mocNum)) return null;
+  var snapshot = searchSnapshot({ q: mocNum });
+  var savedMoc = snapshot && snapshot.results.find(function(moc) { return moc.mocNum === mocNum; });
+  if (savedMoc) {
+    return Object.assign({}, savedMoc, {
+      image: savedMoc.img,
+      canonicalUrl: 'https://rebrickable.com' + (savedMoc.href || '/mocs/' + mocNum + '/'),
+      source: 'snapshot',
+      catalog: getMocCatalogInfo(),
+    });
+  }
+  if (isReviewCatalog()) return null;
   // Cache check
   var cache = loadCache(DETAIL_CACHE_KEY);
   var entry = cache[mocNum];
@@ -360,6 +462,8 @@ export async function getMocDetail(mocNum) {
   var image = ogValue('image');
   var canonicalUrl = ogValue('url');
   var description = ogValue('description');
+  if (html.indexOf(mocNum) === -1) return null;
+  if (!title || (title === mocNum && !image && !canonicalUrl)) return null;
 
   // Try to get h1 as primary name
   var h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/);
