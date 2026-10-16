@@ -10,9 +10,16 @@
 
 import legoImagesData from '../data/legoImages.json';
 import bdpImagesData from '../data/bdpImages.json';
+import galleryImageOverrides from '../data/setGalleryImageOverrides.json';
 import { proxyHtmlUrl } from '../config/proxyConfig';
 
 var STATIC_SETS = Object.assign({}, (bdpImagesData && bdpImagesData.sets) || {}, (legoImagesData && legoImagesData.sets) || {});
+
+export function getSetGalleryImageUrl(setNum, imageId, publicUrl = process.env.PUBLIC_URL || '') {
+  var override = galleryImageOverrides.images[setNum + '/' + imageId];
+  if (override) return publicUrl.replace(/\/$/, '') + override.publicPath;
+  return 'https://cdn.rebrickable.com/media/thumbs/sets/' + setNum + '/' + imageId + '.jpg/1000x800p.jpg';
+}
 
 export function getStaticImageIds(setNum) {
   if (!setNum) return null;

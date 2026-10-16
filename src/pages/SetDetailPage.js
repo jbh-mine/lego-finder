@@ -12,7 +12,7 @@ import Pagination from '../components/Pagination';
 import { Loading, ErrorMessage } from '../components/Loading';
 import TranslatedName from '../components/TranslatedName';
 import PriceHistoryChart from '../components/PriceHistoryChart';
-import { getCachedSetImages, fetchSetImages } from '../utils/fetchSetImages';
+import { getCachedSetImages, fetchSetImages, getSetGalleryImageUrl } from '../utils/fetchSetImages';
 import '../styles/price.css';
 
 var PH = 'https://rebrickable.com/static/img/nil_mf.jpg';
@@ -94,7 +94,7 @@ function SetDetailPage() {
 
     var buildUrls = function(ids) {
       return ids.map(function(id) {
-        return 'https://cdn.rebrickable.com/media/thumbs/sets/' + setNum + '/' + id + '.jpg/1000x800p.jpg';
+        return getSetGalleryImageUrl(setNum, id);
       });
     };
 

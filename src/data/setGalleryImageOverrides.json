@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "imagesVerifiedAt": "2026-10-16T05:27:51.000Z",
+    "note": "Exact copies of two verified Rebrickable gallery photos. Same-origin copies avoid browser/CDN failures and missing small-size thumbnails. Catalog snapshot dates are unchanged."
+  },
+  "images": {
+    "910008-1/118648": {
+      "publicPath": "/images/set-gallery/910008-1-118648.jpg",
+      "sourceUrl": "https://cdn.rebrickable.com/media/thumbs/sets/910008-1/118648.jpg/1000x800p.jpg",
+      "sha256": "1a68e00dd0d6de0f3dd98b022febef67a3876904379d94f022360d6ddd3d6cdb",
+      "bytes": 105428,
+      "contentType": "image/jpeg"
+    },
+    "910027-1/118672": {
+      "publicPath": "/images/set-gallery/910027-1-118672.jpg",
+      "sourceUrl": "https://cdn.rebrickable.com/media/thumbs/sets/910027-1/118672.jpg/1000x800p.jpg",
+      "sha256": "58576be3ef439973614cf71c6d0e56fbed853db77009a7181e95cb898381f9fc",
+      "bytes": 172374,
+      "contentType": "image/jpeg"
+    }
+  }
+}

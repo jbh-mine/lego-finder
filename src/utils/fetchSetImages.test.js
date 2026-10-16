@@ -1,6 +1,10 @@
-import { fetchSetImages, getStaticImageIds } from './fetchSetImages';
+import { fetchSetImages, getStaticImageIds, getSetGalleryImageUrl } from './fetchSetImages';
 import legoImagesData from '../data/legoImages.json';
 import bdpImagesData from '../data/bdpImages.json';
+import galleryImageOverrides from '../data/setGalleryImageOverrides.json';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 
 test('a gallery from the saved catalog works without public proxy requests', async function() {
   localStorage.clear();
@@ -56,4 +60,31 @@ test('the new image cache remains usable during legacy cache cleanup', function(
   var gallery = require('./fetchSetImages');
   expect(gallery.getCachedSetImages('910008-1')).toEqual(['118648']);
   expect(localStorage.getItem('lego_set_images_cache_v3')).not.toBeNull();
+});
+
+test('the two verified photos resolve within the Pages base path and other galleries keep their URLs', function() {
+  expect(getSetGalleryImageUrl('910008-1', '118648', '/lego-finder'))
+    .toBe('/lego-finder/images/set-gallery/910008-1-118648.jpg');
+  expect(getSetGalleryImageUrl('910027-1', '118672', '/lego-finder/'))
+    .toBe('/lego-finder/images/set-gallery/910027-1-118672.jpg');
+  expect(getSetGalleryImageUrl('910027-1', '118672', 'https://jbh-mine.github.io/lego-finder'))
+    .toBe('https://jbh-mine.github.io/lego-finder/images/set-gallery/910027-1-118672.jpg');
+  expect(getSetGalleryImageUrl('910008-1', '118648', ''))
+    .toBe('/images/set-gallery/910008-1-118648.jpg');
+  expect(getSetGalleryImageUrl('910002-1', '120712', '/lego-finder'))
+    .toBe('https://cdn.rebrickable.com/media/thumbs/sets/910002-1/120712.jpg/1000x800p.jpg');
+  expect(getSetGalleryImageUrl('910008-1', '118648', '/lego-finder').replace('/1000x800p.jpg', '/230x180p.jpg'))
+    .toBe('/lego-finder/images/set-gallery/910008-1-118648.jpg');
+});
+
+test('cached gallery files match the recorded original JPEG bytes and source provenance', function() {
+  expect(Object.keys(galleryImageOverrides.images)).toEqual(['910008-1/118648', '910027-1/118672']);
+  Object.entries(galleryImageOverrides.images).forEach(function([key, image]) {
+    var bytes = fs.readFileSync(path.join(process.cwd(), 'public', image.publicPath));
+    expect(bytes.length).toBe(image.bytes);
+    expect(bytes.slice(0, 3).toString('hex')).toBe('ffd8ff');
+    expect(crypto.createHash('sha256').update(bytes).digest('hex')).toBe(image.sha256);
+    expect(image.sourceUrl).toBe('https://cdn.rebrickable.com/media/thumbs/sets/' + key + '.jpg/1000x800p.jpg');
+    expect(image.contentType).toBe('image/jpeg');
+  });
 });
