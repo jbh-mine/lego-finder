@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/lego-finder/static/css/main.578bbbf2.css",
-    "main.js": "/lego-finder/static/js/main.741db014.js",
+    "main.css": "/lego-finder/static/css/main.7a7ee146.css",
+    "main.js": "/lego-finder/static/js/main.0ae25578.js",
     "static/js/453.1092e160.chunk.js": "/lego-finder/static/js/453.1092e160.chunk.js",
     "index.html": "/lego-finder/index.html",
-    "main.578bbbf2.css.map": "/lego-finder/static/css/main.578bbbf2.css.map",
-    "main.741db014.js.map": "/lego-finder/static/js/main.741db014.js.map",
+    "main.7a7ee146.css.map": "/lego-finder/static/css/main.7a7ee146.css.map",
+    "main.0ae25578.js.map": "/lego-finder/static/js/main.0ae25578.js.map",
     "453.1092e160.chunk.js.map": "/lego-finder/static/js/453.1092e160.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.578bbbf2.css",
-    "static/js/main.741db014.js"
+    "static/css/main.7a7ee146.css",
+    "static/js/main.0ae25578.js"
   ]
 }
