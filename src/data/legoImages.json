@@ -1,6 +1,6 @@
 {
   "meta": {
-    "lastUpdated": "2026-10-18",
+    "lastUpdated": "2026-10-25",
     "source": "rebrickable.com",
     "note": "Populate with: npm run fetch-images -- <setNum> ... OR npm run fetch-images -- --from-prices"
   },

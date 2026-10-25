@@ -1,12 +1,12 @@
 {
   "meta": {
-    "lastUpdated": "2026-10-18T07:39:06.485Z",
+    "lastUpdated": "2026-10-25T07:59:14.882Z",
     "scope": "official-blog-reviews",
     "source": "Rebrickable official blog RSS",
     "sourceUrl": "https://rebrickable.com/blog/rss/",
-    "sourceLastUpdated": "2026-10-17T00:00:00.000Z",
+    "sourceLastUpdated": "2026-10-24T00:00:00.000Z",
     "count": 64,
-    "feedItemCount": 943,
+    "feedItemCount": 945,
     "note": "Only MOCs explicitly identified in official blog articles. Ordered by review publication date; not MOC release date. Piece counts, likes, design years and themes are unavailable in this feed."
   },
   "themes": [],

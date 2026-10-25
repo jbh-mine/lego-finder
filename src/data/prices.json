@@ -1,6 +1,6 @@
 {
   "meta": {
-    "lastUpdated": "2026-10-18",
+    "lastUpdated": "2026-10-25",
     "currency": "KRW (BDP converted from USD using historical annual averages)",
     "source": "lego.com/ko-kr (current MSRP) + brickset/brickeconomy (historical MSRP for discontinued) + IRS/x-rates annual averages (BDP USD→KRW)",
     "schemaVersion": 2,
