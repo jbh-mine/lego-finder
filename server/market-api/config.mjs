@@ -25,6 +25,10 @@ export function loadConfig(env = process.env) {
     let url; try { url = new URL(origin); } catch (error) { throw new Error('Invalid configuration: ALLOW_ORIGINS'); }
     if (url.origin !== origin || !['http:', 'https:'].includes(url.protocol)) throw new Error('ALLOW_ORIGINS must contain exact HTTP(S) origins');
   }
+  const maxWatch = integer(env, 'MAX_WATCHED_SCOPES', 500, 1, 500);
+  const maxQueue = integer(env, 'MAX_PROVIDER_QUEUE', 64, 2, 64);
+  const schedulerBatchSize = integer(env, 'SCHEDULER_BATCH_SIZE', 50, 1, 50);
+  if (schedulerBatchSize >= maxQueue) throw new Error('Invalid configuration: SCHEDULER_BATCH_SIZE must be less than MAX_PROVIDER_QUEUE');
   return {
     host: env.HOST || '0.0.0.0', port: integer(env, 'PORT', 8080, 0, 65535),
     dbPath: resolve(env.DB_PATH || './data/market.sqlite'), credentials,
@@ -36,7 +40,7 @@ export function loadConfig(env = process.env) {
     intervalMs: integer(env, 'PROVIDER_MIN_INTERVAL_MS', 1000, 1000, 60000),
     timeoutMs: integer(env, 'PROVIDER_TIMEOUT_MS', 10000, 1000, 30000),
     schedulerMs: integer(env, 'SCHEDULER_INTERVAL_SECONDS', 900, 60, 86400) * 1000,
-    cooldownMs: 600000, backoffMs: 900000, maxWatch: 500, maxQueue: 64,
+    cooldownMs: 600000, backoffMs: 900000, maxWatch, maxQueue, schedulerBatchSize,
   };
 }
 export function parseQuery(setNum, params = new URLSearchParams()) {

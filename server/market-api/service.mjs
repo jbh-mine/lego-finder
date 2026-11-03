@@ -82,7 +82,7 @@ export class MarketService {
     if (this.stopped) return 0;
     this.store.cleanup(this.now());
     if (!this.config.configured) return 0;
-    const due = this.store.due(this.now(), 50).filter(query => !this.inflight.has(queryKey(query)));
+    const due = this.store.due(this.now(), this.config.schedulerBatchSize).filter(query => !this.inflight.has(queryKey(query)));
     for (const query of due) this.get(query, { watch: false }).catch(() => {});
     return due.length;
   }

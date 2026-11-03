@@ -216,3 +216,12 @@ test('scheduler refreshes due scopes without extending watch activity and stops 
   await env.service.close(); assert.equal(env.calls.length, 4); assert.equal(env.service.timer, null);
   assert.equal(env.store.db.prepare('SELECT last_requested FROM watchlist').get().last_requested, NOW);
 });
+
+test('a small hosting scheduler refreshes only its configured batch and preserves watchlist capacity', async t => {
+  const env = environment(t, { maxWatch: 3, maxQueue: 3, schedulerBatchSize: 2 });
+  for (let index = 0; index < 5; index++) env.store.watch(parseQuery('fixture' + index), NOW + index);
+  assert.equal(env.store.db.prepare('SELECT count(*) AS n FROM watchlist').get().n, 3);
+  assert.equal(env.service.refreshDue(), 2);
+  await Promise.allSettled([...env.service.inflight.values()]);
+  assert.equal(env.calls.length, 4); assert.equal(env.store.due(env.now()).length, 1);
+});

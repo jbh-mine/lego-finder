@@ -3,6 +3,12 @@
 Standalone Node.js 24 service with no third-party runtime dependencies. `npm test`
 runs only synthetic official-shape fixtures, never a production or demo feed.
 
+For cardless personal-use hosting, see
+[the free hosting guide](../../docs/MARKET_FREE_HOSTING.md). `hosting-entry.mjs`
+loads the adjacent private `.env`, preserves platform IP/port settings and anchors
+relative database paths to this directory. The optional
+`MARKET_HOSTING_PRESET=alwaysdata-free` supplies smaller queue/watch/batch defaults.
+
 Run one server process per registered fixed IP. BrickLink seller API credentials
 and its registered outbound IP are required. Set all four `BRICKLINK_*` values and
 a long random `ADMIN_TOKEN` in server environment variables. Never put them in

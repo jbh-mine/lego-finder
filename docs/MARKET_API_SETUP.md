@@ -4,6 +4,8 @@ GitHub Pages 화면은 API 키를 안전하게 보관하거나 공용 데이터�
 
 ## 1. 준비할 것
 
+카드 없는 무료 운영은 [alwaysdata 배포 안내](MARKET_FREE_HOSTING.md)를 따른다. 이 경우에도 계정 생성·등록 IP 확인·BrickLink 인증 연결은 필요하다.
+
 | 준비물 | 방법 |
 | --- | --- |
 | BrickLink API 사용 자격 | [공식 API 등록](https://www.bricklink.com/v2/api/register_consumer.page)에 로그인하여 등록 가능 여부를 확인한다. 현행 약관은 등록 판매자를 대상으로 하므로 구매 계정만으로 발급을 보장하지 않는다. |

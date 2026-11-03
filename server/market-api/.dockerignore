@@ -1,4 +1,5 @@
 .env
+refresh.curl.conf
 data
 test
 .test-data

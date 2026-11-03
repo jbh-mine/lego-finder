@@ -94,10 +94,14 @@ export function createApplication(config = loadConfig(), { store = new Store(con
   } };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+export function startServer(config = loadConfig()) {
   if (Number(process.versions.node.split('.')[0]) < 24) throw new Error('Node.js 24 or newer is required.');
-  const config = loadConfig();
   const app = createApplication(config);
   app.server.listen(config.port, config.host, () => console.log(JSON.stringify({ event: 'listening', port: config.port, configured: config.configured, provider: 'bricklink' })));
   for (const signal of ['SIGTERM', 'SIGINT']) process.once(signal, () => app.close().then(() => process.exit(0)));
+  return app;
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  startServer();
 }
