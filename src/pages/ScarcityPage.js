@@ -9,7 +9,7 @@ import { recomputeForPeriod, computePriceScenario, SUPPORTED_PERIODS } from '../
 import { lookupObservedMarket, lookupReferencePrice, marketHistory, observedExamples } from '../utils/scarcityData';
 import scarcityCopy from '../data/scarcityCopy';
 import useMarketData from '../utils/useMarketData';
-import { marketFromApi } from '../utils/marketApi';
+import { marketFromApi, defaultMarketServer } from '../utils/marketApi';
 
 const PERIOD_STORAGE_KEY = 'lego_scarcity_period';
 const card = { background: 'var(--color-surface, #fff)', border: '1px solid var(--color-border, #ddd)', borderRadius: 8, padding: 18, marginBottom: 16 };
@@ -40,6 +40,7 @@ function ScarcityPage() {
   const [costs, setCosts] = useState('0');
   const api = useMarketData(raw && raw.setNum);
   const [serverInput, setServerInput] = useState(api.server);
+  const defaultServer = defaultMarketServer();
   const [serverError, setServerError] = useState('');
   const [snapshotMode, setSnapshotMode] = useState(false);
   const request = useRef(0);
@@ -137,9 +138,11 @@ function ScarcityPage() {
         <button style={button} onClick={() => { try { setServerInput(api.save(serverInput)); setServerError(''); setSnapshotMode(false); } catch (failure) { setServerError(apiError(failure)); } }}>{text.saveServer}</button>
         <button style={button} disabled={api.testing || !serverInput.trim()} onClick={() => api.test(serverInput)}>{api.testing ? text.connecting : text.testServer}</button>
         <button style={field} disabled={!api.server} onClick={() => { api.save(''); setServerInput(''); setSnapshotMode(false); }}>{text.disconnect}</button>
+        {defaultServer && defaultServer !== api.server && <button style={field} onClick={() => { setServerInput(api.save(defaultServer)); setSnapshotMode(false); }}>{text.useDefaultServer}</button>}
       </div>
       <p role="status">{api.server ? text.serverConfigured : text.serverAbsent}
         {api.health && (api.health.error ? ' · ' + apiError(api.health.error) : ' · ' + (api.health.configured ? text.serverReady : text.apiErrors.NOT_CONFIGURED))}</p>
+      {api.health && api.health.storage === 'supabase' && <p role="status">{text.supabaseStorage} · {api.health.collector && api.health.collector.online ? text.collectorOnline : text.collectorOffline}</p>}
       {serverError && <p role="alert">{serverError}</p>}
       <a href="https://github.com/jbh-mine/lego-finder/blob/main/docs/MARKET_API_SETUP.md" target="_blank" rel="noopener noreferrer">{text.setupGuide}</a>
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 16 }}>

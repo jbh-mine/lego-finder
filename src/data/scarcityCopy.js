@@ -134,4 +134,26 @@ Object.assign(en.apiErrors, {
   SERVER_BUSY: 'The provider request queue is full. A retry will follow shortly.', REFRESH_PENDING: 'A server retry is pending and no sufficiently recent data is available.',
   INVALID_SET: 'The server does not accept this set identifier format.', INVALID_SET_NUMBER: 'Check the set identifier format.', INVALID_SCOPE: 'Unsupported condition or seller-country scope.',
 });
+Object.assign(ko, {
+  useDefaultServer: '기본 시세 API 연결', supabaseStorage: 'Supabase 저장소 연결됨',
+  collectorOnline: 'PC 수집기 연결됨', collectorOffline: 'PC 수집기 연결 대기',
+  serverNote: '시세 API를 연결해 검색한 제품의 관측값을 조회합니다. Supabase는 저장·조회·갱신 대기열을 담당하고, 등록 IP의 PC 수집기가 BrickLink에 접속합니다. API 키는 브라우저에 입력하지 않습니다.',
+});
+Object.assign(en, {
+  useDefaultServer: 'Use default market API', supabaseStorage: 'Supabase storage connected',
+  collectorOnline: 'PC collector connected', collectorOffline: 'Waiting for PC collector',
+  serverNote: 'Query observations for searched products through the market API. Supabase stores observations and refresh jobs; the registered-IP PC collector contacts BrickLink. Never enter API secrets in this browser.',
+});
+Object.assign(ko.apiErrors, {
+  NOT_CONFIGURED: 'BrickLink 인증 키 설정이 아직 완료되지 않았습니다. 수집기의 비공개 설정 파일을 확인하세요.',
+  COLLECTOR_OFFLINE: 'PC 수집기가 연결되어 있지 않습니다. 저장된 이력은 유지되며 PC 로그인·네트워크·예약 작업을 확인해야 합니다.',
+  COLLECTION_PENDING: '이 제품의 첫 시세 수집을 기다리고 있습니다. PC 수집기가 처리한 뒤 자동으로 다시 조회합니다.',
+  STORAGE_UNAVAILABLE: 'Supabase 가격 저장소에 일시적으로 연결하지 못했습니다. 잠시 후 다시 조회합니다.',
+});
+Object.assign(en.apiErrors, {
+  NOT_CONFIGURED: 'BrickLink API credentials are not configured. Check the collector’s private configuration.',
+  COLLECTOR_OFFLINE: 'The PC collector is offline. Saved history remains available; check PC login, network and scheduled task.',
+  COLLECTION_PENDING: 'Waiting for this product’s first collection. The page retries after the PC worker processes it.',
+  STORAGE_UNAVAILABLE: 'Supabase market storage is temporarily unavailable. The page will retry.',
+});
 export default { ko, en };

@@ -1,5 +1,6 @@
 .env
 refresh.curl.conf
+.collector-logs
 data
 test
 .test-data

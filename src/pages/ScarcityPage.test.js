@@ -35,6 +35,25 @@ function open(url = '/scarcity') {
   return render(<ScarcityPage />);
 }
 
+test('the deployed default API can reconnect a disconnected browser and reports storage separately from collector credentials', async () => {
+  const previous = process.env.REACT_APP_MARKET_API_URL;
+  process.env.REACT_APP_MARKET_API_URL = 'https://example.supabase.co/functions/v1/lego-market-api';
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true, schemaVersion: 1,
+    provider: 'bricklink', configured: false, storage: 'supabase', collector: { online: true, configured: false } }) });
+  try {
+    open();
+    fireEvent.click(screen.getByRole('button', { name: '기본 시세 API 연결' }));
+    expect(localStorage.getItem(MARKET_SERVER_KEY)).toBe(process.env.REACT_APP_MARKET_API_URL);
+    fireEvent.click(screen.getByRole('button', { name: '연결 확인', exact: true }));
+    await screen.findByText(/Supabase 저장소 연결됨/);
+    expect(screen.getByText(/PC 수집기 연결됨/)).toBeInTheDocument();
+    expect(screen.getByText(/BrickLink 인증 키 설정이 아직 완료되지 않았습니다/)).toBeInTheDocument();
+  } finally {
+    if (previous === undefined) delete process.env.REACT_APP_MARKET_API_URL;
+    else process.env.REACT_APP_MARKET_API_URL = previous;
+  }
+});
+
 test('verified transaction median, latest trade, asking quote, formula and zero-growth scenario are distinct', async () => {
   open('/scarcity?setNum=10305');
   await screen.findByRole('heading', { name: 'Product 10305-1' });

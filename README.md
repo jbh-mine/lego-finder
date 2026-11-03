@@ -4,7 +4,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 
 > **라이브 데모**: https://jbh-mine.github.io/lego-finder
 
-제품별 자동 시세에는 운영자 소유의 BrickLink 인증 값과 고정 IP 서버가 필요합니다. 연결 후에는 검색한 제품의 최근 판매 통계·호가를 갱신하고 SQLite에 일별 가격 관측값을 누적합니다. [서버 준비·연결 방법](docs/MARKET_API_SETUP.md), [추정 공식](docs/MARKET_FORECAST_METHOD.md), [데이터 출처와 제한](docs/MARKET_DATA_SOURCES.md)을 확인하세요. 서버 미연결 상태의 KREAM 7종은 날짜 있는 참고 스냅샷입니다.
+현재 시세 API·이력 저장은 기존 쿠지의 Supabase 프로젝트에 연결되어 있습니다. 등록 IP의 PC 수집기가 BrickLink 인증을 사용해 자료를 가져오고, Supabase에 날짜별 관측 통계를 보관합니다. PC 예약 실행과 DB 갱신 예약을 활성화했지만 **BrickLink 키 네 값이 아직 비어 있어 실제 가격 수집은 시작되지 않았습니다.** [현재 연결·운영 상태](docs/MARKET_SUPABASE.md), [추정 공식](docs/MARKET_FORECAST_METHOD.md), [데이터 해석](docs/MARKET_DATA_SOURCES.md)을 확인하세요. 기존 KREAM 7종은 날짜 있는 별도 참고 자료입니다.
 
 ---
 
@@ -104,7 +104,7 @@ GitHub Pages에서 동작하는 레고 세트 검색 및 컬렉션 관리 웹앱
 - **BrickLink CDN** — 제품 대체 이미지 (SN/ON)
 - **MyMemory Translation API** — 제품명/테마명/카테고리명 한국어 번역 (localStorage 캐싱)
 - **KREAM 공개 체결 관측** — 제품 모델 번호와 실제 공개 거래를 대조한 날짜 있는 스냅샷 (`src/data/marketObservations.json`). 실시간 자동 갱신 아님
-- **BrickLink Store API + Node.js 24 + SQLite** — 서버 측 OAuth 인증·조회 캐시·관심 제품 자동 갱신·일별 관측 이력. 별도 고정 IP 서버에 배포 후 연결
+- **BrickLink Store API + Node.js 24 + Supabase** — PC에서 OAuth 인증·수집, 기존 Supabase 프로젝트에서 독립된 레고 API·작업 대기열·일별 관측 이력 관리. 독립 서버용 SQLite 경로도 유지
 - **PWA** — `manifest.json` + `sw.js` (3-tier 캐시 전략) + `serviceWorkerRegistration.js`
 - **GitHub Pages** (gh-pages) 배포
 - **GitHub Actions** — 주간 데이터 자동 수집 + 자동 배포 파이프라인
@@ -203,6 +203,8 @@ npm run deploy
 
 ## 가격 데이터 업데이트
 
+현재 선택한 운영 구성은 [쿠지 Supabase + PC 수집기](docs/MARKET_SUPABASE.md)입니다. 저장·조회·대기열은 기존 Supabase를 공유하고 실제 BrickLink 요청은 등록 IP의 PC에서 실행합니다. API 키 연결 전에는 실제 가격 수집이 시작되지 않습니다.
+
 카드 등록 없는 무료 서버 구성: [alwaysdata 배포 안내](docs/MARKET_FREE_HOSTING.md). 실제 계정·API 키 연결 전에는 수집이 시작되지 않습니다.
 
 자동 리셀 시세는 [별도 서버 설치 안내](docs/MARKET_API_SETUP.md)를 따릅니다. 브라우저에 API 키를 넣지 않습니다. 아래 기존 스크립트는 저장된 정가 자료 관리용이며 새 시세 서버나 거래 이력 수집을 대신하지 않습니다.
@@ -229,6 +231,13 @@ npm run fetch-images -- --refresh
 ## 변경 이력 (Changelog)
 
 > 이 Changelog는 코드가 수정될 때마다 자동으로 업데이트됩니다. 새로운 변경사항이 push 될 때마다 이 섹션 상단에 새 버전 항목이 추가됩니다.
+
+### v0.6.6 — 2026-11-03
+
+- 사용자가 선택한 기존 쿠지 Supabase에 비공개 레고 스키마·조회 API·15분 주기 대기열 관리를 배포했습니다. 기존 쿠지 함수 정의·RLS·권한·개인 기록 정책을 변경하지 않았습니다.
+- 현재 사용자로 매분·로그인 시 실행되는 PC 수집기를 등록하고 실제 인증 heartbeat 저장을 확인했습니다. PC가 꺼지면 새 자료 수집은 멈추며 Supabase 이력은 유지됩니다. BrickLink 키 네 값은 미설정 상태이므로 실제 가격은 아직 0건입니다.
+- 운영 SQL 검증 21건을 모두 롤백해 모의 가격이 남지 않는 것을 확인했습니다. SQL 로컬 검증 22개·서버 및 Edge 검증 63개·화면 회귀 검증을 추가했습니다. 공개 API의 상태 조회·쓰기 인증·CORS도 실제 HTTP로 확인했습니다.
+- 같은 UTC 날짜의 중복 저장, 작업 만료·호출 한도·관측 시각 역행을 차단합니다. 개인 기록과 가격 자료의 접근 경로를 분리하고, 비밀 값과 DB를 Git에서 제외합니다. [운영 안내](docs/MARKET_SUPABASE.md)
 
 ### v0.6.5 — 2026-11-03
 

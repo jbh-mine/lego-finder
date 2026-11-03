@@ -24,6 +24,9 @@ export function savedMarketServer() {
   try { const stored = localStorage.getItem(MARKET_SERVER_KEY); return normalizeMarketServer(stored === null ? process.env.REACT_APP_MARKET_API_URL || '' : stored); }
   catch (error) { return ''; }
 }
+export function defaultMarketServer() {
+  try { return normalizeMarketServer(process.env.REACT_APP_MARKET_API_URL || ''); } catch (error) { return ''; }
+}
 export function saveMarketServer(value) {
   const server = normalizeMarketServer(value);
   try { localStorage.setItem(MARKET_SERVER_KEY, server); } catch (error) {}

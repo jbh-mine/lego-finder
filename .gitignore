@@ -30,6 +30,7 @@ yarn-error.log*
 /deploy/market-api/.env
 /deploy/market-api/secrets/
 /deploy/market-api/backups/
+/supabase/tests/node_modules/
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm

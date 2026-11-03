@@ -24,6 +24,13 @@ jobs:
       - name: Market API tests (SQLite and official response contract)
         working-directory: server/market-api
         run: npm test
+      - name: Supabase Edge API contract tests
+        run: node --test supabase/functions/lego-market-api/test/*.test.mjs
+      - name: Supabase database contract tests
+        working-directory: supabase/tests
+        run: |
+          npm ci
+          npm test
       - run: npm ci --legacy-peer-deps
       - name: Regression tests
         run: npm test -- --watchAll=false --runInBand
